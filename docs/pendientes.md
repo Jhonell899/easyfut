@@ -7,26 +7,27 @@ Marca con `[x]` lo que vayas terminando. Para trabajar una tarea, créala como *
 - [x] Protección contra reservas falsas
 - [x] Prueba de seguridad y arreglos: cabeceras, contraseña de 8, hueco de "Ya pagué"
 - [ ] Publicar en internet (Vercel) con `https`
-- [ ] App instalable en el celular (PWA): ícono, nombre, pantalla completa
+- [x] App instalable en el celular (PWA): ícono, nombre, pantalla completa
 - [ ] Correo propio (SMTP: Resend o Brevo) para que siempre lleguen los códigos
 - [ ] Borrar las canchas de ejemplo y cargar las reales
-- [ ] Términos y condiciones y política de privacidad (Ley 29733)
+- [ ] Términos y privacidad: borrador listo en /terminos y /privacidad; falta completar los [COMPLETAR] y revisarlo con un abogado
 - [ ] Actualizar dependencias (Next.js y avisos de `npm audit`)
 
 ## 2. Para los jugadores
-- [ ] Cancelar su propia reserva (hasta X horas antes)
-- [ ] Buscar por distrito, precio y "libre hoy a las 8 pm"
-- [ ] Agregar el partido al calendario del celular
-- [ ] Compartir la reserva con el equipo por WhatsApp
+- [x] Cancelar su propia reserva mientras no haya avisado el pago (migración 013)
+- [x] Buscar por nombre o distrito y ordenar por precio
+- [ ] Buscar "libre hoy a las 8 pm"
+- [x] Agregar el partido al calendario del celular
+- [x] Compartir la reserva con el equipo
 - [ ] Reseñas y estrellas
 
 ## 3. Para los dueños
 - [x] Agenda del día con todas las canchas
 - [x] Encargados (falta ejecutar la migración 011)
-- [ ] Resumen de ingresos por semana / mes
+- [x] Resumen de ingresos: hoy, semana y mes
 - [ ] Reservas fijas (todos los martes 8 pm)
 - [ ] Canchas divididas (una de 7 dentro de una de 11)
-- [ ] Botón para avisar al cliente "tu reserva está confirmada"
+- [x] Botón para avisar al cliente "tu reserva está confirmada"
 
 ## 4. Para el administrador
 - [x] Pestaña Canchas: publicar/pausar, gestionar y ver la agenda de cualquier cancha (falta la migración 012)

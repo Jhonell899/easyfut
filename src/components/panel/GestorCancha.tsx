@@ -178,7 +178,7 @@ export default function GestorCancha({
       </div>
 
       {pestana === "reservas" && (
-        <ReservasDia canchaId={cancha.id} duracionTurno={datos.duracion_turno_min} franjas={franjasActuales} />
+        <ReservasDia canchaId={cancha.id} canchaNombre={datos.nombre} duracionTurno={datos.duracion_turno_min} franjas={franjasActuales} />
       )}
       {pestana === "horarios" && (
         <Tarjeta titulo="Horarios y precios" detalle="Los cambios no afectan las reservas ya hechas.">

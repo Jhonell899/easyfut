@@ -208,6 +208,18 @@ export default function FormularioRegistro({
         {enviando ? "Creando cuenta…" : tipo === "dueno" ? "Crear cuenta de rentador" : "Crear cuenta"}
       </button>
 
+      <p className="text-center text-xs text-[#8A968F]">
+        Al crear tu cuenta aceptas los{" "}
+        <Link href="/terminos" target="_blank" className="underline">
+          Términos
+        </Link>{" "}
+        y la{" "}
+        <Link href="/privacidad" target="_blank" className="underline">
+          Política de privacidad
+        </Link>
+        .
+      </p>
+
       <p className="text-center text-sm text-[#5A5A5A]">
         ¿Ya tienes cuenta?{" "}
         <Link

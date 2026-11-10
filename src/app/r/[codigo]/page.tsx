@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import AvisoConfig from "@/components/AvisoConfig";
 import { fmtFecha, soles } from "@/lib/horario";
 import PagoReserva from "@/components/PagoReserva";
+import AccionesReserva from "@/components/AccionesReserva";
 
 // El estado de una reserva cambia (pago, expiración): siempre datos frescos
 export const dynamic = "force-dynamic";
@@ -134,9 +135,27 @@ export default async function PaginaReserva({
         </p>
       )}
 
-      <Link href="/reservas" className="text-sm font-medium text-[#0B6E4F]">
-        Ver mis reservas
-      </Link>
+      {reserva.estado === "cancelada" && (
+        <p className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">
+          Esta reserva fue cancelada y el horario quedó libre.
+        </p>
+      )}
+
+      <AccionesReserva
+        codigo={reserva.codigo}
+        canchaNombre={reserva.cancha_nombre}
+        direccion={reserva.direccion}
+        inicio={reserva.inicio}
+        fin={reserva.fin}
+        cuando={`${fmtFecha(reserva.inicio, { weekday: "long", day: "numeric", month: "long" })}, ${hora(reserva.inicio)} – ${hora(reserva.fin)}`}
+        puedeCancelar={reserva.estado === "pendiente" && !vencida && !reserva.pago_avisado_en}
+        activa={reserva.estado === "confirmada" || (reserva.estado === "pendiente" && !vencida)}
+      />
+
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-[#0B6E4F]">
+        <Link href="/reservas">Ver mis reservas</Link>
+        {reserva.cancha_slug && <Link href={`/c/${reserva.cancha_slug}`}>Reservar otra vez en esta cancha</Link>}
+      </div>
     </main>
   );
 }

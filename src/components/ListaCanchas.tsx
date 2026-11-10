@@ -9,7 +9,18 @@ type Filtro = { clave: string; texto: string; cumple: (c: Cancha) => boolean };
 /** Lista de canchas con filtro por modalidad de fútbol (7, 9, 11…) y otros deportes. */
 export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
   const [activo, setActivo] = useState("todas");
+  const [buscar, setBuscar] = useState("");
+  const [distrito, setDistrito] = useState("");
+  const [orden, setOrden] = useState<"recomendado" | "precio">("recomendado");
   const { punto, estado, pedir } = useMiUbicacion();
+
+  const distritos = useMemo(() => [...new Set(canchas.map((c) => c.distrito))].sort((a, b) => a.localeCompare(b, "es")), [canchas]);
+  const precioDesde = (c: Cancha) => {
+    const p = (c.franjas ?? []).map((f) => Number(f.precio_hora));
+    return p.length ? Math.min(...p) : Infinity;
+  };
+  // Sin tildes ni mayúsculas: "chosica" encuentra "Chosica", "futbol" encuentra "Fútbol"
+  const plano = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
   // Solo se ofrecen filtros que tengan al menos una cancha
   const filtros = useMemo<Filtro[]>(() => {
@@ -34,13 +45,21 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
   const filtro = filtros.find((f) => f.clave === activo) ?? filtros[0];
   // Con ubicación: cada cancha lleva su distancia y se ordenan de la más cercana a la más lejana
   const visibles = useMemo(() => {
-    const lista = canchas.filter(filtro.cumple).map((c) => {
-      const p = puntoDe(c);
-      return { c, km: punto && p ? distanciaKm(punto, p) : null };
-    });
-    if (punto) lista.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
+    const q = plano(buscar.trim());
+    const lista = canchas
+      .filter(filtro.cumple)
+      .filter((c) => !distrito || c.distrito === distrito)
+      .filter((c) => !q || plano(`${c.nombre} ${c.distrito} ${c.direccion}`).includes(q))
+      .map((c) => {
+        const p = puntoDe(c);
+        return { c, km: punto && p ? distanciaKm(punto, p) : null };
+      });
+    if (orden === "precio") lista.sort((a, b) => precioDesde(a.c) - precioDesde(b.c));
+    else if (punto) lista.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
     return lista;
-  }, [canchas, filtro, punto]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canchas, filtro, punto, buscar, distrito, orden]);
+  const hayFiltros = !!buscar.trim() || !!distrito || activo !== "todas";
 
   return (
     <>
@@ -50,6 +69,45 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
           <span className="text-sm text-[#5A5A5A]">
             {visibles.length} {visibles.length === 1 ? "cancha" : "canchas"}
           </span>
+        </div>
+
+        {/* Buscador */}
+        <label className="flex items-center gap-2 rounded-xl border border-[#E3E3E3] px-3 focus-within:border-[#0B6E4F]">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A968F" strokeWidth="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <input
+            type="search"
+            value={buscar}
+            onChange={(e) => setBuscar(e.target.value)}
+            placeholder="Busca por nombre, distrito o dirección"
+            aria-label="Buscar canchas"
+            className="min-w-0 flex-1 bg-transparent py-2.5 text-base outline-none"
+          />
+        </label>
+
+        <div className="grid grid-cols-2 gap-2">
+          <select
+            value={distrito}
+            onChange={(e) => setDistrito(e.target.value)}
+            aria-label="Distrito"
+            className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#0B6E4F]"
+          >
+            <option value="">Todos los distritos</option>
+            {distritos.map((d) => (
+              <option key={d}>{d}</option>
+            ))}
+          </select>
+          <select
+            value={orden}
+            onChange={(e) => setOrden(e.target.value as typeof orden)}
+            aria-label="Ordenar"
+            className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#0B6E4F]"
+          >
+            <option value="recomendado">{punto ? "Más cerca" : "Más nuevas"}</option>
+            <option value="precio">Menor precio</option>
+          </select>
         </div>
 
         <BotonUbicacion estado={estado} onPedir={pedir} />
@@ -87,9 +145,22 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
       ))}
 
       {canchas.length > 0 && visibles.length === 0 && (
-        <p className="rounded-xl bg-white p-4 text-sm text-[#5A5A5A]">
-          No hay canchas de este tipo por ahora.
-        </p>
+        <div className="flex flex-col items-start gap-2 rounded-xl bg-white p-4 text-sm text-[#5A5A5A]">
+          <p>No encontramos canchas con esa búsqueda.</p>
+          {hayFiltros && (
+            <button
+              type="button"
+              onClick={() => {
+                setBuscar("");
+                setDistrito("");
+                setActivo("todas");
+              }}
+              className="font-bold text-[#0B6E4F]"
+            >
+              Quitar filtros
+            </button>
+          )}
+        </div>
       )}
     </>
   );

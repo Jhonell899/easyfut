@@ -78,8 +78,19 @@ export default async function Inicio() {
         </Link>
       </main>
 
-      <footer className="pb-8 text-center text-xs text-[#8A968F]">
-        © {new Date().getFullYear()} EasyFut
+      <footer className="flex flex-col items-center gap-1 pb-8 text-center text-xs text-[#8A968F]">
+        <p className="flex gap-4">
+          <Link href="/terminos" className="hover:underline">
+            Términos
+          </Link>
+          <Link href="/privacidad" className="hover:underline">
+            Privacidad
+          </Link>
+          <Link href="/publicar" className="hover:underline">
+            Publica tu cancha
+          </Link>
+        </p>
+        <p>© {new Date().getFullYear()} EasyFut</p>
       </footer>
     </div>
   );

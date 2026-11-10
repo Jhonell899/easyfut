@@ -1,7 +1,7 @@
 import MarcoAuth from "@/components/MarcoAuth";
 import FormularioIngreso from "@/components/FormularioIngreso";
 
-export const metadata = { title: "Ingresar · EasyFut" };
+export const metadata = { title: "Ingresar" };
 
 export default async function PaginaIngresar({
   searchParams,

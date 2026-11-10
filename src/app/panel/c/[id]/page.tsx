@@ -5,7 +5,7 @@ import MarcoPanel from "@/components/panel/MarcoPanel";
 import GestorCancha, { type CanchaBD } from "@/components/panel/GestorCancha";
 import VerificarCelular from "@/components/panel/VerificarCelular";
 
-export const metadata = { title: "Mi cancha · EasyFut" };
+export const metadata = { title: "Mi cancha" };
 export const dynamic = "force-dynamic";
 
 export default async function PanelCancha({

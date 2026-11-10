@@ -3,7 +3,7 @@ import { usuarioActual } from "@/lib/sesionServidor";
 import MarcoPanel from "@/components/panel/MarcoPanel";
 import Encargados from "@/components/panel/Encargados";
 
-export const metadata = { title: "Encargados · EasyFut" };
+export const metadata = { title: "Encargados" };
 export const dynamic = "force-dynamic";
 
 export default async function PaginaEncargados() {

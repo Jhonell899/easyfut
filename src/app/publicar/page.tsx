@@ -5,7 +5,7 @@ import Logo from "@/components/Logo";
 import MenuUsuario from "@/components/MenuUsuario";
 import HacermeRentador from "@/components/panel/HacermeRentador";
 
-export const metadata = { title: "Publica tu cancha · EasyFut" };
+export const metadata = { title: "Publica tu cancha" };
 export const dynamic = "force-dynamic";
 
 const VENTAJAS = [

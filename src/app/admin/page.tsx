@@ -3,7 +3,7 @@ import { usuarioActual } from "@/lib/sesionServidor";
 import MarcoPanel from "@/components/panel/MarcoPanel";
 import PestanasAdmin from "@/components/admin/PestanasAdmin";
 
-export const metadata = { title: "Administración · EasyFut" };
+export const metadata = { title: "Administración" };
 export const dynamic = "force-dynamic";
 
 export default async function Admin() {

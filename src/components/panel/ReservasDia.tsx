@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { BotonBloquear, InsigniaHistorial, useHistorial } from "@/components/panel/HistorialCliente";
+import { enlaceAvisoConfirmada } from "@/lib/avisos";
 import {
   aMinutos,
   diaSemana,
@@ -45,10 +46,12 @@ export type Nuevo = { ini: number; precioHora: number; finFranja: number };
 
 export default function ReservasDia({
   canchaId,
+  canchaNombre,
   duracionTurno,
   franjas,
 }: {
   canchaId: string;
+  canchaNombre: string;
   duracionTurno: number;
   franjas: Franja[];
 }) {
@@ -291,9 +294,21 @@ export default function ReservasDia({
                     </>
                   )}
                   {r.estado === "confirmada" && (
-                    <Accion onClick={() => cambiarEstado(r, "cancelada")} disabled={ocupado === r.id}>
-                      Cancelar
-                    </Accion>
+                    <>
+                      <Accion onClick={() => cambiarEstado(r, "cancelada")} disabled={ocupado === r.id}>
+                        Cancelar
+                      </Accion>
+                      {enlaceAvisoConfirmada(r, canchaNombre) && (
+                        <a
+                          href={enlaceAvisoConfirmada(r, canchaNombre)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-bold text-white"
+                        >
+                          Avisar al cliente
+                        </a>
+                      )}
+                    </>
                   )}
                   {r.estado === "bloqueo" && (
                     <Accion onClick={() => quitarBloqueo(r)} disabled={ocupado === r.id}>

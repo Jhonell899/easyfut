@@ -52,6 +52,8 @@ const ERRORES: Record<string, string> = {
   demasiadas_sin_confirmar:
     "Tienes 2 reservas esperando que el dueño confirme el pago. Cuando las confirme podrás reservar otra.",
   limite_conexion: "Hay demasiadas reservas sin pagar desde esta conexión. Paga una o espera a que venzan.",
+  muy_lejos: "Solo se puede reservar con hasta 30 días de anticipación.",
+  demasiadas_cancelaciones: "Cancelaste varias reservas hoy. Podrás volver a reservar mañana.",
   demasiadas_vencidas:
     "Dejaste vencer varias reservas sin pagar esta semana, así que no puedes reservar por unos días.",
 };

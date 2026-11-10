@@ -4,7 +4,7 @@ import MarcoPanel from "@/components/panel/MarcoPanel";
 import AsistenteCancha from "@/components/panel/AsistenteCancha";
 import VerificarCelular from "@/components/panel/VerificarCelular";
 
-export const metadata = { title: "Publicar cancha · EasyFut" };
+export const metadata = { title: "Publicar cancha" };
 export const dynamic = "force-dynamic";
 
 export default async function NuevaCancha() {

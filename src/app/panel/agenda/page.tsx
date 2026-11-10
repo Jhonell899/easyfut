@@ -3,7 +3,7 @@ import { usuarioActual } from "@/lib/sesionServidor";
 import MarcoPanel from "@/components/panel/MarcoPanel";
 import AgendaDia from "@/components/panel/AgendaDia";
 
-export const metadata = { title: "Agenda · EasyFut" };
+export const metadata = { title: "Agenda" };
 export const dynamic = "force-dynamic";
 
 type Local = { dueno_id: string; dueno_nombre: string | null; canchas: number };

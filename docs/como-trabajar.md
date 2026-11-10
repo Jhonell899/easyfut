@@ -45,6 +45,16 @@ Una forma simple de no perder nada y saber siempre qué cambió.
 
 > Para cambios muy pequeños también puedes hacer commit directo en `main`.
 
+## Revisión automática
+
+Cada vez que subes código, GitHub comprueba solo que no haya errores y que la app compile
+(pestaña **Actions** del repositorio). Un ✅ verde significa que todo está bien; una ❌ roja,
+que algo se rompió. Puedes hacer la misma revisión en tu computadora antes de subir:
+
+```bash
+npm run verificar
+```
+
 ## Cómo escribir los commits
 
 En español, en presente y diciendo **qué** cambia:

@@ -5,6 +5,7 @@ import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { aMinutos, diaSemana, fmtFecha, fmtMinutos, hoyLima, inicioDia, instante, soles, sumarDias } from "@/lib/horario";
 import { NuevaReserva, type Nuevo } from "@/components/panel/ReservasDia";
 import { BotonBloquear, InsigniaHistorial, useHistorial } from "@/components/panel/HistorialCliente";
+import { enlaceAvisoConfirmada } from "@/lib/avisos";
 
 type Franja = { dia_semana: number; hora_inicio: string; hora_fin: string; precio_hora: number };
 type Cancha = { id: string; nombre: string; duracion_turno_min: number; activa: boolean; franjas: Franja[] };
@@ -441,9 +442,21 @@ function DetalleReserva({
             </>
           )}
           {r.estado === "confirmada" && (
-            <button type="button" disabled={ocupado} onClick={() => actualizar("cancelada")} className="flex-1 rounded-xl border border-[#E3E3E3] py-3 font-bold disabled:opacity-50">
-              Cancelar reserva
-            </button>
+            <>
+              <button type="button" disabled={ocupado} onClick={() => actualizar("cancelada")} className="flex-1 rounded-xl border border-[#E3E3E3] py-3 font-bold disabled:opacity-50">
+                Cancelar reserva
+              </button>
+              {enlaceAvisoConfirmada(r, cancha) && (
+                <a
+                  href={enlaceAvisoConfirmada(r, cancha)!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-[2] rounded-xl bg-[#25D366] py-3 text-center font-bold text-white"
+                >
+                  Avisar al cliente
+                </a>
+              )}
+            </>
           )}
           {r.estado === "bloqueo" && (
             <button type="button" disabled={ocupado} onClick={quitarBloqueo} className="flex-1 rounded-xl border border-[#E3E3E3] py-3 font-bold disabled:opacity-50">

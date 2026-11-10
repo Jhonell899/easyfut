@@ -1,0 +1,27 @@
+# Cada vez que se sube código o se abre un pull request, GitHub comprueba
+# que la app no tenga errores de tipos y que compile.
+name: Revisar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  revisar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Errores de tipos
+        run: npm run revisar
+      - name: Compilar
+        run: npm run build
+        env:
+          # Valores de relleno: la compilación no necesita la base de datos real
+          NEXT_PUBLIC_SUPABASE_URL: https://ejemplo.supabase.co
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: clave-publica-de-ejemplo

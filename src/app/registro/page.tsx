@@ -1,7 +1,7 @@
 import MarcoAuth from "@/components/MarcoAuth";
 import FormularioRegistro from "@/components/FormularioRegistro";
 
-export const metadata = { title: "Crear cuenta · EasyFut" };
+export const metadata = { title: "Crear cuenta" };
 
 export default async function PaginaRegistro({
   searchParams,

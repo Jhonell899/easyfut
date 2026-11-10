@@ -7,8 +7,9 @@ import { fmtFecha, soles } from "@/lib/horario";
 import VerificarCelular from "@/components/panel/VerificarCelular";
 import PendientesEnVivo from "@/components/panel/PendientesEnVivo";
 import BloqueadosDueno from "@/components/panel/BloqueadosDueno";
+import IngresosDueno from "@/components/panel/IngresosDueno";
 
-export const metadata = { title: "Mi panel · EasyFut" };
+export const metadata = { title: "Mi panel" };
 export const dynamic = "force-dynamic";
 
 type CanchaPanel = { id: string; nombre: string; slug: string; distrito: string; activa: boolean };
@@ -134,6 +135,7 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
         )}
 
         {misCanchas.length > 0 && <PendientesEnVivo duenoId={user.id} />}
+        {misCanchas.length > 0 && <IngresosDueno duenoId={user.id} />}
         {misCanchas.length > 0 && <BloqueadosDueno duenoId={user.id} />}
 
         <section className="flex flex-col gap-2">
