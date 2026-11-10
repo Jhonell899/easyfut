@@ -31,8 +31,18 @@ function traducir(msg: string): string {
     return "Esa contraseña apareció en filtraciones de datos. Elige otra más segura.";
   if (/password/i.test(msg)) return "La contraseña debe tener al menos 8 caracteres.";
   if (/invalid.*email|email.*invalid/i.test(msg)) return "Ese correo no parece válido.";
-  if (/rate limit|too many/i.test(msg)) return "Demasiados intentos. Espera un momento.";
-  return "No pudimos crear la cuenta. Inténtalo de nuevo.";
+  if (/security purposes|after \d+ seconds/i.test(msg)) {
+    const seg = msg.match(/(\d+) seconds?/)?.[1];
+    return `Ya te enviamos un código hace poco. Espera ${seg ?? "unos"} segundos y vuelve a intentarlo.`;
+  }
+  if (/rate limit|too many/i.test(msg))
+    return "Se alcanzó el límite de correos por hora. Espera unos minutos e inténtalo de nuevo.";
+  if (/database error/i.test(msg)) return "No pudimos guardar tu perfil. Avísanos para revisarlo.";
+  if (/api key|apikey|jwt/i.test(msg)) return "La app no está bien conectada a la base de datos (clave incorrecta).";
+  if (/signups? not allowed|signup is disabled/i.test(msg)) return "El registro está desactivado por ahora.";
+  if (/fetch|network|load failed/i.test(msg)) return "Sin conexión. Revisa tu internet e inténtalo de nuevo.";
+  // Motivo desconocido: se muestra tal cual para poder diagnosticarlo
+  return `No pudimos crear la cuenta. Detalle: ${msg || "sin respuesta del servidor"}`;
 }
 
 export default function FormularioRegistro({
