@@ -9,7 +9,7 @@ const SECCIONES: Seccion[] = [
     titulo: "Qué es EasyFut",
     parrafos: [
       "EasyFut es una plataforma que conecta a jugadores con dueños de canchas deportivas (\"rentadores\") para reservar horarios. EasyFut no es dueña de las canchas ni presta el servicio de alquiler: ese servicio lo presta cada rentador.",
-      "Responsable de la plataforma: Jhonell Jhonny Huamani Llallico , jhonellhuamani09@gmai.com.",
+      "Responsable de la plataforma: Jhonell Jhonny Huamani Llallico, jhonellhuamani09@gmail.com.",
     ],
   },
   {
@@ -45,7 +45,7 @@ const SECCIONES: Seccion[] = [
     titulo: "Cambios y contacto",
     parrafos: [
       "Podemos actualizar estos términos; la fecha de arriba indica la última versión. Si sigues usando EasyFut después de un cambio, se entiende que lo aceptas.",
-      "Consultas y reclamos: jhonellhuamani09@gmail.com .",
+      "Consultas y reclamos: jhonellhuamani09@gmail.com.",
     ],
   },
 ];
