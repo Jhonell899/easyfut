@@ -112,7 +112,7 @@ export default function AdminCanchas() {
             key={f.clave}
             type="button"
             onClick={() => setFiltro(f.clave)}
-            className={`rounded-2xl p-2.5 shadow-sm ${filtro === f.clave ? "bg-[#1B1B1B] text-white" : "bg-white"}`}
+            className={`rounded-2xl p-2.5 shadow-sm ${filtro === f.clave ? "bg-[#0A3D2E] text-white" : "bg-white"}`}
           >
             <p className={`text-xl font-extrabold ${f.clave === "revisar" && conteos.revisar && filtro !== f.clave ? "text-amber-600" : ""}`}>
               {lista ? conteos[f.clave] : "–"}
@@ -126,7 +126,7 @@ export default function AdminCanchas() {
         value={buscar}
         onChange={(e) => setBuscar(e.target.value)}
         placeholder="Buscar por cancha, distrito o dueño"
-        className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-3 text-base outline-none focus:border-[#0B6E4F]"
+        className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-3 text-base outline-none focus:border-[#6D28D9]"
       />
 
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
@@ -153,7 +153,7 @@ export default function AdminCanchas() {
                       <p className="truncate font-bold">{c.nombre}</p>
                       <span
                         className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${
-                          c.activa ? "bg-[#E6EEEA] text-[#0B6E4F]" : "bg-[#F4F4F4] text-[#5A5A5A]"
+                          c.activa ? "bg-[#EDE9FE] text-[#6D28D9]" : "bg-[#F4F4F4] text-[#5A5A5A]"
                         }`}
                       >
                         {c.activa ? "Publicada" : "Pausada"}
@@ -192,7 +192,7 @@ export default function AdminCanchas() {
                 </div>
 
                 <div className="grid grid-cols-4 gap-1.5">
-                  <Link href={`/panel/c/${c.id}`} className="rounded-lg bg-[#0B6E4F] py-2 text-center text-xs font-bold text-white">
+                  <Link href={`/panel/c/${c.id}`} className="rounded-lg bg-[#6D28D9] py-2 text-center text-xs font-bold text-white">
                     Gestionar
                   </Link>
                   <Link href={`/panel/agenda?d=${c.dueno_id}`} className="rounded-lg border border-[#E3E3E3] py-2 text-center text-xs font-bold">
@@ -210,7 +210,7 @@ export default function AdminCanchas() {
                     onClick={() => alternar(c)}
                     disabled={ocupado === c.id}
                     className={`rounded-lg py-2 text-xs font-bold disabled:opacity-50 ${
-                      c.activa ? "text-red-700 hover:bg-red-50" : "bg-[#1B1B1B] text-white"
+                      c.activa ? "text-red-700 hover:bg-red-50" : "bg-[#0A3D2E] text-white"
                     }`}
                   >
                     {c.activa ? "Pausar" : "Publicar"}

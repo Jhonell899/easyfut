@@ -24,26 +24,39 @@ export default async function Inicio() {
   return (
     <div className="min-h-screen">
       {/* Portada */}
-      <header className="fondo-cancha relative overflow-hidden text-white">
-        <div className="relative mx-auto flex max-w-xl flex-col gap-8 px-5 pb-16 pt-5">
+      <header className="fondo-cancha relative overflow-hidden rounded-b-[2rem] text-white">
+        <div className="relative mx-auto flex max-w-xl flex-col gap-7 px-5 pb-20 pt-5">
           <nav className="flex items-center justify-between">
             <Logo claro />
             <MenuUsuario claro />
           </nav>
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-extrabold leading-tight">
+          <div className="flex flex-col gap-3">
+            <span className="self-start rounded-full bg-white/10 px-3 py-1 text-xs font-bold text-[#C4B5FD] ring-1 ring-white/20 backdrop-blur">
+              ⚽ Canchas en Lima
+            </span>
+            <h1 className="text-4xl font-extrabold leading-[1.05] tracking-tight">
               Reserva tu cancha
               <br />
-              en minutos
+              <span className="bg-gradient-to-r from-[#C4B5FD] to-[#A7F3D0] bg-clip-text text-transparent">en minutos</span>
             </h1>
-            <p className="text-white/80">
-              Elige horario, paga y juega. Sin llamadas ni esperas.
-            </p>
+            <p className="max-w-xs text-white/75">Elige horario, paga con Yape o Plin y juega. Sin llamadas ni esperas.</p>
           </div>
+          <dl className="grid grid-cols-3 gap-2 text-center">
+            {[
+              { valor: String(canchas.length), texto: canchas.length === 1 ? "cancha" : "canchas" },
+              { valor: "1 min", texto: "para reservar" },
+              { valor: "24/7", texto: "desde tu celular" },
+            ].map((d) => (
+              <div key={d.texto} className="rounded-2xl bg-white/10 px-2 py-2.5 ring-1 ring-white/15 backdrop-blur">
+                <dd className="text-xl font-extrabold">{d.valor}</dd>
+                <dt className="text-[11px] text-white/70">{d.texto}</dt>
+              </div>
+            ))}
+          </dl>
         </div>
       </header>
 
-      <main className="relative mx-auto -mt-8 flex max-w-xl flex-col gap-4 px-5 pb-10">
+      <main className="relative mx-auto -mt-12 flex max-w-xl flex-col gap-5 px-5 pb-10">
         {!supabase && <AvisoConfig />}
 
         {error && (
@@ -63,9 +76,9 @@ export default async function Inicio() {
         {/* Entrada para dueños de canchas */}
         <Link
           href="/publicar"
-          className="mt-4 flex items-center gap-4 rounded-2xl bg-[#1B1B1B] p-5 text-white transition-transform hover:-translate-y-0.5"
+          className="fondo-cancha sombra-fuerte mt-4 flex items-center gap-4 rounded-3xl p-5 text-white transition-transform hover:-translate-y-0.5"
         >
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#B6F09C] text-[#0B6E4F]">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#C4B5FD] text-[#6D28D9]">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M3 21V9l9-6 9 6v12h-6v-7H9v7z" />
             </svg>
@@ -74,7 +87,7 @@ export default async function Inicio() {
             <span className="block font-bold">¿Tienes una cancha?</span>
             <span className="block text-sm text-white/70">Publícala en EasyFut y recibe reservas en línea.</span>
           </span>
-          <span aria-hidden="true" className="text-xl text-[#B6F09C]">→</span>
+          <span aria-hidden="true" className="text-xl text-[#C4B5FD]">→</span>
         </Link>
       </main>
 

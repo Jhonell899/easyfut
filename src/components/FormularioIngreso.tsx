@@ -83,7 +83,7 @@ export default function FormularioIngreso({
           <p>Ese registro no se terminó de verificar, así que la cuenta no existe. Regístrate de nuevo.</p>
           <Link
             href={`/registro${sufijo}`}
-            className="shrink-0 rounded-xl bg-[#0B6E4F] px-4 py-2 font-bold text-white"
+            className="shrink-0 rounded-xl bg-[#6D28D9] px-4 py-2 font-bold text-white"
           >
             Registrarme
           </Link>
@@ -98,14 +98,14 @@ export default function FormularioIngreso({
       <button
         type="submit"
         disabled={enviando}
-        className="rounded-xl bg-[#0B6E4F] py-3 font-bold text-white disabled:opacity-50"
+        className="rounded-xl bg-[#6D28D9] py-3 font-bold text-white disabled:opacity-50"
       >
         {enviando ? "Ingresando…" : "Ingresar"}
       </button>
 
       <p className="text-center text-sm text-[#5A5A5A]">
         ¿No tienes cuenta?{" "}
-        <Link href={`/registro${sufijo}`} className="font-bold text-[#0B6E4F]">
+        <Link href={`/registro${sufijo}`} className="font-bold text-[#6D28D9]">
           Crear cuenta
         </Link>
       </p>

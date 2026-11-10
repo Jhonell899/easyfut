@@ -32,8 +32,8 @@ const hora = (iso: string) => fmtFecha(iso, { hour: "2-digit", minute: "2-digit"
 
 const ESTADOS: Record<string, { texto: string; clase: string }> = {
   pendiente: { texto: "Pendiente de pago", clase: "bg-amber-50 text-amber-800" },
-  revision: { texto: "Pago en revisión", clase: "bg-[#E6EEEA] text-[#0B6E4F]" },
-  confirmada: { texto: "Confirmada", clase: "bg-[#E6EEEA] text-[#0B6E4F]" },
+  revision: { texto: "Pago en revisión", clase: "bg-[#EDE9FE] text-[#6D28D9]" },
+  confirmada: { texto: "Confirmada", clase: "bg-[#DCF5EA] text-[#0F7A55]" },
   cancelada: { texto: "Cancelada", clase: "bg-red-50 text-red-700" },
   expirada: { texto: "Expirada", clase: "bg-[#F4F4F4] text-[#5A5A5A]" },
 };
@@ -79,7 +79,7 @@ export default async function PaginaReserva({
 
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-5 p-5">
-      <Link href="/" className="text-sm font-medium text-[#0B6E4F]">
+      <Link href="/" className="text-sm font-medium text-[#6D28D9]">
         ← Todas las canchas
       </Link>
 
@@ -124,7 +124,7 @@ export default async function PaginaReserva({
       )}
 
       {reserva.estado === "confirmada" && (
-        <p className="rounded-2xl bg-[#E6EEEA] p-4 text-sm font-medium text-[#0B6E4F]">
+        <p className="rounded-2xl bg-[#EDE9FE] p-4 text-sm font-medium text-[#6D28D9]">
           ¡Listo! El dueño confirmó tu pago. Te esperamos en la cancha.
         </p>
       )}
@@ -152,7 +152,7 @@ export default async function PaginaReserva({
         activa={reserva.estado === "confirmada" || (reserva.estado === "pendiente" && !vencida)}
       />
 
-      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-[#0B6E4F]">
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-[#6D28D9]">
         <Link href="/reservas">Ver mis reservas</Link>
         {reserva.cancha_slug && <Link href={`/c/${reserva.cancha_slug}`}>Reservar otra vez en esta cancha</Link>}
       </div>

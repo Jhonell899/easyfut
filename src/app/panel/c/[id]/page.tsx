@@ -53,7 +53,7 @@ export default async function PanelCancha({
       volver={esSuya ? { href: "/panel", texto: "Mi panel" } : { href: "/admin", texto: "Administración" }}
     >
       {!esSuya && (
-        <p className="rounded-2xl bg-[#1B1B1B] px-4 py-3 text-sm text-white">
+        <p className="rounded-2xl bg-[#0A3D2E] px-4 py-3 text-sm text-white">
           Estás gestionando esta cancha como <strong>administrador</strong>. Los cambios se guardan en la cancha del dueño.
         </p>
       )}

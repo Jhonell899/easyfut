@@ -151,14 +151,14 @@ export default function AsistenteCancha() {
       {/* Progreso */}
       <div className="rounded-2xl bg-white p-4 shadow-sm">
         <div className="flex items-center justify-between text-sm">
-          <span className="font-bold text-[#0B6E4F]">
+          <span className="font-bold text-[#6D28D9]">
             Paso {paso + 1} de {PASOS.length}
           </span>
           <span className="text-[#5A5A5A]">{actual.titulo}</span>
         </div>
         <div className="mt-2 flex gap-1">
           {PASOS.map((_, i) => (
-            <span key={i} className={`h-1.5 flex-1 rounded-full ${i <= paso ? "bg-[#0B6E4F]" : "bg-[#E3E3E3]"}`} />
+            <span key={i} className={`h-1.5 flex-1 rounded-full ${i <= paso ? "bg-[#6D28D9]" : "bg-[#E3E3E3]"}`} />
           ))}
         </div>
       </div>
@@ -208,7 +208,7 @@ export default function AsistenteCancha() {
             type="button"
             onClick={ultimo ? publicar : siguiente}
             disabled={publicando}
-            className="flex-1 rounded-xl bg-[#0B6E4F] py-3 font-bold text-white disabled:opacity-50"
+            className="flex-1 rounded-xl bg-[#6D28D9] py-3 font-bold text-white disabled:opacity-50"
           >
             {ultimo ? (publicando ? "Publicando…" : "Publicar cancha") : "Continuar"}
           </button>
@@ -225,7 +225,7 @@ function Resumen({ datos, horario, irA }: { datos: DatosCancha; horario: Horario
         <p className="text-xs text-[#5A5A5A]">{titulo}</p>
         <div className="text-sm text-[#1B1B1B]">{valor}</div>
       </div>
-      <button type="button" onClick={() => irA(paso)} className="shrink-0 text-sm font-bold text-[#0B6E4F]">
+      <button type="button" onClick={() => irA(paso)} className="shrink-0 text-sm font-bold text-[#6D28D9]">
         Editar
       </button>
     </div>
@@ -259,7 +259,7 @@ function Resumen({ datos, horario, irA }: { datos: DatosCancha; horario: Horario
           "Ubicación",
           <>
             {datos.direccion}, {datos.distrito}
-            <span className={`block text-xs ${datos.latitud != null ? "text-[#0B6E4F]" : "text-amber-700"}`}>
+            <span className={`block text-xs ${datos.latitud != null ? "text-[#6D28D9]" : "text-amber-700"}`}>
               {datos.latitud != null ? "✓ Marcada en el mapa" : "Sin punto en el mapa: no aparecerá en “cerca de mí”"}
             </span>
           </>,

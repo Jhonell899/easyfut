@@ -26,7 +26,7 @@ type ReservaPanel = {
 
 const ESTADOS: Record<string, string> = {
   pendiente: "bg-amber-50 text-amber-800",
-  confirmada: "bg-[#E6EEEA] text-[#0B6E4F]",
+  confirmada: "bg-[#DCF5EA] text-[#0F7A55]",
   bloqueo: "bg-[#F4F4F4] text-[#5A5A5A]",
 };
 
@@ -55,7 +55,7 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
         <p className="text-sm text-[#5A5A5A]">
           Tu cuenta es de comprador. Desde aquí los dueños gestionan sus canchas y reservas.
         </p>
-        <Link href="/" className="font-bold text-[#0B6E4F]">
+        <Link href="/" className="font-bold text-[#6D28D9]">
           ← Buscar canchas
         </Link>
       </main>
@@ -96,7 +96,7 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
               <h1 className="text-2xl font-extrabold">Hola, {perfil.nombre?.split(" ")[0] ?? "dueño"}</h1>
             </div>
             {misCanchas.length > 0 && (
-              <Link href="/panel/nueva" className="shrink-0 rounded-xl bg-white px-3 py-2 text-sm font-bold text-[#0B6E4F]">
+              <Link href="/panel/nueva" className="shrink-0 rounded-xl bg-white px-3 py-2 text-sm font-bold text-[#6D28D9]">
                 + Nueva cancha
               </Link>
             )}
@@ -107,7 +107,7 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
       <main className="mx-auto -mt-8 flex max-w-xl flex-col gap-5 px-5 pb-10">
         {perfil.telefono_verificado ? (
           <p className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm shadow-sm">
-            <span className="rounded-full bg-[#E6EEEA] px-2 py-0.5 text-xs font-bold text-[#0B6E4F]">✓ WhatsApp confirmado</span>
+            <span className="rounded-full bg-[#DCF5EA] px-2 py-0.5 text-xs font-bold text-[#0F7A55]">✓ WhatsApp confirmado</span>
             <span className="text-[#5A5A5A]">
               Contacto público: <strong className="text-[#1B1B1B]">+51 {perfil.telefono_verificado}</strong>
             </span>
@@ -129,7 +129,7 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
           </div>
         )}
         {locales.length > 0 && (
-          <Link href={`/panel?d=${locales[0].dueno_id}`} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#0B6E4F] shadow-sm">
+          <Link href={`/panel?d=${locales[0].dueno_id}`} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#6D28D9] shadow-sm">
             También eres encargado en {locales[0].dueno_nombre ?? "otro local"} →
           </Link>
         )}
@@ -184,7 +184,7 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
                   En unos minutos: datos, ubicación, horarios, precios y fotos.
                 </p>
               </div>
-              <Link href="/panel/nueva" className="rounded-xl bg-[#0B6E4F] px-5 py-3 font-bold text-white">
+              <Link href="/panel/nueva" className="rounded-xl bg-[#6D28D9] px-5 py-3 font-bold text-white">
                 Publicar cancha
               </Link>
             </div>
@@ -197,7 +197,7 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
                       <span className="block font-bold">{c.nombre}</span>
                       <span className="text-[#5A5A5A]">{c.distrito}</span>
                     </span>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${c.activa ? "bg-[#E6EEEA] text-[#0B6E4F]" : "bg-[#F4F4F4] text-[#5A5A5A]"}`}>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${c.activa ? "bg-[#EDE9FE] text-[#6D28D9]" : "bg-[#F4F4F4] text-[#5A5A5A]"}`}>
                       {c.activa ? "Publicada" : "Pausada"}
                     </span>
                   </Link>
@@ -266,7 +266,7 @@ function PanelEncargado({
                 key={l.dueno_id}
                 href={`/panel?d=${l.dueno_id}`}
                 className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ${
-                  l.dueno_id === local.dueno_id ? "bg-[#1B1B1B] text-white" : "bg-white shadow-sm"
+                  l.dueno_id === local.dueno_id ? "bg-[#0A3D2E] text-white" : "bg-white shadow-sm"
                 }`}
               >
                 {l.dueno_nombre ?? "Local"}

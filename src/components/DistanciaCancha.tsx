@@ -26,7 +26,7 @@ export default function DistanciaCancha({ lat, lng }: { lat: number; lng: number
         type="button"
         onClick={pedir}
         disabled={estado === "buscando" || estado === "no-soportado"}
-        className="text-sm font-bold text-[#0B6E4F] disabled:opacity-60"
+        className="text-sm font-bold text-[#6D28D9] disabled:opacity-60"
       >
         {estado === "buscando" ? "Buscando tu ubicación…" : "¿Qué tan lejos estoy? Usar mi ubicación"}
       </button>

@@ -19,7 +19,7 @@ type ReservaCuenta = {
 
 const ESTADOS: Record<string, { texto: string; clase: string }> = {
   pendiente: { texto: "Pendiente de pago", clase: "bg-amber-50 text-amber-800" },
-  confirmada: { texto: "Confirmada", clase: "bg-[#E6EEEA] text-[#0B6E4F]" },
+  confirmada: { texto: "Confirmada", clase: "bg-[#DCF5EA] text-[#0F7A55]" },
   cancelada: { texto: "Cancelada", clase: "bg-red-50 text-red-700" },
   expirada: { texto: "Expirada", clase: "bg-[#F4F4F4] text-[#5A5A5A]" },
 };
@@ -68,7 +68,7 @@ export default function MisReservas() {
           <p className="text-[#4A4A4A]">Ingresa para ver tus reservas en cualquier dispositivo.</p>
           <Link
             href="/ingresar?next=/reservas"
-            className="shrink-0 rounded-xl bg-[#0B6E4F] px-4 py-2 font-bold text-white"
+            className="shrink-0 rounded-xl bg-[#6D28D9] px-4 py-2 font-bold text-white"
           >
             Ingresar
           </Link>
@@ -79,7 +79,7 @@ export default function MisReservas() {
           {enCuenta.length === 0 ? (
             <p className="rounded-2xl bg-white p-4 text-sm text-[#5A5A5A]">
               Aún no tienes reservas.{" "}
-              <Link href="/" className="font-bold text-[#0B6E4F]">
+              <Link href="/" className="font-bold text-[#6D28D9]">
                 Buscar canchas
               </Link>
             </p>
@@ -128,7 +128,7 @@ export default function MisReservas() {
             maxLength={8}
             className="min-w-0 flex-1 rounded-xl border border-[#E3E3E3] bg-white px-3 py-2 text-base uppercase"
           />
-          <button type="submit" className="rounded-xl bg-[#0B6E4F] px-4 py-2 font-bold text-white">
+          <button type="submit" className="rounded-xl bg-[#6D28D9] px-4 py-2 font-bold text-white">
             Buscar
           </button>
         </div>
@@ -143,7 +143,7 @@ export default function MisReservas() {
               <li key={c}>
                 <Link href={`/r/${c}`} className="flex justify-between p-4 text-sm text-[#1B1B1B]">
                   <span className="font-mono font-bold">{c}</span>
-                  <span className="text-[#0B6E4F]">Ver →</span>
+                  <span className="text-[#6D28D9]">Ver →</span>
                 </Link>
               </li>
             ))}

@@ -24,7 +24,7 @@ export default function PestanasAdmin() {
             aria-selected={pestana === p.clave}
             onClick={() => setPestana(p.clave)}
             className={`rounded-full px-4 py-2 text-sm font-bold ${
-              pestana === p.clave ? "bg-[#1B1B1B] text-white" : "bg-white text-[#1B1B1B] shadow-sm"
+              pestana === p.clave ? "bg-[#0A3D2E] text-white" : "bg-white text-[#1B1B1B] shadow-sm"
             }`}
           >
             {p.texto}

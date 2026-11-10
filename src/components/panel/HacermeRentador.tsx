@@ -31,7 +31,7 @@ export default function HacermeRentador() {
         type="button"
         onClick={convertir}
         disabled={enviando}
-        className="rounded-xl bg-[#0B6E4F] py-3 font-bold text-white disabled:opacity-50"
+        className="rounded-xl bg-[#6D28D9] py-3 font-bold text-white disabled:opacity-50"
       >
         {enviando ? "Un momento…" : "Convertir en cuenta de rentador"}
       </button>

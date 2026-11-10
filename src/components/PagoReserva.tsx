@@ -105,7 +105,7 @@ export default function PagoReserva(p: Props) {
   // --- Ya avisó: esperando al dueño -----------------------------------------
   if (avisado) {
     return (
-      <section className="flex flex-col gap-3 rounded-2xl bg-[#E6EEEA] p-4 text-sm text-[#0B6E4F]">
+      <section className="flex flex-col gap-3 rounded-2xl bg-[#EDE9FE] p-4 text-sm text-[#6D28D9]">
         <div className="flex items-center gap-3">
           <span className="relative flex h-3 w-3">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#18A058] opacity-75" />
@@ -113,7 +113,7 @@ export default function PagoReserva(p: Props) {
           </span>
           <p className="font-bold">Tu horario está separado. Esperando que el dueño confirme tu pago.</p>
         </div>
-        <p className="text-[#1B4D3A]">
+        <p className="text-[#4C1D95]">
           Ya no se cae: queda reservado hasta que {p.duenoNombre?.split(" ")[0] ?? "el dueño"} revise su{" "}
           {medio || "cuenta"} y lo confirme. Esta página se actualiza sola.
         </p>
@@ -171,14 +171,14 @@ export default function PagoReserva(p: Props) {
                   copiar(m.dato);
                 }}
                 className={`flex w-full items-center justify-between gap-3 rounded-xl border-2 px-3 py-2.5 text-left ${
-                  medio === m.clave ? "border-[#0B6E4F] bg-[#F4FAF6]" : "border-[#E3E3E3]"
+                  medio === m.clave ? "border-[#6D28D9] bg-[#F5F3FF]" : "border-[#E3E3E3]"
                 }`}
               >
                 <span>
                   <span className="block text-xs text-[#5A5A5A]">{m.titulo}</span>
                   <span className="font-mono text-base font-bold tracking-wide">{m.dato}</span>
                 </span>
-                <span className="text-xs font-bold text-[#0B6E4F]">{copiado === m.dato ? "¡Copiado!" : "Copiar"}</span>
+                <span className="text-xs font-bold text-[#6D28D9]">{copiado === m.dato ? "¡Copiado!" : "Copiar"}</span>
               </button>
             </li>
           ))}

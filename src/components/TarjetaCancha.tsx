@@ -10,6 +10,8 @@ export type Cancha = {
   distrito: string;
   fotos: string[] | null;
   modalidades?: number[] | null;
+  superficie?: string | null;
+  servicios?: string[] | null;
   latitud?: number | null;
   longitud?: number | null;
   franjas: { precio_hora: number }[];
@@ -39,63 +41,91 @@ export default function TarjetaCancha({ cancha, km }: { cancha: Cancha; km?: num
   const cerca = km != null ? cercania(km) : null;
   const precios = (cancha.franjas ?? []).map((f) => Number(f.precio_hora));
   const desde = precios.length ? Math.min(...precios) : null;
+  const servicios = cancha.servicios ?? [];
+  const detalles = [cancha.superficie, ...servicios.slice(0, 2)].filter(Boolean) as string[];
+  const extra = servicios.length - 2;
 
   return (
     <Link
       href={`/c/${cancha.slug}`}
-      className="group block overflow-hidden rounded-2xl border border-[#E3E3E3] bg-white transition-shadow hover:shadow-md"
+      className="sombra-suave group block overflow-hidden rounded-3xl bg-white transition-all duration-200 hover:-translate-y-1"
     >
-      <div className="relative">
+      {/* Foto con el nombre encima */}
+      <div className="relative h-44 overflow-hidden">
         {cancha.fotos?.[0] ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={cancha.fotos[0]}
             alt={`Foto de ${cancha.nombre}`}
-            className="h-36 w-full object-cover"
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="fondo-cancha flex h-36 items-center justify-center">
-            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="white" strokeOpacity="0.6" strokeWidth="1.5" aria-hidden="true">
-              <rect x="2" y="5" width="20" height="14" rx="1" />
-              <path d="M12 5v14" />
-              <circle cx="12" cy="12" r="2.5" />
-              <path d="M2 9.5h2.5v5H2M22 9.5h-2.5v5H22" />
+          <div className="fondo-cancha flex h-full items-center justify-center">
+            <svg width="120" height="80" viewBox="0 0 60 40" fill="none" stroke="white" strokeOpacity="0.28" strokeWidth="1" aria-hidden="true">
+              <rect x="2" y="2" width="56" height="36" rx="2" />
+              <path d="M30 2v36" />
+              <circle cx="30" cy="20" r="6" />
+              <path d="M2 12h8v16H2M58 12h-8v16h8" />
             </svg>
           </div>
         )}
-        <span className="absolute left-3 top-3 rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-[#0B6E4F]">
+        {/* Degradado para que el texto se lea sobre cualquier foto */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#062A1F]/90 via-[#062A1F]/20 to-transparent" />
+
+        <span className="absolute left-3 top-3 rounded-full bg-white/15 px-3 py-1 text-xs font-bold text-white ring-1 ring-white/30 backdrop-blur-md">
           {etiquetaDeporte(cancha.deporte, cancha.modalidades)}
         </span>
         {cerca && (
-          <span className={`absolute right-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold shadow-sm ${cerca.clase}`}>
+          <span className={`absolute right-3 top-3 flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold shadow-md ${cerca.clase}`}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
             </svg>
             {fmtDistancia(km!)} · {cerca.texto}
           </span>
         )}
+
+        <div className="absolute inset-x-4 bottom-3 text-white">
+          <h2 className="truncate text-xl font-extrabold leading-tight drop-shadow">{cancha.nombre}</h2>
+          <p className="flex items-center gap-1 text-sm text-white/85">
+            <svg className="shrink-0" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
+            </svg>
+            <span className="truncate">
+              {cancha.distrito} · {cancha.direccion}
+            </span>
+          </p>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1 p-4">
-        <h2 className="text-base font-bold text-[#1B1B1B]">{cancha.nombre}</h2>
-        <p className="flex items-start gap-1.5 text-sm text-[#5A5A5A]">
-          <svg className="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-            <path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z" />
-            <circle cx="12" cy="10" r="2.5" />
-          </svg>
-          {cancha.direccion}, {cancha.distrito}
-        </p>
+      <div className="flex flex-col gap-3 p-4">
+        {detalles.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {detalles.map((d) => (
+              <span key={d} className="rounded-full bg-[#F3F1FA] px-2.5 py-1 text-xs font-medium text-[#4C1D95]">
+                {d}
+              </span>
+            ))}
+            {extra > 0 && <span className="rounded-full bg-[#F3F1FA] px-2.5 py-1 text-xs font-medium text-[#8A968F]">+{extra}</span>}
+          </div>
+        )}
 
-        <div className="mt-2 flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           {desde !== null ? (
-            <p className="whitespace-nowrap text-sm text-[#5A5A5A]">
-              Desde <span className="text-lg font-bold text-[#1B1B1B]">S/ {desde.toFixed(2)}</span> /h
+            <p className="leading-tight">
+              <span className="block text-[11px] font-medium uppercase tracking-wide text-[#8A968F]">Desde</span>
+              <span className="whitespace-nowrap text-2xl font-extrabold text-[#0A3D2E]">
+                S/ {Number.isInteger(desde) ? desde : desde.toFixed(2)}
+                <span className="text-sm font-medium text-[#8A968F]"> /hora</span>
+              </span>
             </p>
           ) : (
             <p className="text-sm text-[#5A5A5A]">Sin precios aún</p>
           )}
-          <span className="rounded-xl bg-[#0B6E4F] px-4 py-2 text-sm font-bold text-white">
+          <span className="boton-morado flex items-center gap-1.5 rounded-2xl px-5 py-3 text-sm font-bold text-white transition-transform group-hover:scale-105">
             Reservar
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
           </span>
         </div>
       </div>

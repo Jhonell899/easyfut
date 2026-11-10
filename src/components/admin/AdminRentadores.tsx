@@ -94,7 +94,7 @@ export default function AdminRentadores() {
         value={buscar}
         onChange={(e) => setBuscar(e.target.value)}
         placeholder="Buscar por referencia, nombre, correo o celular"
-        className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-3 text-base outline-none focus:border-[#0B6E4F]"
+        className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-3 text-base outline-none focus:border-[#6D28D9]"
       />
 
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
@@ -119,11 +119,11 @@ export default function AdminRentadores() {
                     </p>
                   </div>
                   <div className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="rounded-lg bg-[#1B1B1B] px-2 py-0.5 font-mono text-xs font-bold tracking-wider text-white">
+                    <span className="rounded-lg bg-[#0A3D2E] px-2 py-0.5 font-mono text-xs font-bold tracking-wider text-white">
                       {r.referencia}
                     </span>
                     {r.telefono_verificado ? (
-                      <span className="rounded-full bg-[#E6EEEA] px-2 py-0.5 text-[11px] font-bold text-[#0B6E4F]">✓ WhatsApp</span>
+                      <span className="rounded-full bg-[#DCF5EA] px-2 py-0.5 text-[11px] font-bold text-[#0F7A55]">✓ WhatsApp</span>
                     ) : (
                       <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800">Sin confirmar</span>
                     )}
@@ -148,7 +148,7 @@ export default function AdminRentadores() {
                   <div className="flex flex-col gap-2">
                     <div className="flex gap-2">
                       <div className="flex min-w-0 flex-1 items-stretch overflow-hidden rounded-xl border border-[#E3E3E3]">
-                        <span className="flex items-center bg-[#F2F5F3] px-2 text-[#5A5A5A]">+51</span>
+                        <span className="flex items-center bg-[#F1EFF8] px-2 text-[#5A5A5A]">+51</span>
                         <input
                           inputMode="numeric"
                           value={numero}
@@ -161,7 +161,7 @@ export default function AdminRentadores() {
                         type="button"
                         onClick={() => verificar(r)}
                         disabled={ocupado === r.id || !/^9\d{8}$/.test(numero.replace(/\D/g, ""))}
-                        className="shrink-0 rounded-xl bg-[#0B6E4F] px-3 font-bold text-white disabled:opacity-50"
+                        className="shrink-0 rounded-xl bg-[#6D28D9] px-3 font-bold text-white disabled:opacity-50"
                       >
                         Confirmar WhatsApp
                       </button>

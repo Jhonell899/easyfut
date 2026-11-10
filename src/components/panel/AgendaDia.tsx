@@ -136,13 +136,13 @@ export default function AgendaDia({ duenoId, puedeBloquearClientes }: { duenoId:
       {/* Día */}
       <div className="rounded-2xl bg-white p-3 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
-          <button type="button" onClick={() => setDesde(sumarDias(desde, -7))} className="rounded-lg px-2 py-1 text-[#0B6E4F]" aria-label="Semana anterior">
+          <button type="button" onClick={() => setDesde(sumarDias(desde, -7))} className="rounded-lg px-2 py-1 text-[#6D28D9]" aria-label="Semana anterior">
             ‹
           </button>
           <span className="text-sm font-bold first-letter:uppercase">
             {fmtFecha(instante(fecha, 720), { weekday: "long", day: "numeric", month: "long" })}
           </span>
-          <button type="button" onClick={() => setDesde(sumarDias(desde, 7))} className="rounded-lg px-2 py-1 text-[#0B6E4F]" aria-label="Semana siguiente">
+          <button type="button" onClick={() => setDesde(sumarDias(desde, 7))} className="rounded-lg px-2 py-1 text-[#6D28D9]" aria-label="Semana siguiente">
             ›
           </button>
         </div>
@@ -153,7 +153,7 @@ export default function AgendaDia({ duenoId, puedeBloquearClientes }: { duenoId:
               type="button"
               onClick={() => setFecha(d)}
               className={`flex flex-col items-center rounded-xl py-1.5 text-xs ${
-                d === fecha ? "bg-[#0B6E4F] font-bold text-white" : d === hoy ? "bg-[#E6EEEA] text-[#0B6E4F]" : "text-[#1B1B1B]"
+                d === fecha ? "bg-[#6D28D9] font-bold text-white" : d === hoy ? "bg-[#EDE9FE] text-[#6D28D9]" : "text-[#1B1B1B]"
               }`}
             >
               <span>{d === hoy ? "Hoy" : DIA[diaSemana(d)]}</span>
@@ -242,7 +242,7 @@ export default function AgendaDia({ duenoId, puedeBloquearClientes }: { duenoId:
                           type="button"
                           disabled={paso}
                           onClick={() => setNuevo({ ini: l.ini, precioHora: l.precio, finFranja: l.finFranja, cancha: c })}
-                          className="absolute inset-x-0.5 flex flex-col items-start justify-center rounded-lg border border-dashed border-[#CFDCD5] px-2 text-left text-[11px] text-[#5A5A5A] hover:border-[#0B6E4F] hover:bg-[#F4FAF6] disabled:border-transparent disabled:bg-[#FAFAFA] disabled:text-[#C4C4C4]"
+                          className="absolute inset-x-0.5 flex flex-col items-start justify-center rounded-lg border border-dashed border-[#CFDCD5] px-2 text-left text-[11px] text-[#5A5A5A] hover:border-[#6D28D9] hover:bg-[#F5F3FF] disabled:border-transparent disabled:bg-[#FAFAFA] disabled:text-[#C4C4C4]"
                           style={{ top: (l.ini - rango.ini) * PX_MIN + 1, height: (l.fin - l.ini) * PX_MIN - 2 }}
                         >
                           <span className="font-bold">{fmtMinutos(l.ini)}</span>
@@ -312,8 +312,8 @@ export default function AgendaDia({ duenoId, puedeBloquearClientes }: { duenoId:
 
 function estiloReserva(r: Reserva): { texto: string; clase: string } {
   if (r.estado === "bloqueo") return { texto: "Bloqueado", clase: "bg-[#E8E8E8] text-[#5A5A5A]" };
-  if (r.estado === "confirmada") return { texto: `Pagada · ${soles(r.monto)}`, clase: "bg-[#0B6E4F] text-white" };
-  if (r.pago_avisado_en) return { texto: "Dice que pagó", clase: "bg-[#18A058] text-white ring-2 ring-[#B6F09C]" };
+  if (r.estado === "confirmada") return { texto: `Pagada · ${soles(r.monto)}`, clase: "bg-[#0F7A55] text-white" };
+  if (r.pago_avisado_en) return { texto: "Dice que pagó", clase: "bg-[#18A058] text-white ring-2 ring-[#C4B5FD]" };
   return { texto: "Esperando pago", clase: "bg-amber-100 text-amber-900" };
 }
 
@@ -322,7 +322,7 @@ function Leyenda() {
     { texto: "Libre", clase: "border border-dashed border-[#CFDCD5] bg-white" },
     { texto: "Esperando pago", clase: "bg-amber-100" },
     { texto: "Dice que pagó", clase: "bg-[#18A058]" },
-    { texto: "Pagada", clase: "bg-[#0B6E4F]" },
+    { texto: "Pagada", clase: "bg-[#0F7A55]" },
     { texto: "Bloqueado", clase: "bg-[#E8E8E8]" },
   ];
   return (
@@ -436,7 +436,7 @@ function DetalleReserva({
               <button type="button" disabled={ocupado} onClick={() => actualizar("cancelada")} className="flex-1 rounded-xl border border-[#E3E3E3] py-3 font-bold disabled:opacity-50">
                 {r.pago_avisado_en ? "No me llegó" : "Cancelar"}
               </button>
-              <button type="button" disabled={ocupado} onClick={() => actualizar("confirmada")} className="flex-[2] rounded-xl bg-[#0B6E4F] py-3 font-bold text-white disabled:opacity-50">
+              <button type="button" disabled={ocupado} onClick={() => actualizar("confirmada")} className="flex-[2] rounded-xl bg-[#6D28D9] py-3 font-bold text-white disabled:opacity-50">
                 Confirmar pago
               </button>
             </>

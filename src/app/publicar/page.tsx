@@ -30,7 +30,7 @@ export default async function Publicar() {
             <MenuUsuario claro />
           </nav>
           <div className="flex flex-col gap-2">
-            <p className="text-sm font-bold uppercase tracking-wide text-[#B6F09C]">Para dueños de canchas</p>
+            <p className="text-sm font-bold uppercase tracking-wide text-[#C4B5FD]">Para dueños de canchas</p>
             <h1 className="text-3xl font-extrabold leading-tight">
               Llena tu cancha
               <br />
@@ -57,13 +57,13 @@ export default async function Publicar() {
             <>
               <Link
                 href={`/registro?tipo=dueno&next=${encodeURIComponent("/panel/nueva")}`}
-                className="rounded-xl bg-[#0B6E4F] py-3 text-center font-bold text-white"
+                className="rounded-xl bg-[#6D28D9] py-3 text-center font-bold text-white"
               >
                 Crear cuenta de rentador
               </Link>
               <p className="text-center text-sm text-[#5A5A5A]">
                 ¿Ya tienes cuenta?{" "}
-                <Link href={`/ingresar?next=${encodeURIComponent("/publicar")}`} className="font-bold text-[#0B6E4F]">
+                <Link href={`/ingresar?next=${encodeURIComponent("/publicar")}`} className="font-bold text-[#6D28D9]">
                   Ingresar
                 </Link>
               </p>
@@ -74,7 +74,7 @@ export default async function Publicar() {
         <section className="grid grid-cols-2 gap-2">
           {VENTAJAS.map((v) => (
             <div key={v.titulo} className="rounded-2xl bg-white p-4 shadow-sm">
-              <p className="font-bold text-[#0B6E4F]">{v.titulo}</p>
+              <p className="font-bold text-[#6D28D9]">{v.titulo}</p>
               <p className="mt-1 text-sm text-[#5A5A5A]">{v.detalle}</p>
             </div>
           ))}
@@ -85,7 +85,7 @@ export default async function Publicar() {
           <ol className="flex flex-col gap-3">
             {PASOS.map((p, i) => (
               <li key={p} className="flex items-center gap-3 text-sm">
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#E6EEEA] font-bold text-[#0B6E4F]">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#EDE9FE] font-bold text-[#6D28D9]">
                   {i + 1}
                 </span>
                 {p}

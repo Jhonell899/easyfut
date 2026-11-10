@@ -95,7 +95,7 @@ export default function AdminClientes() {
             key={d.clave}
             type="button"
             onClick={() => setFiltro(d.clave as typeof filtro)}
-            className={`rounded-2xl p-3 shadow-sm ${filtro === d.clave ? "bg-[#1B1B1B] text-white" : "bg-white"}`}
+            className={`rounded-2xl p-3 shadow-sm ${filtro === d.clave ? "bg-[#0A3D2E] text-white" : "bg-white"}`}
           >
             <p className={`text-2xl font-extrabold ${d.alerta && filtro !== d.clave ? "text-amber-600" : ""}`}>
               {lista ? d.valor : "–"}
@@ -109,7 +109,7 @@ export default function AdminClientes() {
         value={buscar}
         onChange={(e) => setBuscar(e.target.value)}
         placeholder="Buscar por celular o nombre"
-        className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-3 text-base outline-none focus:border-[#0B6E4F]"
+        className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-3 text-base outline-none focus:border-[#6D28D9]"
       />
 
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
@@ -151,7 +151,7 @@ export default function AdminClientes() {
 
               <div className="grid grid-cols-5 gap-1 text-center text-xs">
                 <Cifra valor={c.total} texto="Total" />
-                <Cifra valor={c.pagadas} texto="Pagadas" color="text-[#0B6E4F]" />
+                <Cifra valor={c.pagadas} texto="Pagadas" color="text-[#0F7A55]" />
                 <Cifra valor={c.vencidas} texto="Vencidas" color={c.vencidas ? "text-amber-700" : undefined} />
                 <Cifra valor={c.pagos_falsos ?? 0} texto="Pago falso" color={c.pagos_falsos ? "text-red-700" : undefined} />
                 <Cifra valor={c.canceladas} texto="Canceladas" />

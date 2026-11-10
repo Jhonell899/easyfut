@@ -39,7 +39,7 @@ export default function PaginaLegal({
         </section>
       ))}
 
-      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-[#0B6E4F]">
+      <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-medium text-[#6D28D9]">
         <Link href={otro.href}>{otro.texto}</Link>
         <Link href="/">Volver al inicio</Link>
       </div>

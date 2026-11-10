@@ -66,10 +66,10 @@ export default function IngresosDueno({ duenoId }: { duenoId: string }) {
           <div key={x.d} className="flex flex-1 flex-col items-center gap-1">
             <div
               title={soles(x.total)}
-              className={`w-full rounded-t-md ${x.d === hoy ? "bg-[#0B6E4F]" : x.futuro ? "bg-[#F2F2F2]" : "bg-[#B9D8CB]"}`}
+              className={`w-full rounded-t-md ${x.d === hoy ? "bg-[#6D28D9]" : x.futuro ? "bg-[#F2F2F2]" : "bg-[#C4B5FD]"}`}
               style={{ height: `${Math.max(4, (x.total / maximo) * 56)}px` }}
             />
-            <span className={`text-[10px] ${x.d === hoy ? "font-bold text-[#0B6E4F]" : "text-[#8A968F]"}`}>
+            <span className={`text-[10px] ${x.d === hoy ? "font-bold text-[#6D28D9]" : "text-[#8A968F]"}`}>
               {["D", "L", "M", "M", "J", "V", "S"][diaSemana(x.d)]}
             </span>
           </div>

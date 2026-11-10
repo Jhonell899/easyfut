@@ -75,7 +75,7 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
         <Link
           href="/ingresar"
           className={`rounded-full px-4 py-1.5 text-sm font-bold ${
-            claro ? "bg-white text-[#0B6E4F]" : "bg-[#0B6E4F] text-white"
+            claro ? "bg-white text-[#6D28D9]" : "bg-[#6D28D9] text-white"
           }`}
         >
           Ingresar
@@ -96,7 +96,7 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
         aria-haspopup="menu"
         className={`flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-medium ${pastilla}`}
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#B6F09C] text-xs font-bold text-[#0B6E4F]">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#C4B5FD] text-xs font-bold text-[#6D28D9]">
           {nombre.charAt(0).toUpperCase()}
         </span>
         <span className="max-w-24 truncate">{nombre.split(" ")[0]}</span>
@@ -112,7 +112,7 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
             <p className="truncate text-xs text-[#5A5A5A]">{correo}</p>
             <span
               className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                esDueno ? "bg-[#1B1B1B] text-white" : "bg-[#E6EEEA] text-[#0B6E4F]"
+                esDueno ? "bg-[#0A3D2E] text-white" : "bg-[#EDE9FE] text-[#6D28D9]"
               }`}
             >
               {esDueno ? "Rentador" : esEncargado ? "Encargado" : "Comprador"}
@@ -123,7 +123,7 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
               Mi panel
             </Link>
           ) : esEncargado ? (
-            <Link href="/panel" role="menuitem" className="block px-3 py-2.5 font-bold text-[#0B6E4F] hover:bg-[#F4F4F4]">
+            <Link href="/panel" role="menuitem" className="block px-3 py-2.5 font-bold text-[#6D28D9] hover:bg-[#F4F4F4]">
               Panel de encargado
             </Link>
           ) : (
@@ -135,7 +135,7 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
             Mis reservas
           </Link>
           {perfil?.es_admin && (
-            <Link href="/admin" role="menuitem" className="block px-3 py-2.5 font-bold text-[#0B6E4F] hover:bg-[#F4F4F4]">
+            <Link href="/admin" role="menuitem" className="block px-3 py-2.5 font-bold text-[#6D28D9] hover:bg-[#F4F4F4]">
               Administración
             </Link>
           )}

@@ -72,7 +72,7 @@ export default function Encargados({ duenoId }: { duenoId: string }) {
             onChange={(e) => setNombre(e.target.value)}
             placeholder="Nombre (ej. Carlos, turno noche)"
             maxLength={60}
-            className="rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#0B6E4F]"
+            className="rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9]"
           />
           <input
             type="email"
@@ -80,17 +80,17 @@ export default function Encargados({ duenoId }: { duenoId: string }) {
             onChange={(e) => setCorreo(e.target.value)}
             placeholder="Correo con el que entrará a EasyFut"
             autoComplete="off"
-            className="rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#0B6E4F]"
+            className="rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9]"
           />
           <button
             type="submit"
             disabled={!correoValido || ocupado}
-            className="rounded-xl bg-[#0B6E4F] py-3 font-bold text-white disabled:opacity-50"
+            className="rounded-xl bg-[#6D28D9] py-3 font-bold text-white disabled:opacity-50"
           >
             {ocupado ? "Agregando…" : "Agregar encargado"}
           </button>
         </form>
-        {aviso && <p className="rounded-xl bg-[#E6EEEA] p-3 text-sm text-[#0B6E4F]">{aviso}</p>}
+        {aviso && <p className="rounded-xl bg-[#EDE9FE] p-3 text-sm text-[#6D28D9]">{aviso}</p>}
         {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
       </section>
 

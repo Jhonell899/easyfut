@@ -34,7 +34,7 @@ export default function MapaSelector({
 
       const icono = L.divIcon({
         className: "",
-        html: `<svg width="36" height="44" viewBox="0 0 24 30" style="filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))"><path d="M12 0C5.4 0 0 5.2 0 11.7 0 20.4 12 30 12 30s12-9.6 12-18.3C24 5.2 18.6 0 12 0z" fill="#0B6E4F"/><circle cx="12" cy="11.5" r="4.5" fill="#fff"/></svg>`,
+        html: `<svg width="36" height="44" viewBox="0 0 24 30" style="filter:drop-shadow(0 2px 2px rgba(0,0,0,.35))"><path d="M12 0C5.4 0 0 5.2 0 11.7 0 20.4 12 30 12 30s12-9.6 12-18.3C24 5.2 18.6 0 12 0z" fill="#6D28D9"/><circle cx="12" cy="11.5" r="4.5" fill="#fff"/></svg>`,
         iconSize: [36, 44],
         iconAnchor: [18, 44],
       });

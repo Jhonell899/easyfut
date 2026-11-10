@@ -27,7 +27,7 @@ import {
 
 const MapaSelector = dynamic(() => import("@/components/panel/MapaSelector"), {
   ssr: false,
-  loading: () => <div className="h-64 w-full animate-pulse rounded-xl bg-[#E6EEEA]" />,
+  loading: () => <div className="h-64 w-full animate-pulse rounded-xl bg-[#EDE9FE]" />,
 });
 
 type EditorProps = {
@@ -58,8 +58,8 @@ function Opcion({ activo, onClick, children }: { activo: boolean; onClick: () =>
       aria-pressed={activo}
       className={`rounded-full border px-3 py-1.5 text-sm transition-colors ${
         activo
-          ? "border-[#0B6E4F] bg-[#0B6E4F] font-bold text-white"
-          : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#0B6E4F]"
+          ? "border-[#6D28D9] bg-[#6D28D9] font-bold text-white"
+          : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#6D28D9]"
       }`}
     >
       {children}
@@ -72,7 +72,7 @@ function Etiqueta({ children }: { children: React.ReactNode }) {
 }
 
 const claseSelect =
-  "w-full rounded-xl border border-[#E3E3E3] bg-white px-3 py-3 text-base outline-none focus:border-[#0B6E4F]";
+  "w-full rounded-xl border border-[#E3E3E3] bg-white px-3 py-3 text-base outline-none focus:border-[#6D28D9]";
 
 // ---------------------------------------------------------------------------
 // 1. Datos básicos
@@ -152,7 +152,7 @@ export function EditorDatos({ datos, cambiar }: EditorProps) {
           placeholder="Cuéntales a los jugadores qué hace especial tu cancha."
           value={datos.descripcion}
           onChange={(e) => cambiar({ descripcion: e.target.value })}
-          className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#0B6E4F]"
+          className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9]"
         />
       </label>
     </div>
@@ -229,7 +229,7 @@ export function EditorUbicacion({ datos, cambiar }: EditorProps) {
             type="button"
             onClick={buscarDireccion}
             disabled={buscando}
-            className="rounded-xl border border-[#0B6E4F] px-3 py-2 text-sm font-bold text-[#0B6E4F] disabled:opacity-50"
+            className="rounded-xl border border-[#6D28D9] px-3 py-2 text-sm font-bold text-[#6D28D9] disabled:opacity-50"
           >
             Buscar dirección
           </button>
@@ -237,7 +237,7 @@ export function EditorUbicacion({ datos, cambiar }: EditorProps) {
             type="button"
             onClick={usarMiUbicacion}
             disabled={buscando}
-            className="rounded-xl border border-[#0B6E4F] px-3 py-2 text-sm font-bold text-[#0B6E4F] disabled:opacity-50"
+            className="rounded-xl border border-[#6D28D9] px-3 py-2 text-sm font-bold text-[#6D28D9] disabled:opacity-50"
           >
             Estoy en la cancha
           </button>
@@ -280,10 +280,10 @@ export function EditorHorarios({ horario, setHorario }: { horario: Horario; setH
             <div className="flex items-center justify-between gap-2">
               <span className="font-bold">{NOMBRE_DIA[dia]}</span>
               <label className="flex items-center gap-2 text-sm">
-                <span className={abierto ? "text-[#0B6E4F]" : "text-[#8A968F]"}>{abierto ? "Abierto" : "Cerrado"}</span>
+                <span className={abierto ? "text-[#6D28D9]" : "text-[#8A968F]"}>{abierto ? "Abierto" : "Cerrado"}</span>
                 <input
                   type="checkbox"
-                  className="h-5 w-5 accent-[#0B6E4F]"
+                  className="h-5 w-5 accent-[#6D28D9]"
                   checked={abierto}
                   onChange={(e) =>
                     cambiarDia(dia, e.target.checked ? [{ ini: "08:00", fin: "23:00", precio: lista[0]?.precio ?? "" }] : [])
@@ -352,7 +352,7 @@ export function EditorHorarios({ horario, setHorario }: { horario: Horario; setH
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
                   <button
                     type="button"
-                    className="font-bold text-[#0B6E4F]"
+                    className="font-bold text-[#6D28D9]"
                     onClick={() => {
                       const ultima = lista.at(-1)!;
                       cambiarDia(dia, [...lista, { ini: ultima.fin === "24:00" ? "18:00" : ultima.fin, fin: "24:00", precio: "" }]);
@@ -407,9 +407,9 @@ export function EditorServicios({ datos, cambiar }: EditorProps) {
           maxLength={40}
           onChange={(e) => setOtro(e.target.value)}
           placeholder="Otro servicio…"
-          className="min-w-0 flex-1 rounded-xl border border-[#E3E3E3] px-3 py-2 text-sm outline-none focus:border-[#0B6E4F]"
+          className="min-w-0 flex-1 rounded-xl border border-[#E3E3E3] px-3 py-2 text-sm outline-none focus:border-[#6D28D9]"
         />
-        <button type="submit" className="rounded-xl bg-[#E6EEEA] px-4 text-sm font-bold text-[#0B6E4F]">
+        <button type="submit" className="rounded-xl bg-[#EDE9FE] px-4 text-sm font-bold text-[#6D28D9]">
           Agregar
         </button>
       </form>
@@ -463,18 +463,18 @@ export function EditorFotos({ datos, cambiar }: EditorProps) {
     <div className="flex flex-col gap-3">
       <div className="grid grid-cols-3 gap-2">
         {datos.fotos.map((url, i) => (
-          <div key={url} className="group relative aspect-square overflow-hidden rounded-xl bg-[#E6EEEA]">
+          <div key={url} className="group relative aspect-square overflow-hidden rounded-xl bg-[#EDE9FE]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={url} alt={`Foto ${i + 1}`} className="h-full w-full object-cover" />
             {i === 0 ? (
-              <span className="absolute left-1.5 top-1.5 rounded-full bg-[#0B6E4F] px-2 py-0.5 text-[10px] font-bold text-white">
+              <span className="absolute left-1.5 top-1.5 rounded-full bg-[#6D28D9] px-2 py-0.5 text-[10px] font-bold text-white">
                 Portada
               </span>
             ) : (
               <button
                 type="button"
                 onClick={() => portada(url)}
-                className="absolute left-1.5 top-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-[#0B6E4F]"
+                className="absolute left-1.5 top-1.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-[#6D28D9]"
               >
                 Usar de portada
               </button>
@@ -492,7 +492,7 @@ export function EditorFotos({ datos, cambiar }: EditorProps) {
           </div>
         ))}
         {Array.from({ length: subiendo }).map((_, i) => (
-          <div key={`s${i}`} className="flex aspect-square animate-pulse items-center justify-center rounded-xl bg-[#E6EEEA] text-xs text-[#0B6E4F]">
+          <div key={`s${i}`} className="flex aspect-square animate-pulse items-center justify-center rounded-xl bg-[#EDE9FE] text-xs text-[#6D28D9]">
             Subiendo…
           </div>
         ))}
@@ -500,7 +500,7 @@ export function EditorFotos({ datos, cambiar }: EditorProps) {
           <button
             type="button"
             onClick={() => input.current?.click()}
-            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#B9CCC2] text-sm font-bold text-[#0B6E4F] hover:bg-[#E6EEEA]"
+            className="flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-[#C9BFEA] text-sm font-bold text-[#6D28D9] hover:bg-[#EDE9FE]"
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M12 5v14M5 12h14" />
@@ -559,7 +559,7 @@ export function EditorPagos({ datos, cambiar }: EditorProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="rounded-xl bg-[#E6EEEA] p-3 text-sm text-[#0B6E4F]">
+      <p className="rounded-xl bg-[#EDE9FE] p-3 text-sm text-[#6D28D9]">
         El cliente tiene <strong>10 minutos</strong> para pagarte y avisarte por WhatsApp; si no, el horario se
         libera. Cuando avise que pagó, confírmalo desde tu panel lo antes posible.
       </p>
@@ -596,7 +596,7 @@ export function EditorPagos({ datos, cambiar }: EditorProps) {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={p.qr} alt="QR de pago" className="h-24 w-24 rounded-xl border border-[#E3E3E3] object-contain" />
           ) : (
-            <div className="flex h-24 w-24 items-center justify-center rounded-xl border-2 border-dashed border-[#B9CCC2] text-xs text-[#8A968F]">
+            <div className="flex h-24 w-24 items-center justify-center rounded-xl border-2 border-dashed border-[#C9BFEA] text-xs text-[#8A968F]">
               Sin QR
             </div>
           )}
@@ -605,7 +605,7 @@ export function EditorPagos({ datos, cambiar }: EditorProps) {
               type="button"
               onClick={() => input.current?.click()}
               disabled={subiendo}
-              className="rounded-xl border border-[#0B6E4F] px-3 py-2 text-sm font-bold text-[#0B6E4F] disabled:opacity-50"
+              className="rounded-xl border border-[#6D28D9] px-3 py-2 text-sm font-bold text-[#6D28D9] disabled:opacity-50"
             >
               {subiendo ? "Subiendo…" : p.qr ? "Cambiar QR" : "Subir QR"}
             </button>

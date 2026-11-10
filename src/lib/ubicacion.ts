@@ -97,8 +97,8 @@ export type Cercania = { texto: string; clase: string };
 
 /** Qué tan cerca está, con colores para la etiqueta. */
 export function cercania(km: number): Cercania {
-  if (km < 2) return { texto: "Muy cerca", clase: "bg-[#0B6E4F] text-white" };
-  if (km < 5) return { texto: "Cerca de ti", clase: "bg-[#E6EEEA] text-[#0B6E4F]" };
+  if (km < 2) return { texto: "Muy cerca", clase: "bg-[#6D28D9] text-white" };
+  if (km < 5) return { texto: "Cerca de ti", clase: "bg-[#EDE9FE] text-[#6D28D9]" };
   if (km < 12) return { texto: "Algo lejos", clase: "bg-amber-50 text-amber-800" };
   return { texto: "Lejos", clase: "bg-[#F1F1F1] text-[#5A5A5A]" };
 }

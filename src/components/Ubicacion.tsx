@@ -45,7 +45,7 @@ export default function Ubicacion({ nombre, direccion, distrito, latitud, longit
             href={comoLlegar}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-[#0B6E4F] px-3 py-2 text-sm font-bold text-[#0B6E4F]"
+            className="flex shrink-0 items-center gap-1.5 rounded-xl border border-[#6D28D9] px-3 py-2 text-sm font-bold text-[#6D28D9]"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M3 11l18-8-8 18-2-8-8-2z" />

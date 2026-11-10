@@ -134,7 +134,7 @@ export default function GestorCancha({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {activa && (
-            <Link href={`/c/${cancha.slug}`} target="_blank" className="rounded-xl px-3 py-2 text-sm font-bold text-[#0B6E4F] hover:bg-[#E6EEEA]">
+            <Link href={`/c/${cancha.slug}`} target="_blank" className="rounded-xl px-3 py-2 text-sm font-bold text-[#6D28D9] hover:bg-[#EDE9FE]">
               Ver
             </Link>
           )}
@@ -142,7 +142,7 @@ export default function GestorCancha({
             type="button"
             onClick={alternarPublicada}
             className={`rounded-xl px-3 py-2 text-sm font-bold ${
-              activa ? "border border-[#E3E3E3] text-[#1B1B1B]" : "bg-[#0B6E4F] text-white"
+              activa ? "border border-[#E3E3E3] text-[#1B1B1B]" : "bg-[#6D28D9] text-white"
             }`}
           >
             {activa ? "Pausar" : "Publicar"}
@@ -152,7 +152,7 @@ export default function GestorCancha({
 
       {mensaje && (
         <p
-          className={`rounded-xl p-3 text-sm ${mensaje.tipo === "ok" ? "bg-[#E6EEEA] text-[#0B6E4F]" : "bg-red-50 text-red-700"}`}
+          className={`rounded-xl p-3 text-sm ${mensaje.tipo === "ok" ? "bg-[#DCF5EA] text-[#0F7A55]" : "bg-red-50 text-red-700"}`}
           role={mensaje.tipo === "ok" ? "status" : "alert"}
         >
           {mensaje.texto}
@@ -169,7 +169,7 @@ export default function GestorCancha({
             aria-selected={pestana === p.clave}
             onClick={() => setPestana(p.clave)}
             className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold transition-colors ${
-              pestana === p.clave ? "bg-[#1B1B1B] text-white" : "bg-white text-[#1B1B1B] shadow-sm"
+              pestana === p.clave ? "bg-[#0A3D2E] text-white" : "bg-white text-[#1B1B1B] shadow-sm"
             }`}
           >
             {p.texto}
@@ -230,7 +230,7 @@ export default function GestorCancha({
               type="button"
               onClick={guardar}
               disabled={guardando}
-              className="rounded-xl bg-[#0B6E4F] px-5 py-3 font-bold text-white disabled:opacity-50"
+              className="rounded-xl bg-[#6D28D9] px-5 py-3 font-bold text-white disabled:opacity-50"
             >
               {guardando ? "Guardando…" : "Guardar cambios"}
             </button>

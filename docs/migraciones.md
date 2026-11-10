@@ -19,6 +19,7 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | 011 | `011_encargados.sql` | Encargados: ven la agenda y confirman pagos en las canchas del dueño | ✅ Ejecutada |
 | 012 | `012_admin_canchas.sql` | El administrador ve y gestiona todas las canchas, horarios, fotos y reservas | ✅ Ejecutada |
 | 013 | `013_mejoras.sql` | El cliente cancela su reserva sin pagar, tope de 30 días, tope de cancelaciones, el encargado no cambia montos | ✅ Ejecutada |
+| 014 | `014_nombre_dueno.sql` | El nombre del dueño se muestra siempre en la página de su cancha | ✅ Ejecutada |
 
 ## Si algo falla
 

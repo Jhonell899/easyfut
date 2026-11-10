@@ -127,10 +127,10 @@ export default function FormularioRegistro({
                 onClick={() => setTipo(t.valor)}
                 aria-pressed={activo}
                 className={`flex flex-col items-start gap-2 rounded-2xl border-2 p-3 text-left transition-colors ${
-                  activo ? "border-[#0B6E4F] bg-[#E6EEEA]" : "border-[#E3E3E3] bg-white"
+                  activo ? "border-[#6D28D9] bg-[#EDE9FE]" : "border-[#E3E3E3] bg-white"
                 }`}
               >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill={activo ? "#0B6E4F" : "#8A968F"} aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill={activo ? "#6D28D9" : "#8A968F"} aria-hidden="true">
                   {t.icono}
                 </svg>
                 <span>
@@ -187,7 +187,7 @@ export default function FormularioRegistro({
           <p>Ya existe una cuenta verificada con este correo.</p>
           <Link
             href={`/ingresar${siguiente ? `?next=${encodeURIComponent(siguiente)}` : ""}`}
-            className="shrink-0 rounded-xl bg-[#0B6E4F] px-4 py-2 font-bold text-white"
+            className="shrink-0 rounded-xl bg-[#6D28D9] px-4 py-2 font-bold text-white"
           >
             Ingresar
           </Link>
@@ -203,7 +203,7 @@ export default function FormularioRegistro({
       <button
         type="submit"
         disabled={!valido || enviando}
-        className="rounded-xl bg-[#0B6E4F] py-3 font-bold text-white disabled:opacity-50"
+        className="rounded-xl bg-[#6D28D9] py-3 font-bold text-white disabled:opacity-50"
       >
         {enviando ? "Creando cuenta…" : tipo === "dueno" ? "Crear cuenta de rentador" : "Crear cuenta"}
       </button>
@@ -224,7 +224,7 @@ export default function FormularioRegistro({
         ¿Ya tienes cuenta?{" "}
         <Link
           href={`/ingresar${siguiente ? `?next=${encodeURIComponent(siguiente)}` : ""}`}
-          className="font-bold text-[#0B6E4F]"
+          className="font-bold text-[#6D28D9]"
         >
           Ingresar
         </Link>

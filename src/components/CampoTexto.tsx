@@ -10,7 +10,7 @@ export default function CampoTexto({ etiqueta, ayuda, conError, className, ...in
       {etiqueta}
       <input
         {...input}
-        className={`w-full rounded-xl border px-3 py-3 text-base font-normal outline-none focus:border-[#0B6E4F] ${
+        className={`w-full rounded-xl border px-3 py-3 text-base font-normal outline-none focus:border-[#6D28D9] ${
           conError ? "border-red-400" : "border-[#E3E3E3]"
         } ${className ?? ""}`}
       />

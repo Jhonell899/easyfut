@@ -167,13 +167,13 @@ export default function ReservasDia({
       {/* Selector de día */}
       <div className="rounded-2xl bg-white p-3 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
-          <button type="button" onClick={() => setDesde(sumarDias(desde, -7))} className="rounded-lg px-2 py-1 text-[#0B6E4F]" aria-label="Semana anterior">
+          <button type="button" onClick={() => setDesde(sumarDias(desde, -7))} className="rounded-lg px-2 py-1 text-[#6D28D9]" aria-label="Semana anterior">
             ‹
           </button>
           <span className="text-sm font-bold first-letter:uppercase">
             {fmtFecha(instante(fecha, 720), { weekday: "long", day: "numeric", month: "long" })}
           </span>
-          <button type="button" onClick={() => setDesde(sumarDias(desde, 7))} className="rounded-lg px-2 py-1 text-[#0B6E4F]" aria-label="Semana siguiente">
+          <button type="button" onClick={() => setDesde(sumarDias(desde, 7))} className="rounded-lg px-2 py-1 text-[#6D28D9]" aria-label="Semana siguiente">
             ›
           </button>
         </div>
@@ -186,7 +186,7 @@ export default function ReservasDia({
                 type="button"
                 onClick={() => setFecha(d)}
                 className={`flex flex-col items-center rounded-xl py-1.5 text-xs ${
-                  sel ? "bg-[#0B6E4F] font-bold text-white" : d === hoy ? "bg-[#E6EEEA] text-[#0B6E4F]" : "text-[#1B1B1B]"
+                  sel ? "bg-[#6D28D9] font-bold text-white" : d === hoy ? "bg-[#EDE9FE] text-[#6D28D9]" : "text-[#1B1B1B]"
                 }`}
               >
                 <span>{d === hoy ? "Hoy" : DIA[diaSemana(d)]}</span>
@@ -227,7 +227,7 @@ export default function ReservasDia({
                     <button
                       type="button"
                       onClick={() => setNuevo({ ini: f.ini, precioHora: f.precio, finFranja: f.finFranja })}
-                      className="rounded-lg bg-[#E6EEEA] px-3 py-1.5 text-xs font-bold text-[#0B6E4F]"
+                      className="rounded-lg bg-[#EDE9FE] px-3 py-1.5 text-xs font-bold text-[#6D28D9]"
                     >
                       + Agregar
                     </button>
@@ -252,7 +252,7 @@ export default function ReservasDia({
                         <p className="truncate font-bold">{r.nombre_cliente}</p>
                         <p className="text-xs text-[#5A5A5A]">
                           {r.celular_cliente && /^9\d{8}$/.test(r.celular_cliente) ? (
-                            <a href={`https://wa.me/51${r.celular_cliente}`} target="_blank" rel="noopener noreferrer" className="text-[#0B6E4F] underline-offset-2 hover:underline">
+                            <a href={`https://wa.me/51${r.celular_cliente}`} target="_blank" rel="noopener noreferrer" className="text-[#6D28D9] underline-offset-2 hover:underline">
                               WhatsApp {r.celular_cliente}
                             </a>
                           ) : (
@@ -372,7 +372,7 @@ function Estado({ estado, vencida, avisoPago }: { estado: string; vencida: boole
       : estado === "pendiente"
       ? ["Esperando pago", "bg-amber-50 text-amber-800"]
       : estado === "confirmada"
-        ? ["Pagada", "bg-[#E6EEEA] text-[#0B6E4F]"]
+        ? ["Pagada", "bg-[#DCF5EA] text-[#0F7A55]"]
         : ["Bloqueo", "bg-[#F4F4F4] text-[#5A5A5A]"];
   return <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${clase}`}>{texto}</span>;
 }
@@ -387,7 +387,7 @@ function Accion({
       type="button"
       {...props}
       className={`rounded-lg px-3 py-1.5 text-xs font-bold disabled:opacity-50 ${
-        principal ? "bg-[#0B6E4F] text-white" : "border border-[#E3E3E3] text-[#1B1B1B]"
+        principal ? "bg-[#6D28D9] text-white" : "border border-[#E3E3E3] text-[#1B1B1B]"
       }`}
     >
       {children}
@@ -470,13 +470,13 @@ export function NuevaReserva({
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#F2F5F3] p-1">
+        <div className="grid grid-cols-2 gap-2 rounded-xl bg-[#F1EFF8] p-1">
           {(["presencial", "bloqueo"] as const).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => setTipo(t)}
-              className={`rounded-lg py-2 text-sm font-bold ${tipo === t ? "bg-white text-[#0B6E4F] shadow-sm" : "text-[#5A5A5A]"}`}
+              className={`rounded-lg py-2 text-sm font-bold ${tipo === t ? "bg-white text-[#6D28D9] shadow-sm" : "text-[#5A5A5A]"}`}
             >
               {t === "presencial" ? "Reserva presencial" : "Bloquear horario"}
             </button>
@@ -524,7 +524,7 @@ export function NuevaReserva({
 
         {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 
-        <button type="submit" disabled={guardando} className="rounded-xl bg-[#0B6E4F] py-3 font-bold text-white disabled:opacity-50">
+        <button type="submit" disabled={guardando} className="rounded-xl bg-[#6D28D9] py-3 font-bold text-white disabled:opacity-50">
           {guardando ? "Guardando…" : tipo === "presencial" ? "Guardar reserva (pagada)" : "Bloquear horario"}
         </button>
       </form>

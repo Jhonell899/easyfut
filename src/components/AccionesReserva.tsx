@@ -138,7 +138,7 @@ export default function AccionesReserva(p: Props) {
       )}
 
       <div className="flex items-center justify-between gap-3 text-sm">
-        <button type="button" onClick={copiarCodigo} className="font-medium text-[#0B6E4F]">
+        <button type="button" onClick={copiarCodigo} className="font-medium text-[#6D28D9]">
           {copiado ? "¡Código copiado!" : `Copiar código ${p.codigo}`}
         </button>
         {p.puedeCancelar && (
@@ -159,7 +159,7 @@ export default function AccionesReserva(p: Props) {
 
 function Icono({ children }: { children: React.ReactNode }) {
   return (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0B6E4F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       {children}
     </svg>
   );

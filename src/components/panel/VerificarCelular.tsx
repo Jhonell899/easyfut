@@ -102,7 +102,7 @@ export default function VerificarCelular({ celularInicial }: { celularInicial?: 
   return (
     <section className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm">
       <div className="flex items-start gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#E6EEEA] text-[#0B6E4F]">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#EDE9FE] text-[#6D28D9]">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
             <rect x="6" y="2" width="12" height="20" rx="2" />
             <path d="M11 18h2" />
@@ -118,9 +118,9 @@ export default function VerificarCelular({ celularInicial }: { celularInicial?: 
       </div>
 
       {!AUTOMATICO && comprobado ? (
-        <div className="flex flex-col gap-2 rounded-xl bg-[#E6EEEA] p-4 text-sm text-[#0B6E4F]">
+        <div className="flex flex-col gap-2 rounded-xl bg-[#EDE9FE] p-4 text-sm text-[#6D28D9]">
           <p className="font-bold">✓ +51 {comprobado} tiene WhatsApp. Falta la aprobación de EasyFut.</p>
-          <p className="text-[#1B4D3A]">Te avisaremos por WhatsApp cuando esté aprobado; después ya podrás publicar tu cancha.</p>
+          <p className="text-[#4C1D95]">Te avisaremos por WhatsApp cuando esté aprobado; después ya podrás publicar tu cancha.</p>
           <div className="flex flex-wrap gap-x-4 gap-y-1">
             <button type="button" onClick={() => window.location.reload()} className="font-bold underline-offset-2 hover:underline">
               Ya me aprobaron · Actualizar
@@ -143,8 +143,8 @@ export default function VerificarCelular({ celularInicial }: { celularInicial?: 
         <>
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             Tu número de WhatsApp
-            <div className="flex items-stretch overflow-hidden rounded-xl border border-[#E3E3E3] focus-within:border-[#0B6E4F]">
-              <span className="flex items-center bg-[#F2F5F3] px-3 text-base font-normal text-[#5A5A5A]">+51</span>
+            <div className="flex items-stretch overflow-hidden rounded-xl border border-[#E3E3E3] focus-within:border-[#6D28D9]">
+              <span className="flex items-center bg-[#F1EFF8] px-3 text-base font-normal text-[#5A5A5A]">+51</span>
               <input
                 inputMode="numeric"
                 autoComplete="tel-national"
@@ -163,8 +163,8 @@ export default function VerificarCelular({ celularInicial }: { celularInicial?: 
         <>
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             Número de WhatsApp
-            <div className="flex items-stretch overflow-hidden rounded-xl border border-[#E3E3E3] focus-within:border-[#0B6E4F]">
-              <span className="flex items-center bg-[#F2F5F3] px-3 text-base font-normal text-[#5A5A5A]">+51</span>
+            <div className="flex items-stretch overflow-hidden rounded-xl border border-[#E3E3E3] focus-within:border-[#6D28D9]">
+              <span className="flex items-center bg-[#F1EFF8] px-3 text-base font-normal text-[#5A5A5A]">+51</span>
               <input
                 inputMode="numeric"
                 autoComplete="tel-national"
@@ -206,13 +206,13 @@ export default function VerificarCelular({ celularInicial }: { celularInicial?: 
               if (v.length === 6) verificar(v);
             }}
             aria-label="Código de WhatsApp"
-            className="w-full rounded-2xl border-2 border-[#E3E3E3] py-4 text-center font-mono text-3xl tracking-[0.5em] outline-none focus:border-[#0B6E4F] disabled:opacity-60"
+            className="w-full rounded-2xl border-2 border-[#E3E3E3] py-4 text-center font-mono text-3xl tracking-[0.5em] outline-none focus:border-[#6D28D9] disabled:opacity-60"
           />
           <button
             type="button"
             onClick={() => verificar(codigo)}
             disabled={codigo.length < 6 || ocupado}
-            className="rounded-xl bg-[#0B6E4F] py-3 font-bold text-white disabled:opacity-50"
+            className="rounded-xl bg-[#6D28D9] py-3 font-bold text-white disabled:opacity-50"
           >
             {ocupado ? "Verificando…" : "Verificar"}
           </button>
@@ -224,7 +224,7 @@ export default function VerificarCelular({ celularInicial }: { celularInicial?: 
               type="button"
               onClick={enviar}
               disabled={espera > 0 || ocupado}
-              className="font-bold text-[#0B6E4F] disabled:font-normal disabled:text-[#8A968F]"
+              className="font-bold text-[#6D28D9] disabled:font-normal disabled:text-[#8A968F]"
             >
               {espera > 0 ? `Reenviar en ${espera} s` : "Reenviar código"}
             </button>

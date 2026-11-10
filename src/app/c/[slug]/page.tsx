@@ -108,9 +108,9 @@ export default async function DetalleCancha({
   if (!data) notFound();
 
   const cancha = data as CanchaDetalle;
-  // Contacto público del dueño (solo si verificó su celular; migración 005)
+  // Dueño de la cancha: el nombre siempre; el celular solo si su WhatsApp está aprobado (migración 014)
   const { data: contactos } = await supabase.rpc("contacto_cancha", { p_cancha_id: cancha.id });
-  const contacto = (contactos as { nombre: string | null; celular: string }[] | null)?.[0] ?? null;
+  const contacto = (contactos as { nombre: string | null; celular: string | null }[] | null)?.[0] ?? null;
   const fotos = cancha.fotos ?? [];
   const servicios = cancha.servicios ?? [];
   const modalidades = ordenarModalidades(cancha.modalidades);
@@ -164,7 +164,7 @@ export default async function DetalleCancha({
         {/* Datos principales */}
         <section className="flex flex-col gap-2">
           <div className="flex flex-wrap gap-2 text-xs font-medium">
-            <span className="rounded-full bg-[#E6EEEA] px-2.5 py-1 text-[#0B6E4F]">
+            <span className="rounded-full bg-[#EDE9FE] px-2.5 py-1 text-[#6D28D9]">
               {DEPORTES[cancha.deporte] ?? cancha.deporte}
             </span>
             {cancha.superficie && (
@@ -193,6 +193,20 @@ export default async function DetalleCancha({
             {cancha.direccion}, {cancha.distrito}
           </p>
 
+          {/* Dueño, visible desde el primer vistazo */}
+          {contacto?.nombre && (
+            <p className="flex items-center gap-1.5 text-sm text-[#5A5A5A]">
+              <svg className="shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
+              </svg>
+              Dueño: <strong className="font-bold text-[#1B1B1B]">{contacto.nombre}</strong>
+              {contacto.celular && (
+                <span className="rounded-full bg-[#DCF5EA] px-1.5 py-0.5 text-[10px] font-bold text-[#0F7A55]">✓ WhatsApp</span>
+              )}
+            </p>
+          )}
+
           {cancha.descripcion && (
             <p className="text-sm leading-relaxed text-[#1B1B1B]">{cancha.descripcion}</p>
           )}
@@ -201,7 +215,7 @@ export default async function DetalleCancha({
             <ul className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-[#4A4A4A]">
               {servicios.map((s) => (
                 <li key={s} className="flex items-center gap-1.5">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0B6E4F" strokeWidth="2.5" aria-hidden="true">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" strokeWidth="2.5" aria-hidden="true">
                     <path d="M5 12l5 5L20 7" />
                   </svg>
                   {s}
@@ -219,10 +233,10 @@ export default async function DetalleCancha({
               {modalidades.map((n) => (
                 <li
                   key={n}
-                  className="flex flex-col items-center rounded-2xl border border-[#0B6E4F]/25 bg-[#E6EEEA] px-2 py-3 text-center"
+                  className="flex flex-col items-center rounded-2xl border border-[#6D28D9]/25 bg-[#EDE9FE] px-2 py-3 text-center"
                 >
-                  <span className="text-xs font-medium text-[#0B6E4F]">Fútbol</span>
-                  <span className="text-2xl font-extrabold leading-none text-[#0B6E4F]">{n}</span>
+                  <span className="text-xs font-medium text-[#6D28D9]">Fútbol</span>
+                  <span className="text-2xl font-extrabold leading-none text-[#6D28D9]">{n}</span>
                   <span className="mt-1 text-[11px] text-[#4A5A52]">
                     {n} vs {n} · {n * 2} jugadores
                   </span>
@@ -263,7 +277,7 @@ export default async function DetalleCancha({
             }))}
           />
         ) : (
-          <p className="rounded-2xl bg-[#E6EEEA] p-4 text-sm text-[#4A5A52]">
+          <p className="rounded-2xl bg-[#EDE9FE] p-4 text-sm text-[#4A5A52]">
             Esta cancha todavía no publicó sus horarios para reservar.
           </p>
         )}

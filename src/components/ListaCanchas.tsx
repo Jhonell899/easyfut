@@ -63,7 +63,7 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
 
   return (
     <>
-      <div className="flex flex-col gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
+      <div className="sombra-fuerte flex flex-col gap-3 rounded-3xl bg-white p-4">
         <div className="flex items-baseline justify-between">
           <h2 className="font-bold text-[#1B1B1B]">Canchas disponibles</h2>
           <span className="text-sm text-[#5A5A5A]">
@@ -72,7 +72,7 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
         </div>
 
         {/* Buscador */}
-        <label className="flex items-center gap-2 rounded-xl border border-[#E3E3E3] px-3 focus-within:border-[#0B6E4F]">
+        <label className="flex items-center gap-2 rounded-xl border border-[#E3E3E3] px-3 focus-within:border-[#6D28D9]">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A968F" strokeWidth="2" aria-hidden="true">
             <circle cx="11" cy="11" r="7" />
             <path d="M20 20l-3.5-3.5" />
@@ -92,7 +92,7 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
             value={distrito}
             onChange={(e) => setDistrito(e.target.value)}
             aria-label="Distrito"
-            className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#0B6E4F]"
+            className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#6D28D9]"
           >
             <option value="">Todos los distritos</option>
             {distritos.map((d) => (
@@ -103,7 +103,7 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
             value={orden}
             onChange={(e) => setOrden(e.target.value as typeof orden)}
             aria-label="Ordenar"
-            className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#0B6E4F]"
+            className="rounded-xl border border-[#E3E3E3] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#6D28D9]"
           >
             <option value="recomendado">{punto ? "Más cerca" : "Más nuevas"}</option>
             <option value="precio">Menor precio</option>
@@ -128,8 +128,8 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
                   aria-pressed={sel}
                   className={`shrink-0 rounded-full border px-3 py-1.5 text-sm transition-colors ${
                     sel
-                      ? "border-[#0B6E4F] bg-[#0B6E4F] font-bold text-white"
-                      : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#0B6E4F]"
+                      ? "border-[#0A3D2E] bg-[#0A3D2E] font-bold text-white"
+                      : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#6D28D9]"
                   }`}
                 >
                   {f.texto}
@@ -155,7 +155,7 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
                 setDistrito("");
                 setActivo("todas");
               }}
-              className="font-bold text-[#0B6E4F]"
+              className="font-bold text-[#6D28D9]"
             >
               Quitar filtros
             </button>
@@ -169,7 +169,7 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
 function BotonUbicacion({ estado, onPedir }: { estado: ReturnType<typeof useMiUbicacion>["estado"]; onPedir: () => void }) {
   if (estado === "listo") {
     return (
-      <p className="flex items-center gap-2 rounded-xl bg-[#E6EEEA] px-3 py-2 text-sm text-[#0B6E4F]">
+      <p className="flex items-center gap-2 rounded-xl bg-[#EDE9FE] px-3 py-2 text-sm text-[#6D28D9]">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <circle cx="12" cy="12" r="4" />
           <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" strokeWidth="2" />
@@ -197,7 +197,7 @@ function BotonUbicacion({ estado, onPedir }: { estado: ReturnType<typeof useMiUb
         type="button"
         onClick={onPedir}
         disabled={estado === "buscando" || estado === "no-soportado"}
-        className="flex items-center justify-center gap-2 rounded-xl border-2 border-[#0B6E4F] py-2.5 text-sm font-bold text-[#0B6E4F] transition-colors hover:bg-[#E6EEEA] disabled:opacity-60"
+        className="flex items-center justify-center gap-2 rounded-xl border-2 border-[#6D28D9] py-2.5 text-sm font-bold text-[#6D28D9] transition-colors hover:bg-[#EDE9FE] disabled:opacity-60"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
           <path d="M3 11l18-8-8 18-2-8-8-2z" />

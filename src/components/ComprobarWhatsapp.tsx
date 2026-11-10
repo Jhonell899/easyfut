@@ -28,7 +28,7 @@ export default function ComprobarWhatsapp({
 
   if (confirmado) {
     return (
-      <div className="flex items-center justify-between gap-3 rounded-xl bg-[#E6EEEA] px-3 py-2.5 text-sm text-[#0B6E4F]">
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-[#EDE9FE] px-3 py-2.5 text-sm text-[#6D28D9]">
         <span className="font-bold">✓ +51 {limpio} tiene WhatsApp</span>
         <button type="button" onClick={() => onCambio(false)} className="text-xs text-[#5A5A5A] underline-offset-2 hover:underline">
           Cambiar

@@ -18,10 +18,10 @@ export default function ErrorPagina({ error, reset }: { error: Error & { digest?
       <p className="text-sm text-[#5A5A5A]">
         No pudimos cargar esta pantalla. Revisa tu conexión a internet e inténtalo otra vez.
       </p>
-      <button type="button" onClick={reset} className="rounded-xl bg-[#0B6E4F] px-6 py-3 font-bold text-white">
+      <button type="button" onClick={reset} className="rounded-xl bg-[#6D28D9] px-6 py-3 font-bold text-white">
         Reintentar
       </button>
-      <Link href="/" className="text-sm font-medium text-[#0B6E4F]">
+      <Link href="/" className="text-sm font-medium text-[#6D28D9]">
         Volver al inicio
       </Link>
     </main>

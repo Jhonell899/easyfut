@@ -144,7 +144,7 @@ export default function PendientesEnVivo({ duenoId, puedeBloquear = true }: { du
           <button
             type="button"
             onClick={async () => setPermiso(await Notification.requestPermission())}
-            className="rounded-full bg-[#1B1B1B] px-3 py-1 text-xs font-bold text-white"
+            className="rounded-full bg-[#0A3D2E] px-3 py-1 text-xs font-bold text-white"
           >
             🔔 Activar avisos
           </button>
@@ -215,7 +215,7 @@ export default function PendientesEnVivo({ duenoId, puedeBloquear = true }: { du
                       type="button"
                       onClick={() => responder(r, "confirmada")}
                       disabled={ocupado === r.id}
-                      className="flex-[2] rounded-xl bg-[#0B6E4F] py-2.5 font-bold text-white disabled:opacity-50"
+                      className="flex-[2] rounded-xl bg-[#6D28D9] py-2.5 font-bold text-white disabled:opacity-50"
                     >
                       Confirmar pago
                     </button>

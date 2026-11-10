@@ -53,7 +53,7 @@ export function InsigniaHistorial({ h }: { h?: Historial }) {
       clase: h.vencidas >= 2 ? "bg-amber-100 text-amber-900" : "bg-amber-50 text-amber-800",
     });
   if (h.pagadas > 0)
-    chips.push({ texto: `✓ ${h.pagadas} pagada${h.pagadas === 1 ? "" : "s"}`, clase: "bg-[#E6EEEA] text-[#0B6E4F]" });
+    chips.push({ texto: `✓ ${h.pagadas} pagada${h.pagadas === 1 ? "" : "s"}`, clase: "bg-[#DCF5EA] text-[#0F7A55]" });
   if (!chips.length) chips.push({ texto: "Cliente nuevo", clase: "bg-[#F4F4F4] text-[#5A5A5A]" });
 
   return (

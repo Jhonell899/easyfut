@@ -89,8 +89,8 @@ export default function VerificarCodigo({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col items-center gap-3 text-center">
-        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#E6EEEA]">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#0B6E4F" strokeWidth="2" aria-hidden="true">
+        <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EDE9FE]">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#6D28D9" strokeWidth="2" aria-hidden="true">
             <rect x="3" y="5" width="18" height="14" rx="2" />
             <path d="M3 7l9 6 9-6" />
           </svg>
@@ -122,7 +122,7 @@ export default function VerificarCodigo({
           placeholder="••••••"
           maxLength={8}
           disabled={verificando}
-          className="w-full rounded-2xl border-2 border-[#E3E3E3] py-4 text-center font-mono text-3xl tracking-[0.5em] outline-none focus:border-[#0B6E4F] disabled:opacity-60"
+          className="w-full rounded-2xl border-2 border-[#E3E3E3] py-4 text-center font-mono text-3xl tracking-[0.5em] outline-none focus:border-[#6D28D9] disabled:opacity-60"
         />
 
         {error && (
@@ -131,7 +131,7 @@ export default function VerificarCodigo({
           </p>
         )}
         {aviso && !error && (
-          <p className="rounded-xl bg-[#E6EEEA] p-3 text-sm text-[#0B6E4F]" role="status">
+          <p className="rounded-xl bg-[#EDE9FE] p-3 text-sm text-[#6D28D9]" role="status">
             {aviso}
           </p>
         )}
@@ -139,7 +139,7 @@ export default function VerificarCodigo({
         <button
           type="submit"
           disabled={codigo.length < 6 || verificando}
-          className="rounded-xl bg-[#0B6E4F] py-3 font-bold text-white disabled:opacity-50"
+          className="rounded-xl bg-[#6D28D9] py-3 font-bold text-white disabled:opacity-50"
         >
           {verificando ? "Verificando…" : "Verificar"}
         </button>
@@ -150,7 +150,7 @@ export default function VerificarCodigo({
           type="button"
           onClick={reenviar}
           disabled={espera > 0}
-          className="font-bold text-[#0B6E4F] disabled:font-normal disabled:text-[#8A968F]"
+          className="font-bold text-[#6D28D9] disabled:font-normal disabled:text-[#8A968F]"
         >
           {espera > 0 ? `Reenviar código en ${espera} s` : "Reenviar código"}
         </button>

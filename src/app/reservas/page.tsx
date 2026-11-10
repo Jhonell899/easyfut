@@ -6,7 +6,7 @@ export const metadata = { title: "Mis reservas" };
 export default function PaginaMisReservas() {
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col gap-5 p-5">
-      <Link href="/" className="text-sm font-medium text-[#0B6E4F]">
+      <Link href="/" className="text-sm font-medium text-[#6D28D9]">
         ← Todas las canchas
       </Link>
       <h1 className="text-2xl font-bold text-[#1B1B1B]">Mis reservas</h1>
