@@ -43,6 +43,13 @@ const ERRORES: Record<string, string> = {
   cruza_medianoche: "La reserva no puede pasar de la medianoche.",
   fuera_de_horario: "Ese horario está fuera de la atención de la cancha.",
   horario_ocupado: "Alguien acaba de reservar ese horario. Elige otro.",
+  // Protección contra reservas falsas (migración 009)
+  cliente_bloqueado: "Este número no puede hacer reservas aquí. Si crees que es un error, comunícate con la cancha.",
+  pendiente_activa:
+    "Ya tienes una reserva sin pagar. Págala y avisa al dueño, o espera a que venza (15 minutos), para separar otra. La encuentras en \"Mis reservas\".",
+  limite_conexion: "Hay demasiadas reservas sin pagar desde esta conexión. Paga una o espera a que venzan.",
+  demasiadas_vencidas:
+    "Dejaste vencer varias reservas sin pagar esta semana, así que no puedes reservar por unos días.",
 };
 
 function mensajeError(msg: string): string {

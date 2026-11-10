@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
+import { BotonBloquear, InsigniaHistorial, useHistorial } from "@/components/panel/HistorialCliente";
 import {
   aMinutos,
   diaSemana,
@@ -102,6 +103,7 @@ export default function ReservasDia({
   );
 
   const activas = (reservas ?? []).filter((r) => ACTIVOS.includes(r.estado));
+  const { mapa: historial, recargar: recargarHistorial } = useHistorial((reservas ?? []).map((r) => r.celular_cliente));
   const inactivas = (reservas ?? []).filter((r) => !ACTIVOS.includes(r.estado));
   const ahora = Date.now();
 
@@ -249,12 +251,23 @@ export default function ReservasDia({
                           · {soles(r.monto)} · #{r.codigo}
                         </p>
                         {r.nota && <p className="text-xs text-[#5A5A5A]">{r.nota}</p>}
+                        <InsigniaHistorial h={r.celular_cliente ? historial[r.celular_cliente] : undefined} />
                       </>
                     )}
                   </div>
                   <Estado estado={r.estado} vencida={!!vencida} avisoPago={avisoPago} />
                 </div>
-                <div className="flex justify-end gap-2">
+                <div className="flex flex-wrap justify-end gap-2">
+                  {r.estado !== "bloqueo" && (
+                    <span className="mr-auto">
+                      <BotonBloquear
+                        celular={r.celular_cliente}
+                        nombre={r.nombre_cliente}
+                        bloqueado={!!(r.celular_cliente && historial[r.celular_cliente]?.bloqueado_por_mi)}
+                        onCambio={recargarHistorial}
+                      />
+                    </span>
+                  )}
                   {r.estado === "pendiente" && vencida && (
                     <Accion onClick={() => cambiarEstado(r, "cancelada")} disabled={ocupado === r.id}>
                       Liberar horario

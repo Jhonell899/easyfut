@@ -6,6 +6,7 @@ import MenuUsuario from "@/components/MenuUsuario";
 import { fmtFecha, soles } from "@/lib/horario";
 import VerificarCelular from "@/components/panel/VerificarCelular";
 import PendientesEnVivo from "@/components/panel/PendientesEnVivo";
+import BloqueadosDueno from "@/components/panel/BloqueadosDueno";
 
 export const metadata = { title: "Mi panel · EasyFut" };
 export const dynamic = "force-dynamic";
@@ -111,6 +112,7 @@ export default async function Panel() {
         </div>
 
         {misCanchas.length > 0 && <PendientesEnVivo duenoId={user.id} />}
+        {misCanchas.length > 0 && <BloqueadosDueno duenoId={user.id} />}
 
         <section className="flex flex-col gap-2">
           <h2 className="font-bold">Próximas reservas</h2>

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
+import { BotonBloquear, InsigniaHistorial, useHistorial } from "@/components/panel/HistorialCliente";
 import { fmtFecha, soles } from "@/lib/horario";
 
 type Pendiente = {
@@ -51,6 +52,7 @@ export default function PendientesEnVivo({ duenoId }: { duenoId: string }) {
   const [ocupado, setOcupado] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const avisados = useRef<Set<string> | null>(null);
+  const { mapa: historial, recargar: recargarHistorial } = useHistorial((lista ?? []).map((r) => r.celular_cliente));
 
   const cargar = useCallback(async () => {
     const supabase = supabaseNavegador();
@@ -180,6 +182,7 @@ export default function PendientesEnVivo({ duenoId }: { duenoId: string }) {
                     <Link href={`/panel/c/${r.canchas?.id}`} className="text-xs text-[#8A968F] hover:underline">
                       {r.canchas?.nombre} · #{r.codigo}
                     </Link>
+                    <InsigniaHistorial h={r.celular_cliente ? historial[r.celular_cliente] : undefined} />
                   </div>
                   {pago ? (
                     <span className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${restaDueno > 0 ? "bg-[#18A058] text-white" : "bg-red-600 text-white"}`}>
@@ -193,7 +196,13 @@ export default function PendientesEnVivo({ duenoId }: { duenoId: string }) {
                 </div>
 
                 {pago ? (
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2">
+                    <BotonBloquear
+                      celular={r.celular_cliente}
+                      nombre={r.nombre_cliente}
+                      bloqueado={!!(r.celular_cliente && historial[r.celular_cliente]?.bloqueado_por_mi)}
+                      onCambio={recargarHistorial}
+                    />
                     <button
                       type="button"
                       onClick={() => responder(r, "cancelada")}
