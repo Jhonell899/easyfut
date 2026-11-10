@@ -6,7 +6,7 @@
 -- WhatsApp usando una plantilla de autenticación aprobada por Meta.
 --
 -- ANTES de ejecutar: guarda tus credenciales de Meta en el Vault (ver la guía
--- supabase/WHATSAPP.md). Ejecutar una sola vez en SQL Editor → Run.
+-- docs/whatsapp-meta.md). Ejecutar una sola vez en SQL Editor → Run.
 
 create extension if not exists pg_net;
 

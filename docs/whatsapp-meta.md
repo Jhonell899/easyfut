@@ -46,7 +46,7 @@ select vault.update_secret(
 
 ## 3. Ejecutar la migración
 
-Ejecuta `supabase/migraciones/007_codigo_por_whatsapp.sql` en el SQL Editor.
+Ejecuta `supabase/migraciones/pausadas/007_codigo_por_whatsapp.sql` en el SQL Editor.
 
 ## 4. Activar en Supabase
 
