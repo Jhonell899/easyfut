@@ -16,9 +16,9 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | 008 | `008_administrador.sql` | Cuenta de administrador y página /admin (pon tu correo antes de ejecutarla) | ✅ Ejecutada |
 | 009 | `009_reservas_falsas.sql` | Límites contra reservas falsas, historial y bloqueo de clientes | ✅ Ejecutada |
 | 010 | `010_seguridad.sql` | Cierra el hueco de "Ya pagué", 10 minutos para pagar, horarios "En espera", pagos falsos | ✅ Ejecutada |
-| 011 | `011_encargados.sql` | Encargados: ven la agenda y confirman pagos en las canchas del dueño | ⏳ Pendiente |
-| 012 | `012_admin_canchas.sql` | El administrador ve y gestiona todas las canchas, horarios, fotos y reservas | ⏳ Pendiente |
-| 013 | `013_mejoras.sql` | El cliente cancela su reserva sin pagar, tope de 30 días, tope de cancelaciones, el encargado no cambia montos | ⏳ Pendiente |
+| 011 | `011_encargados.sql` | Encargados: ven la agenda y confirman pagos en las canchas del dueño | ✅ Ejecutada |
+| 012 | `012_admin_canchas.sql` | El administrador ve y gestiona todas las canchas, horarios, fotos y reservas | ✅ Ejecutada |
+| 013 | `013_mejoras.sql` | El cliente cancela su reserva sin pagar, tope de 30 días, tope de cancelaciones, el encargado no cambia montos | ✅ Ejecutada |
 
 ## Si algo falla
 

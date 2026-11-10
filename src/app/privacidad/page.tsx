@@ -7,7 +7,7 @@ export const metadata = { title: "Política de privacidad" };
 const SECCIONES: Seccion[] = [
   {
     titulo: "Quién es responsable de tus datos",
-    parrafos: ["[COMPLETAR: nombre o razón social, RUC, domicilio y correo de contacto del responsable de EasyFut]."],
+    parrafos: ["jhonellhuamani09@gmail.com"],
   },
   {
     titulo: "Qué datos guardamos",
@@ -43,7 +43,7 @@ const SECCIONES: Seccion[] = [
   {
     titulo: "Tus derechos",
     parrafos: [
-      "Puedes pedir acceso, corrección o eliminación de tus datos, u oponerte a su uso, escribiendo a [COMPLETAR: correo de contacto]. Responderemos dentro de los plazos de la Ley 29733.",
+      "Puedes pedir acceso, corrección o eliminación de tus datos, u oponerte a su uso, escribiendo a jhonellhuamani09@gmail.com . Responderemos dentro de los plazos de la Ley 29733.",
     ],
   },
 ];
