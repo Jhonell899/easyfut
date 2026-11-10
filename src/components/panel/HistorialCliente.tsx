@@ -8,6 +8,7 @@ export type Historial = {
   pagadas: number;
   vencidas: number;
   canceladas: number;
+  pagos_falsos?: number;
   bloqueado_por_mi: boolean;
   bloqueado_easyfut: boolean;
 };
@@ -41,6 +42,11 @@ export function InsigniaHistorial({ h }: { h?: Historial }) {
   const chips: { texto: string; clase: string }[] = [];
   if (h.bloqueado_easyfut) chips.push({ texto: "⛔ Bloqueado por EasyFut", clase: "bg-red-600 text-white" });
   if (h.bloqueado_por_mi) chips.push({ texto: "⛔ Bloqueado", clase: "bg-red-50 text-red-700" });
+  if (h.pagos_falsos)
+    chips.push({
+      texto: `⚠ ${h.pagos_falsos} pago${h.pagos_falsos === 1 ? "" : "s"} falso${h.pagos_falsos === 1 ? "" : "s"}`,
+      clase: "bg-red-50 text-red-700",
+    });
   if (h.vencidas > 0)
     chips.push({
       texto: `⚠ ${h.vencidas} vencida${h.vencidas === 1 ? "" : "s"} sin pagar`,

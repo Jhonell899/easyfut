@@ -19,7 +19,7 @@ type Pendiente = {
   canchas: { id: string; nombre: string } | null;
 };
 
-const PLAZO_DUENO_MS = 15 * 60 * 1000;
+const PLAZO_DUENO_MS = 10 * 60 * 1000; // tiempo sugerido para responder
 const hora = (iso: string) => fmtFecha(iso, { hour: "2-digit", minute: "2-digit", hour12: false });
 const mmss = (ms: number) => {
   const s = Math.max(0, Math.ceil(ms / 1000));

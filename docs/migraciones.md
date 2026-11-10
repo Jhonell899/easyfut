@@ -11,10 +11,11 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | 003 | `003_cuentas_no_verificadas.sql` | Borra cuentas que nunca verificaron su correo | ✅ Ejecutada |
 | 004 | `004_panel_rentador.sql` | Publicar canchas, guardar horarios, fotos (Storage) | ✅ Ejecutada |
 | 005 | `005_celular_verificado.sql` | Celular verificado para publicar; contacto público del dueño | ✅ Ejecutada |
-| 006 | `006_pagos.sql` | Yape / Plin / transferencia, "Ya pagué", vencimiento a los 15 min, avisos en vivo | ✅ Ejecutada |
+| 006 | `006_pagos.sql` | Yape / Plin / transferencia, "Ya pagué", vencimiento (hoy 10 min, ver 010), avisos en vivo | ✅ Ejecutada |
 | 007 | `pausadas/007_codigo_por_whatsapp.sql` | Código por WhatsApp con Meta (de pago) | ⏸️ **No ejecutar** (en pausa) |
 | 008 | `008_administrador.sql` | Cuenta de administrador y página /admin (pon tu correo antes de ejecutarla) | ✅ Ejecutada |
-| 009 | `009_reservas_falsas.sql` | Límites contra reservas falsas, historial y bloqueo de clientes | ⏳ Pendiente |
+| 009 | `009_reservas_falsas.sql` | Límites contra reservas falsas, historial y bloqueo de clientes | ✅ Ejecutada |
+| 010 | `010_seguridad.sql` | Cierra el hueco de "Ya pagué", 10 minutos para pagar, horarios "En espera", pagos falsos | ✅ Ejecutada |
 
 ## Si algo falla
 

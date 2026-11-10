@@ -4,7 +4,8 @@ Marca con `[x]` lo que vayas terminando. Para trabajar una tarea, créala como *
 
 ## 1. Antes de lanzar al público
 - [x] Respaldo del código en GitHub
-- [x] Protección contra reservas falsas (falta ejecutar la migración 009)
+- [x] Protección contra reservas falsas
+- [x] Prueba de seguridad y arreglos: cabeceras, contraseña de 8, hueco de "Ya pagué"
 - [ ] Publicar en internet (Vercel) con `https`
 - [ ] App instalable en el celular (PWA): ícono, nombre, pantalla completa
 - [ ] Correo propio (SMTP: Resend o Brevo) para que siempre lleguen los códigos

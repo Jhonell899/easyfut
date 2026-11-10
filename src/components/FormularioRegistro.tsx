@@ -27,7 +27,9 @@ const TIPOS: { valor: Tipo; titulo: string; detalle: string; icono: React.ReactN
 
 function traducir(msg: string): string {
   if (/already registered|already exists/i.test(msg)) return "Ya existe una cuenta con ese correo. Inicia sesión.";
-  if (/password/i.test(msg)) return "La contraseña debe tener al menos 6 caracteres.";
+  if (/pwned|leaked|compromised|breach/i.test(msg))
+    return "Esa contraseña apareció en filtraciones de datos. Elige otra más segura.";
+  if (/password/i.test(msg)) return "La contraseña debe tener al menos 8 caracteres.";
   if (/invalid.*email|email.*invalid/i.test(msg)) return "Ese correo no parece válido.";
   if (/rate limit|too many/i.test(msg)) return "Demasiados intentos. Espera un momento.";
   return "No pudimos crear la cuenta. Inténtalo de nuevo.";
@@ -52,7 +54,7 @@ export default function FormularioRegistro({
 
   const celularLimpio = celular.replace(/\D/g, "");
   const celularValido = /^9\d{8}$/.test(celularLimpio);
-  const valido = nombre.trim().length >= 2 && celularValido && correo && clave.length >= 6;
+  const valido = nombre.trim().length >= 2 && celularValido && correo && clave.length >= 8;
 
   const destino = siguiente?.startsWith("/") ? siguiente : "/";
 
@@ -175,8 +177,8 @@ export default function FormularioRegistro({
         autoComplete="new-password"
         value={clave}
         onChange={(e) => setClave(e.target.value)}
-        conError={!!clave && clave.length < 6}
-        ayuda="Mínimo 6 caracteres."
+        conError={!!clave && clave.length < 8}
+        ayuda="Mínimo 8 caracteres. Mejor si mezclas letras y números."
         required
       />
 

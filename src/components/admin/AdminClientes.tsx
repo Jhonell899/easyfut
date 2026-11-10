@@ -11,6 +11,7 @@ type Cliente = {
   pagadas: number;
   vencidas: number;
   canceladas: number;
+  pagos_falsos?: number;
   ultima: string;
   conexiones: number;
   bloqueado: boolean;
@@ -77,9 +78,9 @@ export default function AdminClientes() {
   }
 
   const visibles = (lista ?? []).filter((c) =>
-    filtro === "riesgo" ? c.vencidas >= 2 : filtro === "bloqueados" ? c.bloqueado : true
+    filtro === "riesgo" ? c.vencidas + (c.pagos_falsos ?? 0) >= 2 : filtro === "bloqueados" ? c.bloqueado : true
   );
-  const enRiesgo = (lista ?? []).filter((c) => c.vencidas >= 2).length;
+  const enRiesgo = (lista ?? []).filter((c) => c.vencidas + (c.pagos_falsos ?? 0) >= 2).length;
   const bloqueados = (lista ?? []).filter((c) => c.bloqueado).length;
 
   return (
@@ -142,16 +143,17 @@ export default function AdminClientes() {
                     ⛔ {c.bloqueo_hasta ? `hasta ${fmtFecha(c.bloqueo_hasta, { day: "numeric", month: "short" })}` : "Bloqueado"}
                   </span>
                 ) : (
-                  c.vencidas >= 2 && (
+                  c.vencidas + (c.pagos_falsos ?? 0) >= 2 && (
                     <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-900">En riesgo</span>
                   )
                 )}
               </div>
 
-              <div className="grid grid-cols-4 gap-1 text-center text-xs">
+              <div className="grid grid-cols-5 gap-1 text-center text-xs">
                 <Cifra valor={c.total} texto="Total" />
                 <Cifra valor={c.pagadas} texto="Pagadas" color="text-[#0B6E4F]" />
                 <Cifra valor={c.vencidas} texto="Vencidas" color={c.vencidas ? "text-amber-700" : undefined} />
+                <Cifra valor={c.pagos_falsos ?? 0} texto="Pago falso" color={c.pagos_falsos ? "text-red-700" : undefined} />
                 <Cifra valor={c.canceladas} texto="Canceladas" />
               </div>
 

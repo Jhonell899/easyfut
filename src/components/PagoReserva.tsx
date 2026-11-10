@@ -83,7 +83,7 @@ export default function PagoReserva(p: Props) {
       setAvisando(false);
       return setError(
         /reserva_vencida/.test(error.message)
-          ? "El plazo de 15 minutos ya venció y el horario se liberó."
+          ? "El plazo de 10 minutos ya venció y el horario se liberó."
           : /avisar_pago|does not exist|schema cache/i.test(error.message)
             ? "Falta ejecutar la migración 006 en Supabase."
             : "No pudimos registrar tu aviso. Inténtalo de nuevo."
@@ -130,7 +130,7 @@ export default function PagoReserva(p: Props) {
   if (restante !== null && restante <= 0) {
     return (
       <p className="rounded-2xl bg-[#F4F4F4] p-4 text-sm text-[#5A5A5A]">
-        Pasaron los 15 minutos sin aviso de pago y el horario se liberó. Puedes hacer una nueva reserva.
+        Pasaron los 10 minutos sin aviso de pago y el horario se liberó. Puedes hacer una nueva reserva.
       </p>
     );
   }

@@ -30,8 +30,10 @@ type Props = {
   franjas: FranjaReserva[];
 };
 
-type Rango = { ini: number; fin: number }; // minutos desde medianoche
-type Slot = { ini: number; fin: number; monto: number; ocupado: boolean };
+// minutos desde medianoche; en_espera = reservado sin confirmar; libera = cuándo vence (ms) si no avisó pago
+type Rango = { ini: number; fin: number; enEspera: boolean; libera: number | null };
+// espera: "En espera" (sin confirmar). liberaEn = ms en que se libera, o null si espera al dueño
+type Slot = { ini: number; fin: number; monto: number; ocupado: boolean; espera: { liberaEn: number | null } | null };
 
 const DIAS_VISIBLES = 14;
 
@@ -46,7 +48,9 @@ const ERRORES: Record<string, string> = {
   // Protección contra reservas falsas (migración 009)
   cliente_bloqueado: "Este número no puede hacer reservas aquí. Si crees que es un error, comunícate con la cancha.",
   pendiente_activa:
-    "Ya tienes una reserva sin pagar. Págala y avisa al dueño, o espera a que venza (15 minutos), para separar otra. La encuentras en \"Mis reservas\".",
+    "Ya tienes una reserva sin pagar. Págala y avisa al dueño, o espera a que venza (10 minutos), para separar otra. La encuentras en \"Mis reservas\".",
+  demasiadas_sin_confirmar:
+    "Tienes 2 reservas esperando que el dueño confirme el pago. Cuando las confirme podrás reservar otra.",
   limite_conexion: "Hay demasiadas reservas sin pagar desde esta conexión. Paga una o espera a que venzan.",
   demasiadas_vencidas:
     "Dejaste vencer varias reservas sin pagar esta semana, así que no puedes reservar por unos días.",
@@ -136,9 +140,11 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
       if (cancelado) return;
       if (error) return setErrorCarga(true);
       setOcupados(
-        (data as { inicio: string; fin: string }[]).map((r) => ({
+        (data as { inicio: string; fin: string; en_espera?: boolean; libera_en?: string | null }[]).map((r) => ({
           ini: (new Date(r.inicio).getTime() - desde.getTime()) / 60_000,
           fin: (new Date(r.fin).getTime() - desde.getTime()) / 60_000,
+          enEspera: !!r.en_espera,
+          libera: r.libera_en ? new Date(r.libera_en).getTime() : null,
         }))
       );
     })();
@@ -149,6 +155,17 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
   }, [supabase, canchaId, fecha, recarga]);
 
   useEffect(() => setElegido(null), [duracion]);
+
+  // Reloj para la cuenta de "En espera"; al vencer una, se vuelve a consultar
+  const [reloj, setReloj] = useState(0);
+  useEffect(() => {
+    setReloj(Date.now());
+    const t = setInterval(() => setReloj(Date.now()), 15000);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    if (reloj && ocupados?.some((o) => o.libera !== null && o.libera <= reloj)) setRecarga((n) => n + 1);
+  }, [reloj, ocupados]);
 
   // Al elegir un horario, llevar al cliente al formulario
   useEffect(() => {
@@ -181,11 +198,17 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
       for (let ini = a; ini + duracion <= b; ini += turnoMin) {
         if (instante(fecha, ini).getTime() <= ahora) continue;
         const fin = ini + duracion;
+        const choques = ocupados.filter((o) => o.ini < fin && o.fin > ini);
+        // "En espera" solo si todo lo que choca está sin confirmar
+        const soloEspera = choques.length > 0 && choques.every((o) => o.enEspera);
         lista.push({
           ini,
           fin,
           monto: Math.round((Number(f.precio_hora) * duracion * 100) / 60) / 100,
-          ocupado: ocupados.some((o) => o.ini < fin && o.fin > ini),
+          ocupado: choques.length > 0,
+          espera: soloEspera
+            ? { liberaEn: choques.some((o) => o.libera === null) ? null : Math.max(...choques.map((o) => o.libera!)) }
+            : null,
         });
       }
     }
@@ -319,7 +342,9 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
             <p>
               {slots.length === 0 && fecha === hoy
                 ? "Ya no quedan horarios para hoy."
-                : "No hay horarios libres este día."}
+                : slots.some((s) => s.espera?.liberaEn)
+                  ? "Ahora no hay horarios libres, pero algunos están en espera y podrían liberarse en unos minutos."
+                  : "No hay horarios libres este día."}
             </p>
             {siguienteDia && (
               <button
@@ -346,11 +371,23 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                     activo
                       ? "border-[#0B6E4F] bg-[#0B6E4F] text-white"
                       : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#0B6E4F]"
-                  } disabled:border-transparent disabled:bg-[#F4F4F4] disabled:text-[#B0B0B0]`}
+                  } disabled:border-transparent ${
+                    s.espera ? "disabled:bg-amber-50 disabled:text-amber-900/60" : "disabled:bg-[#F4F4F4] disabled:text-[#B0B0B0]"
+                  }`}
                 >
                   <span className="text-base font-bold">{fmtMinutos(s.ini)}</span>
-                  <span className={`text-[11px] ${activo ? "text-white/80" : s.ocupado ? "" : "text-[#5A5A5A]"}`}>
-                    {s.ocupado ? "Ocupado" : soles(s.monto)}
+                  <span
+                    className={`text-[11px] ${
+                      activo ? "text-white/80" : s.espera ? "font-bold text-amber-700" : s.ocupado ? "" : "text-[#5A5A5A]"
+                    }`}
+                  >
+                    {s.espera
+                      ? s.espera.liberaEn && reloj
+                        ? `En espera · ${Math.max(1, Math.round((s.espera.liberaEn - Math.max(reloj, Date.now())) / 60000))} min`
+                        : "En espera"
+                      : s.ocupado
+                        ? "Ocupado"
+                        : soles(s.monto)}
                   </span>
                 </button>
               );
@@ -436,7 +473,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
             </button>
           </div>
           <p className="mx-auto max-w-xl px-5 pb-3 text-[11px] text-[#5A5A5A]">
-            Separamos tu horario por 15 minutos para que realices el pago.
+            Separamos tu horario por 10 minutos para que pagues y avises al dueño. Mientras, otros lo verán "En espera".
           </p>
         </div>
       )}

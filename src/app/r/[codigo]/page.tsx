@@ -130,7 +130,7 @@ export default async function PaginaReserva({
 
       {vencida && (
         <p className="rounded-2xl bg-[#F4F4F4] p-4 text-sm text-[#5A5A5A]">
-          Pasaron los 15 minutos sin aviso de pago y el horario se liberó. Puedes hacer una nueva reserva.
+          Pasaron los 10 minutos sin aviso de pago y el horario se liberó. Puedes hacer una nueva reserva.
         </p>
       )}
 

@@ -560,8 +560,8 @@ export function EditorPagos({ datos, cambiar }: EditorProps) {
   return (
     <div className="flex flex-col gap-4">
       <p className="rounded-xl bg-[#E6EEEA] p-3 text-sm text-[#0B6E4F]">
-        El cliente te paga directo y te avisa por WhatsApp. Tú confirmas el pago desde tu panel en máximo{" "}
-        <strong>15 minutos</strong>; si no, la reserva se cae y el horario se libera.
+        El cliente tiene <strong>10 minutos</strong> para pagarte y avisarte por WhatsApp; si no, el horario se
+        libera. Cuando avise que pagó, confírmalo desde tu panel lo antes posible.
       </p>
 
       <div className="grid grid-cols-2 gap-3">

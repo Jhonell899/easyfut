@@ -44,7 +44,10 @@ export default function FormularioIngreso({
       setEnviando(false);
       // Registro que nunca se verificó: esa cuenta no existe, se borra
       if (/email not confirmed/i.test(error.message)) {
-        await supabase.rpc("liberar_correo_no_verificado", { p_correo: correo.trim() });
+        // Solo se borra si el registro tiene más de 10 minutos (migración 010)
+        const { data: borrada } = await supabase.rpc("liberar_correo_no_verificado", { p_correo: correo.trim() });
+        if (borrada === false)
+          return setError("Aún no verificas tu correo. Escribe el código que te enviamos o espera unos minutos y regístrate de nuevo.");
         return setSinVerificar(true);
       }
       return setError(traducir(error.message));
