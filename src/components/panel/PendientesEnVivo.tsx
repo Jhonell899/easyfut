@@ -45,7 +45,7 @@ function pitar() {
  * Reservas que esperan al dueño, en vivo: aparecen al instante cuando un
  * cliente reserva o avisa "Ya pagué", con sonido y notificación del navegador.
  */
-export default function PendientesEnVivo({ duenoId }: { duenoId: string }) {
+export default function PendientesEnVivo({ duenoId, puedeBloquear = true }: { duenoId: string; puedeBloquear?: boolean }) {
   const [lista, setLista] = useState<Pendiente[] | null>(null);
   const [ahora, setAhora] = useState<number | null>(null);
   const [permiso, setPermiso] = useState<NotificationPermission | "no">("default");
@@ -197,12 +197,12 @@ export default function PendientesEnVivo({ duenoId }: { duenoId: string }) {
 
                 {pago ? (
                   <div className="flex items-center gap-2">
-                    <BotonBloquear
+                    {puedeBloquear && <BotonBloquear
                       celular={r.celular_cliente}
                       nombre={r.nombre_cliente}
                       bloqueado={!!(r.celular_cliente && historial[r.celular_cliente]?.bloqueado_por_mi)}
                       onCambio={recargarHistorial}
-                    />
+                    />}
                     <button
                       type="button"
                       onClick={() => responder(r, "cancelada")}

@@ -11,6 +11,7 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
   const [estado, setEstado] = useState<"cargando" | "anonimo" | "conectado">("cargando");
   const [perfil, setPerfil] = useState<PerfilMenu | null>(null);
   const [correo, setCorreo] = useState("");
+  const [esEncargado, setEsEncargado] = useState(false);
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -31,6 +32,9 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
         .eq("id", data.user.id)
         .maybeSingle();
       setPerfil((p as PerfilMenu) ?? { nombre: null, rol: "cliente" });
+      // ¿Es encargado de algún local? (migración 011; si no existe, simplemente no)
+      const { data: locales } = await supabase!.rpc("mis_locales");
+      setEsEncargado(Array.isArray(locales) && locales.length > 0);
       setEstado("conectado");
     }
 
@@ -111,12 +115,16 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
                 esDueno ? "bg-[#1B1B1B] text-white" : "bg-[#E6EEEA] text-[#0B6E4F]"
               }`}
             >
-              {esDueno ? "Rentador" : "Comprador"}
+              {esDueno ? "Rentador" : esEncargado ? "Encargado" : "Comprador"}
             </span>
           </div>
           {esDueno ? (
             <Link href="/panel" role="menuitem" className="block px-3 py-2.5 hover:bg-[#F4F4F4]">
               Mi panel
+            </Link>
+          ) : esEncargado ? (
+            <Link href="/panel" role="menuitem" className="block px-3 py-2.5 font-bold text-[#0B6E4F] hover:bg-[#F4F4F4]">
+              Panel de encargado
             </Link>
           ) : (
             <Link href="/publicar" role="menuitem" className="block px-3 py-2.5 hover:bg-[#F4F4F4]">

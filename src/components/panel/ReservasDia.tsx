@@ -41,7 +41,7 @@ function minutosLima(iso: string, fecha: string) {
 
 const hora = (iso: string) => fmtFecha(iso, { hour: "2-digit", minute: "2-digit", hour12: false });
 
-type Nuevo = { ini: number; precioHora: number; finFranja: number };
+export type Nuevo = { ini: number; precioHora: number; finFranja: number };
 
 export default function ReservasDia({
   canchaId,
@@ -113,7 +113,14 @@ export default function ReservasDia({
     for (const f of franjasDia) {
       for (let t = f.ini; t + duracionTurno <= f.fin; t += duracionTurno) {
         const choca = activas.some((r) => minutosLima(r.inicio, fecha) < t + duracionTurno && minutosLima(r.fin, fecha) > t);
-        if (!choca) lista.push({ tipo: "libre", ini: t, fin: t + duracionTurno, precio: f.precio, finFranja: f.fin });
+        if (!choca)
+          lista.push({
+            tipo: "libre",
+            ini: t,
+            fin: t + duracionTurno,
+            precio: f.precio,
+            finFranja: Math.min(f.fin, ...activas.map((r) => minutosLima(r.inicio, fecha)).filter((m) => m >= t + duracionTurno)),
+          });
       }
     }
     return lista.sort((a, b) => a.ini - b.ini);
@@ -376,7 +383,7 @@ function Accion({
 // ---------------------------------------------------------------------------
 // Hoja para registrar una reserva presencial o bloquear un horario
 
-function NuevaReserva({
+export function NuevaReserva({
   canchaId,
   fecha,
   duracionTurno,

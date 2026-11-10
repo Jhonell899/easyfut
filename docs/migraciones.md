@@ -16,6 +16,7 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | 008 | `008_administrador.sql` | Cuenta de administrador y página /admin (pon tu correo antes de ejecutarla) | ✅ Ejecutada |
 | 009 | `009_reservas_falsas.sql` | Límites contra reservas falsas, historial y bloqueo de clientes | ✅ Ejecutada |
 | 010 | `010_seguridad.sql` | Cierra el hueco de "Ya pagué", 10 minutos para pagar, horarios "En espera", pagos falsos | ✅ Ejecutada |
+| 011 | `011_encargados.sql` | Encargados: ven la agenda y confirman pagos en las canchas del dueño | ⏳ Pendiente |
 
 ## Si algo falla
 

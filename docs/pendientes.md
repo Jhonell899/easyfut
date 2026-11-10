@@ -21,6 +21,8 @@ Marca con `[x]` lo que vayas terminando. Para trabajar una tarea, créala como *
 - [ ] Reseñas y estrellas
 
 ## 3. Para los dueños
+- [x] Agenda del día con todas las canchas
+- [x] Encargados (falta ejecutar la migración 011)
 - [ ] Resumen de ingresos por semana / mes
 - [ ] Reservas fijas (todos los martes 8 pm)
 - [ ] Canchas divididas (una de 7 dentro de una de 11)
