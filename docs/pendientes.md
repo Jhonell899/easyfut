@@ -29,6 +29,7 @@ Marca con `[x]` lo que vayas terminando. Para trabajar una tarea, créala como *
 - [ ] Botón para avisar al cliente "tu reserva está confirmada"
 
 ## 4. Para el administrador
+- [x] Pestaña Canchas: publicar/pausar, gestionar y ver la agenda de cualquier cancha (falta la migración 012)
 - [ ] Aprobar canchas antes de publicarse
 - [ ] Ver todas las reservas y estadísticas generales
 

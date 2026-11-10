@@ -3,14 +3,16 @@
 import { useState } from "react";
 import AdminRentadores from "@/components/admin/AdminRentadores";
 import AdminClientes from "@/components/admin/AdminClientes";
+import AdminCanchas from "@/components/admin/AdminCanchas";
 
 const PESTANAS = [
+  { clave: "canchas", texto: "Canchas" },
   { clave: "rentadores", texto: "Rentadores" },
   { clave: "clientes", texto: "Clientes" },
 ] as const;
 
 export default function PestanasAdmin() {
-  const [pestana, setPestana] = useState<(typeof PESTANAS)[number]["clave"]>("rentadores");
+  const [pestana, setPestana] = useState<(typeof PESTANAS)[number]["clave"]>("canchas");
   return (
     <>
       <div className="flex gap-2" role="tablist">
@@ -29,7 +31,7 @@ export default function PestanasAdmin() {
           </button>
         ))}
       </div>
-      {pestana === "rentadores" ? <AdminRentadores /> : <AdminClientes />}
+      {pestana === "canchas" ? <AdminCanchas /> : pestana === "rentadores" ? <AdminRentadores /> : <AdminClientes />}
     </>
   );
 }

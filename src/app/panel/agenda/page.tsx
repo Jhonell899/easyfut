@@ -22,6 +22,15 @@ export default async function Agenda({ searchParams }: { searchParams: Promise<{
     );
   }
 
+  // Administrador: la agenda de cualquier dueño (migración 012)
+  if (sesion.perfil?.es_admin && d) {
+    return (
+      <MarcoPanel subtitulo="Administrador" titulo="Agenda del día" volver={{ href: "/admin", texto: "Administración" }}>
+        <AgendaDia duenoId={d} puedeBloquearClientes={false} />
+      </MarcoPanel>
+    );
+  }
+
   // Encargado: la agenda del local donde trabaja
   const { data } = await sesion.supabase.rpc("mis_locales");
   const locales = (data ?? []) as Local[];

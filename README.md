@@ -84,7 +84,7 @@ El estado de cada una está en **[docs/migraciones.md](docs/migraciones.md)**.
 | **Jugador** (sin cuenta o *comprador*) | Buscar canchas, reservar, pagar y avisar por WhatsApp |
 | **Rentador** (*dueño*) | Publicar canchas, horarios, precios, fotos y medios de pago; confirmar pagos; bloquear clientes |
 | **Encargado** (invitado por un dueño) | Ver la agenda, confirmar pagos, cancelar y registrar reservas en las canchas de ese dueño |
-| **Administrador** | Aprobar el WhatsApp de rentadores; ver el historial de clientes y bloquearlos en toda EasyFut |
+| **Administrador** | Gestionar todas las canchas (publicar, pausar, editar, ver su agenda); aprobar el WhatsApp de rentadores; ver el historial de clientes y bloquearlos en toda EasyFut |
 
 ---
 
