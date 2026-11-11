@@ -5,7 +5,8 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import {
-  filaCancha,
+  filaSinPagos,
+  pagosParaGuardar,
   franjasParaGuardar,
   horarioDesdeFranjas,
   traducirError,
@@ -18,6 +19,7 @@ import {
 import { refrescarPublico } from "@/app/panel/acciones";
 import { EditorDatos, EditorFotos, EditorHorarios, EditorPagos, EditorServicios, EditorUbicacion, Tarjeta } from "@/components/panel/Editores";
 import ReservasDia from "@/components/panel/ReservasDia";
+import ConfirmarClave from "@/components/panel/ConfirmarClave";
 
 export type CanchaBD = DatosCancha & { id: string; slug: string; activa: boolean };
 type FranjaBD = { dia_semana: number; hora_inicio: string; hora_fin: string; precio_hora: number };
@@ -49,7 +51,8 @@ export default function GestorCancha({
   const [datos, setDatos] = useState<DatosCancha>(cancha);
   const [horario, setHorario] = useState<Horario>(() => horarioDesdeFranjas(franjas));
   const [guardados, setGuardados] = useState(() => ({
-    datos: JSON.stringify(filaCancha(cancha)),
+    datos: JSON.stringify(filaSinPagos(cancha)),
+    pagos: JSON.stringify(pagosParaGuardar(cancha.pagos)),
     horario: JSON.stringify(franjasParaGuardar(horarioDesdeFranjas(franjas))),
   }));
   const [guardando, setGuardando] = useState(false);
@@ -58,9 +61,11 @@ export default function GestorCancha({
   );
 
   const cambiar = (p: Partial<DatosCancha>) => setDatos((d) => ({ ...d, ...p }));
-  const datosCambiaron = JSON.stringify(filaCancha(datos)) !== guardados.datos;
+  const datosCambiaron = JSON.stringify(filaSinPagos(datos)) !== guardados.datos;
+  const pagosCambiaron = JSON.stringify(pagosParaGuardar(datos.pagos)) !== guardados.pagos;
   const horarioCambio = JSON.stringify(franjasParaGuardar(horario)) !== guardados.horario;
-  const hayCambios = datosCambiaron || horarioCambio;
+  const hayCambios = datosCambiaron || pagosCambiaron || horarioCambio;
+  const [pideClave, setPideClave] = useState(false);
 
   const franjasActuales = useMemo(() => franjasParaGuardar(horario), [horario]);
 
@@ -68,13 +73,32 @@ export default function GestorCancha({
     const supabase = supabaseNavegador();
     if (!supabase) return;
     const problema =
-      (datosCambiaron && (validarDatos(datos) || validarPagos(datos.pagos))) || (horarioCambio && validarHorario(horario));
+      (datosCambiaron && validarDatos(datos)) ||
+      (pagosCambiaron && validarPagos(datos.pagos)) ||
+      (horarioCambio && validarHorario(horario));
     if (problema) return setMensaje({ tipo: "error", texto: problema });
 
     setGuardando(true);
     setMensaje(null);
+
+    // Medios de pago: primero y por separado. La base de datos exige que la
+    // contraseña se haya escrito en los últimos 10 minutos (migración 015).
+    if (pagosCambiaron) {
+      const pagos = pagosParaGuardar(datos.pagos);
+      let { error } = await supabase.rpc("guardar_pagos", { p_cancha_id: cancha.id, p_pagos: pagos });
+      // Si la migración 015 aún no está aplicada, se guarda como antes
+      if (error && /guardar_pagos|schema cache|does not exist/i.test(error.message)) {
+        ({ error } = await supabase.from("canchas").update({ pagos }).eq("id", cancha.id));
+      }
+      if (error) {
+        setGuardando(false);
+        if (/requiere_clave/.test(error.message)) return setPideClave(true);
+        return setMensaje({ tipo: "error", texto: traducirError(error.message) });
+      }
+    }
+
     if (datosCambiaron) {
-      const { error } = await supabase.from("canchas").update(filaCancha(datos)).eq("id", cancha.id);
+      const { error } = await supabase.from("canchas").update(filaSinPagos(datos)).eq("id", cancha.id);
       if (error) {
         setGuardando(false);
         return setMensaje({ tipo: "error", texto: traducirError(error.message) });
@@ -91,7 +115,8 @@ export default function GestorCancha({
       }
     }
     setGuardados({
-      datos: JSON.stringify(filaCancha(datos)),
+      datos: JSON.stringify(filaSinPagos(datos)),
+      pagos: JSON.stringify(pagosParaGuardar(datos.pagos)),
       horario: JSON.stringify(franjasParaGuardar(horario)),
     });
     await refrescarPublico(cancha.slug);
@@ -209,6 +234,17 @@ export default function GestorCancha({
             <EditorServicios datos={datos} cambiar={cambiar} />
           </Tarjeta>
         </>
+      )}
+
+      {pideClave && (
+        <ConfirmarClave
+          motivo="Vas a cambiar a dónde llega el dinero de tus clientes. Por seguridad, escribe tu contraseña."
+          onCancelar={() => setPideClave(false)}
+          onListo={() => {
+            setPideClave(false);
+            guardar();
+          }}
+        />
       )}
 
       {hayCambios && (

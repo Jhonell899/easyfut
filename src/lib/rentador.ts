@@ -24,7 +24,7 @@ export function pagosDe(v: unknown): Pagos {
 }
 
 /** Solo los campos con valor (para guardar en canchas.pagos). */
-function pagosParaGuardar(p: Pagos) {
+export function pagosParaGuardar(p: Pagos) {
   const r: Partial<Pagos> = {};
   for (const [k, v] of Object.entries(p) as [keyof Pagos, string][]) if (v.trim()) r[k] = v.trim();
   if (!r.cuenta && !r.cci) delete r.banco;
@@ -205,7 +205,15 @@ export function filaCancha(d: DatosCancha) {
   };
 }
 
+/** Igual que filaCancha pero sin los medios de pago, que se guardan aparte (con contraseña). */
+export function filaSinPagos(d: DatosCancha) {
+  const { pagos: _pagos, ...resto } = filaCancha(d);
+  void _pagos;
+  return resto;
+}
+
 export function traducirError(msg: string): string {
+  if (/requiere_clave/.test(msg)) return "Confirma con tu contraseña para cambiar los medios de pago.";
   if (/franjas_se_pisan/.test(msg)) return "Hay franjas de horario que se pisan.";
   if (/franja_invalida/.test(msg)) return "Revisa las horas y precios del horario.";
   if (/sin_permiso|row-level security|permission denied/i.test(msg))

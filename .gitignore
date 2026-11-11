@@ -7,3 +7,6 @@ next-env.d.ts
 
 # Ajustes locales de Claude Code
 .claude/settings.local.json
+
+# Vercel (conexión local con el proyecto)
+.vercel

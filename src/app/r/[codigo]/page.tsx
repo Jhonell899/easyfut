@@ -26,6 +26,7 @@ type Reserva = {
   dueno_nombre?: string | null;
   dueno_celular?: string | null;
   pago_avisado_en?: string | null;
+  pagos_cambiado_en?: string | null; // migración 015
 };
 
 const hora = (iso: string) => fmtFecha(iso, { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -119,6 +120,7 @@ export default async function PaginaReserva({
           nombreCliente={reserva.nombre_cliente ?? null}
           canchaNombre={reserva.cancha_nombre}
           canchaId={reserva.cancha_id ?? ""}
+          pagosCambiadoEn={reserva.pagos_cambiado_en ?? null}
           cuando={`${fmtFecha(reserva.inicio, { weekday: "long", day: "numeric", month: "long" })}, ${hora(reserva.inicio)} – ${hora(reserva.fin)}`}
         />
       )}

@@ -20,6 +20,7 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | 012 | `012_admin_canchas.sql` | El administrador ve y gestiona todas las canchas, horarios, fotos y reservas | ✅ Ejecutada |
 | 013 | `013_mejoras.sql` | El cliente cancela su reserva sin pagar, tope de 30 días, tope de cancelaciones, el encargado no cambia montos | ✅ Ejecutada |
 | 014 | `014_nombre_dueno.sql` | El nombre del dueño se muestra siempre en la página de su cancha | ✅ Ejecutada |
+| 015 | `015_proteccion_pagos.sql` | Medios de pago: contraseña reciente para cambiarlos, historial de cambios y aviso al cliente | ⏳ Pendiente |
 
 ## Si algo falla
 
@@ -34,5 +35,6 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 
 - Nombre: `NNN_descripcion_corta.sql` con el número siguiente (010, 011…).
 - Nunca edites una migración ya ejecutada: crea una nueva.
+- Si agregas una columna editable a `canchas`, añádela también al `grant update (...)` de la 015; si no, la app no podrá guardarla.
 - Escríbelas para que se puedan ejecutar dos veces sin romper nada
   (`if not exists`, `create or replace`, `drop policy if exists`).

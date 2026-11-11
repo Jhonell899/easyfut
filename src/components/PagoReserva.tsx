@@ -18,6 +18,8 @@ type Props = {
   canchaNombre: string;
   canchaId: string;
   cuando: string; // "sábado 15 de noviembre, 19:00 – 20:00"
+  /** Última vez que el dueño cambió sus medios de pago (migración 015). */
+  pagosCambiadoEn?: string | null;
 };
 
 type Medio = { clave: string; titulo: string; dato: string; detalle?: string };
@@ -37,6 +39,8 @@ export default function PagoReserva(p: Props) {
   const [avisando, setAvisando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copiado, setCopiado] = useState<string | null>(null);
+  // El cliente debe confirmar que el nombre que le muestra Yape/Plin coincide
+  const [nombreVerificado, setNombreVerificado] = useState(false);
 
   const medios: Medio[] = [
     pagos.yape && { clave: "Yape", titulo: "Yape", dato: pagos.yape },
@@ -64,6 +68,16 @@ export default function PagoReserva(p: Props) {
   useEffect(() => {
     if (restante !== null && restante <= 0 && !avisado) router.refresh();
   }, [restante, avisado, router]);
+
+  // "hace 3 horas" si el dueño cambió sus medios de pago en las últimas 48 h
+  const cambioReciente = (() => {
+    if (!p.pagosCambiadoEn || ahora === null) return null;
+    const horas = (ahora - new Date(p.pagosCambiadoEn).getTime()) / 3600000;
+    if (horas < 0 || horas > 48) return null;
+    if (horas < 1) return "hace menos de una hora";
+    if (horas < 24) return `hace ${Math.round(horas)} hora${Math.round(horas) === 1 ? "" : "s"}`;
+    return "ayer";
+  })();
 
   const celularDueno = p.duenoCelular?.replace(/\D/g, "").slice(-9) ?? "";
   const mensaje = [
@@ -148,12 +162,27 @@ export default function PagoReserva(p: Props) {
         <button type="button" onClick={() => copiar(String(p.monto))} className="text-3xl font-extrabold text-[#1B1B1B]">
           {soles(p.monto)}
         </button>
-        {pagos.titular && (
-          <p className="text-sm text-[#5A5A5A]">
-            a nombre de <strong className="text-[#1B1B1B]">{pagos.titular}</strong>
-          </p>
-        )}
       </div>
+
+      {/* Aviso si el dueño cambió sus datos de pago en las últimas 48 horas */}
+      {cambioReciente && (
+        <p className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" role="alert">
+          <strong>Atención:</strong> los datos de pago de esta cancha se actualizaron {cambioReciente}. Antes de pagar,
+          comprueba el nombre del titular{whatsapp ? " o confírmalo con el dueño por WhatsApp" : ""}.
+        </p>
+      )}
+
+      {/* Verificación del titular: evita pagar a un número equivocado */}
+      {pagos.titular && (
+        <div className="flex flex-col gap-2 rounded-xl border-2 border-[#6D28D9] bg-[#F5F3FF] p-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-[#6D28D9]">Paga solo si el nombre coincide</p>
+          <p className="text-xl font-extrabold leading-tight text-[#14231D]">{pagos.titular}</p>
+          <p className="text-xs text-[#5A5A5A]">
+            Yape y Plin muestran el nombre de quien recibe antes de confirmar el pago. Si aparece otro nombre,{" "}
+            <strong>no pagues</strong>.
+          </p>
+        </div>
+      )}
 
       {pagos.qr && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -191,10 +220,24 @@ export default function PagoReserva(p: Props) {
         )
       )}
 
+      {pagos.titular && (
+        <label className="flex items-start gap-3 rounded-xl bg-[#F7F8F7] p-3 text-sm">
+          <input
+            type="checkbox"
+            checked={nombreVerificado}
+            onChange={(e) => setNombreVerificado(e.target.checked)}
+            className="mt-0.5 h-5 w-5 shrink-0 accent-[#6D28D9]"
+          />
+          <span>
+            Al pagar, el nombre que apareció fue <strong>{pagos.titular}</strong>.
+          </span>
+        </label>
+      )}
+
       <button
         type="button"
         onClick={yaPague}
-        disabled={avisando}
+        disabled={avisando || (!!pagos.titular && !nombreVerificado)}
         className="flex items-center justify-center gap-2 rounded-xl bg-[#25D366] py-3.5 font-bold text-white disabled:opacity-60"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
