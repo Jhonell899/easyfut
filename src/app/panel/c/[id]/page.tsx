@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { usuarioActual } from "@/lib/sesionServidor";
 import { DATOS_VACIOS, pagosDe } from "@/lib/rentador";
+import { politicaDe } from "@/lib/politicas";
 import MarcoPanel from "@/components/panel/MarcoPanel";
 import GestorCancha, { type CanchaBD } from "@/components/panel/GestorCancha";
 import VerificarCelular from "@/components/panel/VerificarCelular";
@@ -42,6 +43,7 @@ export default async function PanelCancha({
     servicios: resto.servicios ?? [],
     fotos: resto.fotos ?? [],
     pagos: pagosDe(resto.pagos),
+    politica: politicaDe(resto.politica_cancelacion),
     latitud: resto.latitud != null ? Number(resto.latitud) : null,
     longitud: resto.longitud != null ? Number(resto.longitud) : null,
   };

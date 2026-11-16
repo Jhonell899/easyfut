@@ -102,6 +102,9 @@ export default async function Inicio() {
           <Link href="/publicar" className="hover:underline">
             Publica tu cancha
           </Link>
+          <a href="mailto:easyfutinquiries@gmail.com" className="hover:underline">
+            Soporte
+          </a>
         </p>
         <p>© {new Date().getFullYear()} EasyFut</p>
       </footer>

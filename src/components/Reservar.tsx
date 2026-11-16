@@ -475,7 +475,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
             </button>
           </div>
           <p className="mx-auto max-w-xl px-5 pb-3 text-[11px] text-[#5A5A5A]">
-            Separamos tu horario por 10 minutos para que pagues y avises al dueño. Mientras, otros lo verán "En espera".
+            Separamos tu horario por 10 minutos para que pagues y avises al dueño. Al reservar aceptas la <a href="#politica" className="underline">política de cancelación</a> de la cancha.
           </p>
         </div>
       )}

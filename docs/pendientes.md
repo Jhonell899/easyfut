@@ -22,6 +22,9 @@ Marca con `[x]` lo que vayas terminando. Para trabajar una tarea, créala como *
 - [ ] Reseñas y estrellas
 
 ## 3. Para los dueños
+- [x] Política de cancelación por cancha, con opciones fijas y justas (migración 016)
+- [x] Código de la reserva en el mensaje del pago, para conciliar
+- [ ] Membresía mensual para dueños (cobro, prueba gratis, pausa si no paga)
 - [x] Agenda del día con todas las canchas
 - [x] Encargados
 - [x] Resumen de ingresos: hoy, semana y mes

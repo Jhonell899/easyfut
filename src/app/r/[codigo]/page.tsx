@@ -5,6 +5,7 @@ import AvisoConfig from "@/components/AvisoConfig";
 import { fmtFecha, soles } from "@/lib/horario";
 import PagoReserva from "@/components/PagoReserva";
 import AccionesReserva from "@/components/AccionesReserva";
+import PedirCancelacion from "@/components/PedirCancelacion";
 
 // El estado de una reserva cambia (pago, expiración): siempre datos frescos
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ type Reserva = {
   dueno_celular?: string | null;
   pago_avisado_en?: string | null;
   pagos_cambiado_en?: string | null; // migración 015
+  politica_cancelacion?: string | null; // migración 016
 };
 
 const hora = (iso: string) => fmtFecha(iso, { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -141,6 +143,18 @@ export default async function PaginaReserva({
         <p className="rounded-2xl bg-red-50 p-4 text-sm text-red-700">
           Esta reserva fue cancelada y el horario quedó libre.
         </p>
+      )}
+
+      {(reserva.estado === "confirmada" || (reserva.estado === "pendiente" && !!reserva.pago_avisado_en)) && (
+        <PedirCancelacion
+          codigo={reserva.codigo}
+          inicio={reserva.inicio}
+          monto={Number(reserva.monto)}
+          politica={reserva.politica_cancelacion}
+          canchaNombre={reserva.cancha_nombre}
+          cuando={`${fmtFecha(reserva.inicio, { weekday: "long", day: "numeric", month: "long" })}, ${hora(reserva.inicio)}`}
+          duenoCelular={reserva.dueno_celular ?? null}
+        />
       )}
 
       <AccionesReserva

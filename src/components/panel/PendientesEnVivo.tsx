@@ -195,6 +195,12 @@ export default function PendientesEnVivo({ duenoId, puedeBloquear = true }: { du
                   )}
                 </div>
 
+                {pago && (
+                  <p className="rounded-xl bg-[#F5F3FF] px-3 py-2 text-xs text-[#4C1D95]">
+                    Busca en tu Yape o Plin un pago de <strong>{soles(r.monto)}</strong> con el mensaje{" "}
+                    <strong className="font-mono">{r.codigo}</strong>.
+                  </p>
+                )}
                 {pago ? (
                   <div className="flex items-center gap-2">
                     {puedeBloquear && <BotonBloquear

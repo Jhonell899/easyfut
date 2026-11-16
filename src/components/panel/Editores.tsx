@@ -6,6 +6,7 @@ import CampoTexto from "@/components/CampoTexto";
 import { DEPORTES } from "@/components/TarjetaCancha";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { fmtDuracion } from "@/lib/horario";
+import { POLITICAS, REGLAS_COMUNES, describirTramos, type Politica } from "@/lib/politicas";
 import {
   BANCOS,
   DIAS_ORDEN,
@@ -647,6 +648,61 @@ export function EditorPagos({ datos, cambiar }: EditorProps) {
       </details>
 
       {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 7. Política de cancelación: el dueño elige entre opciones fijas y justas
+
+export function EditorPolitica({ datos, cambiar }: EditorProps) {
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2" role="radiogroup" aria-label="Política de cancelación">
+        {(Object.keys(POLITICAS) as Politica[]).map((clave) => {
+          const p = POLITICAS[clave];
+          const activa = datos.politica === clave;
+          return (
+            <button
+              key={clave}
+              type="button"
+              role="radio"
+              aria-checked={activa}
+              onClick={() => cambiar({ politica: clave })}
+              className={`flex flex-col gap-1 rounded-2xl border-2 p-3 text-left transition-colors ${
+                activa ? "border-[#6D28D9] bg-[#F5F3FF]" : "border-[#E3E3E3] bg-white hover:border-[#C4B5FD]"
+              }`}
+            >
+              <span className="flex items-center justify-between gap-2">
+                <span className="font-bold">{p.nombre}</span>
+                {clave === "moderada" && (
+                  <span className="rounded-full bg-[#EDE9FE] px-2 py-0.5 text-[10px] font-bold text-[#6D28D9]">Recomendada</span>
+                )}
+              </span>
+              <span className="text-sm text-[#5A5A5A]">{p.resumen}</span>
+              {activa && (
+                <ul className="mt-1 flex flex-col gap-0.5 text-xs text-[#4C1D95]">
+                  {describirTramos(clave).map((t) => (
+                    <li key={t}>• {t}</li>
+                  ))}
+                </ul>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      <details className="rounded-xl bg-[#F7F8F7] p-3 text-xs text-[#5A5A5A]">
+        <summary className="cursor-pointer font-bold text-[#14231D]">Reglas que valen para todas las canchas</summary>
+        <ul className="mt-2 flex flex-col gap-1">
+          {REGLAS_COMUNES.map((r) => (
+            <li key={r}>• {r}</li>
+          ))}
+        </ul>
+      </details>
+      <p className="text-xs text-[#5A5A5A]">
+        Los jugadores ven esta política antes de reservar. Tú haces la devolución que corresponda directamente al cliente.
+      </p>
     </div>
   );
 }

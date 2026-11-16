@@ -427,6 +427,12 @@ function DetalleReserva({
           </div>
         )}
         {r.nota && <p className="text-sm text-[#5A5A5A]">{r.nota}</p>}
+        {r.estado === "pendiente" && r.pago_avisado_en && (
+          <p className="rounded-xl bg-[#F5F3FF] px-3 py-2 text-sm text-[#4C1D95]">
+            Busca en tu Yape o Plin un pago de <strong>{soles(r.monto)}</strong> con el mensaje{" "}
+            <strong className="font-mono">{r.codigo}</strong>.
+          </p>
+        )}
 
         {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</p>}
 

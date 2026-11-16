@@ -9,7 +9,7 @@ const SECCIONES: Seccion[] = [
     titulo: "Qué es EasyFut",
     parrafos: [
       "EasyFut es una plataforma que conecta a jugadores con dueños de canchas deportivas (\"rentadores\") para reservar horarios. EasyFut no es dueña de las canchas ni presta el servicio de alquiler: ese servicio lo presta cada rentador.",
-      "Responsable de la plataforma: Jhonell Jhonny Huamani Llallico, jhonellhuamani09@gmail.com.",
+      "Responsable de la plataforma: Jhonell Jhonny Huamani Llallico, RUC 10607895045. Contacto: easyfutinquiries@gmail.com.",
     ],
   },
   {
@@ -24,7 +24,9 @@ const SECCIONES: Seccion[] = [
     parrafos: [
       "Al reservar, el horario queda separado por 10 minutos. En ese tiempo debes pagar directamente al rentador (Yape, Plin o transferencia) y avisarle con el botón \"Ya pagué\". Si no lo haces, el horario se libera.",
       "El pago se hace directamente al rentador: EasyFut no recibe, retiene ni procesa tu dinero. La reserva queda confirmada cuando el rentador confirma que recibió el pago.",
-      "Puedes cancelar tu reserva desde la app mientras no hayas avisado el pago. Después de pagar, las cancelaciones, cambios y devoluciones se coordinan directamente con el rentador, según sus propias condiciones.",
+      "Puedes cancelar tu reserva desde la app mientras no hayas avisado el pago, sin costo.",
+      "Después de pagar, cada cancha aplica una de tres políticas de cancelación fijas (Flexible, Moderada o Estricta), que ves antes de reservar. La devolución que corresponda la hace el rentador por el mismo medio de pago, en un máximo de 48 horas.",
+      "En todas las canchas, si el rentador cancela o la cancha no se puede usar, recibes la devolución completa o eliges otro horario. Si no llegas sin avisar, no hay devolución.",
     ],
   },
   {
@@ -45,7 +47,7 @@ const SECCIONES: Seccion[] = [
     titulo: "Cambios y contacto",
     parrafos: [
       "Podemos actualizar estos términos; la fecha de arriba indica la última versión. Si sigues usando EasyFut después de un cambio, se entiende que lo aceptas.",
-      "Consultas y reclamos: jhonellhuamani09@gmail.com.",
+      "Consultas y reclamos: easyfutinquiries@gmail.com.",
     ],
   },
 ];

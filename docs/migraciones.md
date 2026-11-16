@@ -20,7 +20,8 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | 012 | `012_admin_canchas.sql` | El administrador ve y gestiona todas las canchas, horarios, fotos y reservas | ✅ Ejecutada |
 | 013 | `013_mejoras.sql` | El cliente cancela su reserva sin pagar, tope de 30 días, tope de cancelaciones, el encargado no cambia montos | ✅ Ejecutada |
 | 014 | `014_nombre_dueno.sql` | El nombre del dueño se muestra siempre en la página de su cancha | ✅ Ejecutada |
-| 015 | `015_proteccion_pagos.sql` | Medios de pago: contraseña reciente para cambiarlos, historial de cambios y aviso al cliente | ⏳ Pendiente |
+| 015 | `015_proteccion_pagos.sql` | Medios de pago: contraseña reciente para cambiarlos, historial de cambios y aviso al cliente | ✅ Ejecutada |
+| 016 | `016_politica_cancelacion.sql` | Política de cancelación por cancha (Flexible, Moderada, Estricta) | ✅ Ejecutada |
 
 ## Si algo falla
 

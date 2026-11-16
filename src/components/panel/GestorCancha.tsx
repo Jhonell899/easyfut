@@ -17,7 +17,7 @@ import {
   type Horario,
 } from "@/lib/rentador";
 import { refrescarPublico } from "@/app/panel/acciones";
-import { EditorDatos, EditorFotos, EditorHorarios, EditorPagos, EditorServicios, EditorUbicacion, Tarjeta } from "@/components/panel/Editores";
+import { EditorDatos, EditorFotos, EditorHorarios, EditorPagos, EditorPolitica, EditorServicios, EditorUbicacion, Tarjeta } from "@/components/panel/Editores";
 import ReservasDia from "@/components/panel/ReservasDia";
 import ConfirmarClave from "@/components/panel/ConfirmarClave";
 
@@ -213,6 +213,11 @@ export default function GestorCancha({
       {pestana === "pagos" && (
         <Tarjeta titulo="Medios de pago" detalle="Se muestran al cliente después de reservar.">
           <EditorPagos datos={datos} cambiar={cambiar} />
+        </Tarjeta>
+      )}
+      {pestana === "pagos" && (
+        <Tarjeta titulo="Política de cancelación" detalle="Se muestra a los jugadores antes de reservar.">
+          <EditorPolitica datos={datos} cambiar={cambiar} />
         </Tarjeta>
       )}
       {pestana === "datos" && (

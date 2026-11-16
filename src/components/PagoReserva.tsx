@@ -189,6 +189,20 @@ export default function PagoReserva(p: Props) {
         <img src={pagos.qr} alt="QR para pagar" className="mx-auto h-56 w-56 rounded-xl border border-[#E3E3E3] object-contain" />
       )}
 
+      {/* Referencia única: el dueño la busca en su app para conciliar el pago */}
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-[#0A3D2E] px-3 py-2.5 text-white">
+        <span className="text-sm leading-tight">
+          Escribe este código en el <strong>mensaje</strong> del Yape o Plin
+        </span>
+        <button
+          type="button"
+          onClick={() => copiar(p.codigo)}
+          className="shrink-0 rounded-lg bg-white/15 px-3 py-1.5 font-mono text-base font-bold tracking-wider ring-1 ring-white/30"
+        >
+          {copiado === p.codigo ? "¡Copiado!" : p.codigo}
+        </button>
+      </div>
+
       {medios.length > 0 ? (
         <ul className="flex flex-col gap-2">
           {medios.map((m) => (

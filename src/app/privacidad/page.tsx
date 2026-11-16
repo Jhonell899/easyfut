@@ -7,7 +7,7 @@ export const metadata = { title: "Política de privacidad" };
 const SECCIONES: Seccion[] = [
   {
     titulo: "Quién es responsable de tus datos",
-    parrafos: ["jhonellhuamani09@gmail.com"],
+    parrafos: ["Jhonell Jhonny Huamani Llallico, RUC 10607895045. Contacto: easyfutinquiries@gmail.com."],
   },
   {
     titulo: "Qué datos guardamos",
@@ -43,7 +43,7 @@ const SECCIONES: Seccion[] = [
   {
     titulo: "Tus derechos",
     parrafos: [
-      "Puedes pedir acceso, corrección o eliminación de tus datos, u oponerte a su uso, escribiendo a jhonellhuamani09@gmail.com . Responderemos dentro de los plazos de la Ley 29733.",
+      "Puedes pedir acceso, corrección o eliminación de tus datos, u oponerte a su uso, escribiendo a easyfutinquiries@gmail.com. Responderemos dentro de los plazos de la Ley 29733.",
     ],
   },
 ];

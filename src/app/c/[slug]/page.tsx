@@ -6,6 +6,7 @@ import AvisoConfig from "@/components/AvisoConfig";
 import Reservar from "@/components/Reservar";
 import Ubicacion from "@/components/Ubicacion";
 import ContactoDueno from "@/components/ContactoDueno";
+import PoliticaCancha from "@/components/PoliticaCancha";
 import Logo from "@/components/Logo";
 import { aMinutos, fmtMinutos, soles } from "@/lib/horario";
 
@@ -34,6 +35,7 @@ type CanchaDetalle = {
   latitud?: number | null;
   longitud?: number | null;
   modalidades?: number[] | null;
+  politica_cancelacion?: string | null;
   franjas: Franja[];
 };
 
@@ -263,6 +265,9 @@ export default async function DetalleCancha({
             </ul>
           </section>
         )}
+
+        {/* Política de cancelación: el jugador la ve antes de reservar */}
+        {franjas.length > 0 && <PoliticaCancha politica={cancha.politica_cancelacion} />}
 
         {/* Reserva */}
         {franjas.length > 0 ? (

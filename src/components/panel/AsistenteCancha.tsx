@@ -22,7 +22,8 @@ import {
   type Horario,
 } from "@/lib/rentador";
 import { refrescarPublico } from "@/app/panel/acciones";
-import { EditorDatos, EditorFotos, EditorHorarios, EditorPagos, EditorServicios, EditorUbicacion, Tarjeta } from "@/components/panel/Editores";
+import { POLITICAS, politicaDe } from "@/lib/politicas";
+import { EditorDatos, EditorFotos, EditorHorarios, EditorPagos, EditorPolitica, EditorServicios, EditorUbicacion, Tarjeta } from "@/components/panel/Editores";
 
 const BORRADOR = "easyfut:borrador-cancha";
 
@@ -30,7 +31,7 @@ const PASOS = [
   { titulo: "Tu cancha", detalle: "Lo básico para que los jugadores la encuentren." },
   { titulo: "¿Dónde queda?", detalle: "La dirección y el punto exacto en el mapa." },
   { titulo: "Horarios y precios", detalle: "Los días que abres y cuánto cobras por hora." },
-  { titulo: "¿Cómo te pagan?", detalle: "Yape, Plin o transferencia: el cliente te paga directo." },
+  { titulo: "¿Cómo te pagan?", detalle: "Tus medios de pago y tu política de cancelación." },
   { titulo: "Servicios y fotos", detalle: "Lo que ofreces y cómo se ve." },
   { titulo: "Revisa y publica", detalle: "Así verán tu cancha los jugadores." },
 ];
@@ -52,7 +53,7 @@ export default function AsistenteCancha() {
   useEffect(() => {
     try {
       const b = JSON.parse(localStorage.getItem(BORRADOR) ?? "null");
-      if (b?.datos) setDatos({ ...DATOS_VACIOS, ...b.datos, pagos: pagosDe(b.datos.pagos) });
+      if (b?.datos) setDatos({ ...DATOS_VACIOS, ...b.datos, pagos: pagosDe(b.datos.pagos), politica: politicaDe(b.datos.politica) });
       if (b?.horario) setHorario(b.horario);
       if (typeof b?.paso === "number") setPaso(Math.min(b.paso, PASOS.length - 1));
     } catch {}
@@ -167,7 +168,15 @@ export default function AsistenteCancha() {
         {paso === 0 && <EditorDatos datos={datos} cambiar={cambiar} />}
         {paso === 1 && <EditorUbicacion datos={datos} cambiar={cambiar} />}
         {paso === 2 && <EditorHorarios horario={horario} setHorario={setHorario} />}
-        {paso === 3 && <EditorPagos datos={datos} cambiar={cambiar} />}
+        {paso === 3 && (
+          <div className="flex flex-col gap-6">
+            <EditorPagos datos={datos} cambiar={cambiar} />
+            <div className="flex flex-col gap-2">
+              <h3 className="text-sm font-bold">Política de cancelación</h3>
+              <EditorPolitica datos={datos} cambiar={cambiar} />
+            </div>
+          </div>
+        )}
         {paso === 4 && (
           <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-2">
@@ -289,6 +298,7 @@ function Resumen({ datos, horario, irA }: { datos: DatosCancha; horario: Horario
             .join(" · ") + (datos.pagos.titular ? ` — ${datos.pagos.titular}` : ""),
           3
         )}
+        {fila("Política de cancelación", `${POLITICAS[datos.politica].nombre}: ${POLITICAS[datos.politica].resumen}`, 3)}
         {fila(
           "Servicios y fotos",
           `${datos.servicios.length ? datos.servicios.join(", ") : "Sin servicios"} · ${datos.fotos.length} foto${

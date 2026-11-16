@@ -1,5 +1,6 @@
 // Tipos y utilidades del panel del rentador (crear y editar canchas).
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { POLITICA_POR_DEFECTO, type Politica } from "@/lib/politicas";
 
 export type Pagos = {
   yape: string;
@@ -55,6 +56,7 @@ export type DatosCancha = {
   servicios: string[];
   fotos: string[];
   pagos: Pagos;
+  politica: Politica;
 };
 
 export const DATOS_VACIOS: DatosCancha = {
@@ -71,6 +73,7 @@ export const DATOS_VACIOS: DatosCancha = {
   servicios: [],
   fotos: [],
   pagos: PAGOS_VACIOS,
+  politica: POLITICA_POR_DEFECTO,
 };
 
 export const MODALIDADES = [5, 6, 7, 8, 9, 11];
@@ -202,6 +205,7 @@ export function filaCancha(d: DatosCancha) {
     servicios: d.servicios,
     fotos: d.fotos,
     pagos: pagosParaGuardar(d.pagos),
+    politica_cancelacion: d.politica,
   };
 }
 
