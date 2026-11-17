@@ -46,6 +46,7 @@ easyfut/
 │   ├── migraciones.md         Qué migración hace qué y cuáles ya se ejecutaron
 │   ├── como-trabajar.md       Ramas, commits y versiones: paso a paso
 │   ├── pendientes.md          Lista de mejoras por hacer
+│   ├── guia-pruebas.md        Qué probar y cómo reportar errores (para probadores)
 │   └── whatsapp-meta.md       (En pausa) Código por WhatsApp con Meta
 │
 └── .github/                 ← Plantillas para anotar ideas y errores en GitHub
