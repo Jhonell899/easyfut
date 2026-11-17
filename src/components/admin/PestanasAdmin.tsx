@@ -5,12 +5,14 @@ import AdminRentadores from "@/components/admin/AdminRentadores";
 import AdminClientes from "@/components/admin/AdminClientes";
 import AdminCanchas from "@/components/admin/AdminCanchas";
 import AdminCambiosPagos from "@/components/admin/AdminCambiosPagos";
+import AdminResenas from "@/components/admin/AdminResenas";
 
 const PESTANAS = [
   { clave: "canchas", texto: "Canchas" },
   { clave: "rentadores", texto: "Rentadores" },
   { clave: "clientes", texto: "Clientes" },
   { clave: "pagos", texto: "Cambios de pago" },
+  { clave: "resenas", texto: "Reseñas" },
 ] as const;
 
 export default function PestanasAdmin() {
@@ -39,8 +41,10 @@ export default function PestanasAdmin() {
         <AdminRentadores />
       ) : pestana === "clientes" ? (
         <AdminClientes />
-      ) : (
+      ) : pestana === "pagos" ? (
         <AdminCambiosPagos />
+      ) : (
+        <AdminResenas />
       )}
     </>
   );

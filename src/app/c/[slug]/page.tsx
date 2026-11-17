@@ -7,6 +7,8 @@ import Reservar from "@/components/Reservar";
 import Ubicacion from "@/components/Ubicacion";
 import ContactoDueno from "@/components/ContactoDueno";
 import PoliticaCancha from "@/components/PoliticaCancha";
+import ResenasCancha, { type ResenaPublica } from "@/components/ResenasCancha";
+import ConfianzaCancha, { type DatosConfianza } from "@/components/ConfianzaCancha";
 import Logo from "@/components/Logo";
 import { aMinutos, fmtMinutos, soles } from "@/lib/horario";
 
@@ -120,6 +122,20 @@ export default async function DetalleCancha({
     (f) => f.dia_semana != null && f.hora_inicio && f.hora_fin
   );
   const resumen = resumirHorario(franjas);
+
+  // Reseñas verificadas y señales de confianza (migración 017; si no existe, se omiten)
+  const [{ data: datosResenas }, { data: datosConfianza }] = await Promise.all([
+    supabase
+      .from("resenas")
+      .select("id, estrellas, comentario, nombre, respuesta, created_at")
+      .eq("cancha_id", cancha.id)
+      .order("created_at", { ascending: false })
+      .limit(30),
+    supabase.rpc("confianza_canchas", { p_ids: [cancha.id] }),
+  ]);
+  const resenas = (datosResenas ?? []) as ResenaPublica[];
+  const confianza = ((datosConfianza ?? []) as DatosConfianza[])[0] ?? null;
+  const hayResenas = datosResenas !== null;
   const desde = franjas.length ? Math.min(...franjas.map((f) => Number(f.precio_hora))) : null;
 
   return (
@@ -194,6 +210,9 @@ export default async function DetalleCancha({
             </svg>
             {cancha.direccion}, {cancha.distrito}
           </p>
+
+          {/* Señales de confianza */}
+          {confianza && <ConfianzaCancha c={confianza} />}
 
           {/* Dueño, visible desde el primer vistazo */}
           {contacto?.nombre && (
@@ -296,6 +315,8 @@ export default async function DetalleCancha({
         />
 
         {contacto && <ContactoDueno nombre={contacto.nombre} celular={contacto.celular} cancha={cancha.nombre} />}
+
+        {hayResenas && <ResenasCancha resenas={resenas} />}
       </div>
     </main>
   );

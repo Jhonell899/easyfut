@@ -22,6 +22,19 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | 014 | `014_nombre_dueno.sql` | El nombre del dueño se muestra siempre en la página de su cancha | ✅ Ejecutada |
 | 015 | `015_proteccion_pagos.sql` | Medios de pago: contraseña reciente para cambiarlos, historial de cambios y aviso al cliente | ✅ Ejecutada |
 | 016 | `016_politica_cancelacion.sql` | Política de cancelación por cancha (Flexible, Moderada, Estricta) | ✅ Ejecutada |
+| 017 | `017_libres_resenas_confianza.sql` | Buscar "libre a tal hora", reseñas verificadas, confianza de cada cancha | ⏳ Pendiente |
+| 018 | `018_dispositivos.sql` | Código por correo al entrar desde un dispositivo nuevo (2 pasos) | ⏳ Pendiente |
+
+## Plantillas de correo (Supabase → Authentication → Emails → Templates)
+
+Supabase solo deja editar las plantillas **después de configurar un correo propio (SMTP)**.
+Mientras tanto la app funciona con el **enlace** que manda Supabase: hay que abrirlo en el mismo dispositivo.
+Con las plantillas pegadas, el correo trae además un **código** de 6 dígitos.
+
+| Plantilla en Supabase | Archivo | Asunto |
+|---|---|---|
+| **Confirm signup** | `supabase/plantillas/confirmar_registro.html` | `Tu código de EasyFut: {{ .Token }}` |
+| **Magic Link** | `supabase/plantillas/codigo_ingreso.html` | `Código para entrar a EasyFut: {{ .Token }}` |
 
 ## Si algo falla
 

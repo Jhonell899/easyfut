@@ -1,0 +1,45 @@
+<!--
+  Plantilla "Magic Link" de EasyFut (código para ENTRAR desde un dispositivo nuevo).
+  Dónde pegarla: Supabase → Authentication → Emails → Templates → "Magic Link"
+    Subject:  Código para entrar a EasyFut: {{ .Token }}
+    Body:     (todo este archivo)
+  {{ .Token }} es el código de verificación que el usuario escribe en la app.
+-->
+<div style="margin:0;padding:24px 0;background:#F1EFF8;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+               style="max-width:440px;background:#ffffff;border-radius:20px;overflow:hidden;">
+          <tr>
+            <td style="background:#0A3D2E;padding:24px;text-align:left;">
+              <span style="font-size:22px;font-weight:800;color:#ffffff;">Easy<span style="color:#C4B5FD;">Fut</span></span>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:28px 24px 8px;color:#1b1b1b;">
+              <h1 style="margin:0 0 8px;font-size:20px;">¿Eres tú quien intenta entrar?</h1>
+              <p style="margin:0;font-size:15px;line-height:22px;color:#4a4a4a;">
+                Alguien inició sesión en tu cuenta desde un dispositivo nuevo. Si fuiste tú, escribe este código en EasyFut:
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:20px 24px;">
+              <div style="display:inline-block;padding:16px 24px;background:#EDE9FE;border-radius:14px;
+                          font-family:'Courier New',monospace;font-size:34px;font-weight:700;
+                          letter-spacing:8px;color:#6D28D9;">
+                {{ .Token }}
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 24px 28px;font-size:13px;line-height:20px;color:#5a5a5a;">
+              Si no fuiste tú, <strong>no compartas este código</strong> y cambia tu contraseña: alguien conoce tu clave. Escríbenos a easyfutinquiries@gmail.com.
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>

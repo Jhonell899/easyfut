@@ -11,5 +11,6 @@ export async function GET(request: NextRequest) {
   if (siguiente?.startsWith("/") && siguiente !== "/") {
     return NextResponse.redirect(`${origin}${siguiente}`);
   }
-  return NextResponse.redirect(`${origin}${sesion.perfil?.rol === "dueno" ? "/panel" : "/"}`);
+  const modoJugador = request.cookies.get("ef_modo")?.value === "jugador";
+  return NextResponse.redirect(`${origin}${sesion.perfil?.rol === "dueno" && !modoJugador ? "/panel" : "/"}`);
 }

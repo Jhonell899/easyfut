@@ -3,12 +3,14 @@
 Marca con `[x]` lo que vayas terminando. Para trabajar una tarea, créala como *Issue* en GitHub.
 
 ## 1. Antes de lanzar al público
+- [x] Verificación en dos pasos (código al correo) al entrar desde un dispositivo nuevo (migración 018)
+- [x] Cambiar entre modo dueño y modo jugador
 - [x] Respaldo del código en GitHub
 - [x] Protección contra reservas falsas
 - [x] Prueba de seguridad y arreglos: cabeceras, contraseña de 8, hueco de "Ya pagué"
 - [ ] Publicar en internet (Vercel) con `https`
 - [x] App instalable en el celular (PWA): ícono, nombre, pantalla completa
-- [ ] Correo propio (SMTP: Resend o Brevo) para que siempre lleguen los códigos
+- [ ] **Correo propio (SMTP)**: obligatorio antes de lanzar. Sin él, Supabase solo envía correos a los miembros del equipo del proyecto y no deja editar las plantillas
 - [ ] Borrar las canchas de ejemplo y cargar las reales
 - [ ] Términos y privacidad: borrador listo en /terminos y /privacidad; falta completar los [COMPLETAR] y revisarlo con un abogado
 - [ ] Actualizar dependencias (Next.js y avisos de `npm audit`)
@@ -16,10 +18,11 @@ Marca con `[x]` lo que vayas terminando. Para trabajar una tarea, créala como *
 ## 2. Para los jugadores
 - [x] Cancelar su propia reserva mientras no haya avisado el pago
 - [x] Buscar por nombre o distrito y ordenar por precio
-- [ ] Buscar "libre hoy a las 8 pm"
+- [x] Buscar "libre hoy / mañana a tal hora" (migración 017)
 - [x] Agregar el partido al calendario del celular
 - [x] Compartir la reserva con el equipo
-- [ ] Reseñas y estrellas
+- [x] Reseñas verificadas con estrellas y respuesta del dueño (migración 017)
+- [x] Señales de confianza: partidos jugados, dueño verificado, reseñas respondidas
 
 ## 3. Para los dueños
 - [x] Política de cancelación por cancha, con opciones fijas y justas (migración 016)

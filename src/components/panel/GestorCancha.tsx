@@ -20,6 +20,7 @@ import { refrescarPublico } from "@/app/panel/acciones";
 import { EditorDatos, EditorFotos, EditorHorarios, EditorPagos, EditorPolitica, EditorServicios, EditorUbicacion, Tarjeta } from "@/components/panel/Editores";
 import ReservasDia from "@/components/panel/ReservasDia";
 import ConfirmarClave from "@/components/panel/ConfirmarClave";
+import ResenasDueno from "@/components/panel/ResenasDueno";
 
 export type CanchaBD = DatosCancha & { id: string; slug: string; activa: boolean };
 type FranjaBD = { dia_semana: number; hora_inicio: string; hora_fin: string; precio_hora: number };
@@ -31,6 +32,7 @@ const PESTANAS = [
   { clave: "datos", texto: "Datos" },
   { clave: "ubicacion", texto: "Ubicación" },
   { clave: "fotos", texto: "Fotos y servicios" },
+  { clave: "resenas", texto: "Reseñas" },
 ] as const;
 type Pestana = (typeof PESTANAS)[number]["clave"];
 
@@ -230,6 +232,7 @@ export default function GestorCancha({
           <EditorUbicacion datos={datos} cambiar={cambiar} />
         </Tarjeta>
       )}
+      {pestana === "resenas" && <ResenasDueno canchaId={cancha.id} />}
       {pestana === "fotos" && (
         <>
           <Tarjeta titulo="Fotos">

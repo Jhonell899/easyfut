@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
+import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
 import CampoTexto from "@/components/CampoTexto";
 import VerificarCodigo from "@/components/VerificarCodigo";
 
@@ -81,12 +82,13 @@ export default function FormularioRegistro({
     // para que este registro empiece de cero con un código nuevo.
     await supabase.rpc("liberar_correo_no_verificado", { p_correo: email });
 
-    const { data, error } = await supabase.auth.signUp({
+    // El correo de confirmación se pide con el cliente de enlaces (funciona en cualquier navegador)
+    const { data, error } = await (clienteCorreo() ?? supabase).auth.signUp({
       email,
       password: clave,
       options: {
         data: { nombre: nombre.trim(), celular: celularLimpio, rol: tipo },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(destino)}`,
+        emailRedirectTo: enlaceDeVuelta(destino),
       },
     });
 

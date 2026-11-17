@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
+import { confiarDispositivo } from "@/lib/dispositivo";
+import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
 
 const ESPERA_REENVIO = 60; // segundos
 
@@ -21,9 +23,14 @@ export default function VerificarCodigo({
   destino,
   reenviarAlAbrir = false,
   onVolver,
+  tipo = "signup",
+  explicacion,
 }: {
   correo: string;
   destino: string;
+  /** "signup" = crear cuenta; "email" = entrar desde un dispositivo nuevo. */
+  tipo?: "signup" | "email";
+  explicacion?: string;
   /** true cuando se llega desde el login (el código anterior pudo vencer). */
   reenviarAlAbrir?: boolean;
   onVolver?: () => void;
@@ -50,7 +57,17 @@ export default function VerificarCodigo({
     if (!supabase) return;
     setError(null);
     setAviso(null);
-    const { error } = await supabase.auth.resend({ type: "signup", email: correo });
+    const { error } =
+      tipo === "signup"
+        ? await (clienteCorreo() ?? supabase).auth.resend({
+            type: "signup",
+            email: correo,
+            options: { emailRedirectTo: enlaceDeVuelta(destino) },
+          })
+        : await (clienteCorreo() ?? supabase).auth.signInWithOtp({
+            email: correo,
+            options: { shouldCreateUser: false, emailRedirectTo: enlaceDeVuelta(destino) },
+          });
     if (error) return setError(traducir(error.message));
     setAviso("Te enviamos un código nuevo.");
     setEspera(ESPERA_REENVIO);
@@ -69,13 +86,15 @@ export default function VerificarCodigo({
     if (!supabase) return;
     setVerificando(true);
     setError(null);
-    const { data, error } = await supabase.auth.verifyOtp({ email: correo, token, type: "signup" });
+    const { data, error } = await supabase.auth.verifyOtp({ email: correo, token, type: tipo });
     if (error || !data.session) {
       setVerificando(false);
       setCodigo("");
       inputRef.current?.focus();
       return setError(traducir(error?.message ?? ""));
     }
+    // Entró con un código: este dispositivo queda de confianza por 30 días (migración 018)
+    await confiarDispositivo(supabase).catch(() => {});
     window.location.assign(`/auth/destino?next=${encodeURIComponent(destino)}`);
   }
 
@@ -95,11 +114,18 @@ export default function VerificarCodigo({
             <path d="M3 7l9 6 9-6" />
           </svg>
         </span>
-        <h2 className="text-lg font-bold">Ingresa el código</h2>
+        <h2 className="text-lg font-bold">Revisa tu correo</h2>
+        {explicacion && (
+          <p className="rounded-xl bg-[#F5F3FF] px-3 py-2 text-sm text-[#4C1D95]">{explicacion}</p>
+        )}
         <p className="text-sm text-[#5A5A5A]">
-          Enviamos un código de verificación a{" "}
-          <strong className="text-[#1B1B1B]">{correo}</strong>. Si no lo ves, revisa spam.
+          Te enviamos un correo a <strong className="text-[#1B1B1B]">{correo}</strong>. Si no lo ves, revisa spam.
         </p>
+        <ol className="w-full rounded-xl bg-[#F7F8F7] p-3 text-left text-sm text-[#1B1B1B]">
+          <li>1. Abre el correo de EasyFut (o de Supabase Auth).</li>
+          <li>2. Toca el botón del correo. Te traerá de vuelta a EasyFut ya dentro.</li>
+        </ol>
+        <p className="text-xs text-[#8A968F]">¿Tu correo trae un código de números? Escríbelo abajo.</p>
       </div>
 
       <form

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import MenuUsuario from "@/components/MenuUsuario";
 import { supabase } from "@/lib/supabase";
-import { type Cancha } from "@/components/TarjetaCancha";
+import { type Cancha, type Confianza } from "@/components/TarjetaCancha";
 import ListaCanchas from "@/components/ListaCanchas";
 import AvisoConfig from "@/components/AvisoConfig";
 import Logo from "@/components/Logo";
@@ -20,6 +20,13 @@ export default async function Inicio() {
     : { data: null, error: null };
 
   const canchas = (data ?? []) as Cancha[];
+
+  // Reseñas, partidos jugados y dueño verificado (migración 017; si no existe, se omite)
+  const confianza: Record<string, Confianza> = {};
+  if (supabase && canchas.length) {
+    const { data: filas } = await supabase.rpc("confianza_canchas", { p_ids: canchas.map((c) => c.id) });
+    for (const f of (filas ?? []) as (Confianza & { cancha_id: string })[]) confianza[f.cancha_id] = f;
+  }
 
   return (
     <div className="min-h-screen">
@@ -71,7 +78,7 @@ export default async function Inicio() {
           </p>
         )}
 
-        {canchas.length > 0 && <ListaCanchas canchas={canchas} />}
+        {canchas.length > 0 && <ListaCanchas canchas={canchas} confianza={confianza} />}
 
         {/* Entrada para dueños de canchas */}
         <Link

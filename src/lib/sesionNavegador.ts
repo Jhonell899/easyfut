@@ -11,6 +11,6 @@ export function supabaseNavegador(): SupabaseClient | null {
   if (cliente !== undefined) return cliente;
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  cliente = url && key ? createBrowserClient(url, key) : null;
+  cliente = url && key ? createBrowserClient(url, key, { auth: { detectSessionInUrl: false } }) : null;
   return cliente;
 }

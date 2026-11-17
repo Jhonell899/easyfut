@@ -17,6 +17,14 @@ export type Cancha = {
   franjas: { precio_hora: number }[];
 };
 
+/** Datos públicos de confianza de una cancha (migración 017). */
+export type Confianza = {
+  promedio: number | null;
+  total_resenas: number;
+  partidos: number;
+  dueno_verificado: boolean;
+};
+
 export const DEPORTES: Record<string, string> = {
   futbol: "Fútbol",
   futsal: "Futsal",
@@ -37,7 +45,18 @@ export function etiquetaDeporte(deporte: string, modalidades?: number[] | null):
   return m.length ? `${base} ${m.join(" · ")}` : base;
 }
 
-export default function TarjetaCancha({ cancha, km }: { cancha: Cancha; km?: number | null }) {
+export default function TarjetaCancha({
+  cancha,
+  km,
+  confianza,
+  libre,
+}: {
+  cancha: Cancha;
+  km?: number | null;
+  confianza?: Confianza;
+  /** Hora del primer turno libre, si se buscó "¿Cuándo quieres jugar?". */
+  libre?: string;
+}) {
   const cerca = km != null ? cercania(km) : null;
   const precios = (cancha.franjas ?? []).map((f) => Number(f.precio_hora));
   const desde = precios.length ? Math.min(...precios) : null;
@@ -98,6 +117,30 @@ export default function TarjetaCancha({ cancha, km }: { cancha: Cancha; km?: num
       </div>
 
       <div className="flex flex-col gap-3 p-4">
+        {/* Confianza y disponibilidad */}
+        {(libre || confianza) && (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+            {libre && (
+              <span className="rounded-full bg-[#DCF5EA] px-2.5 py-1 font-bold text-[#0F7A55]">✓ Libre a las {libre}</span>
+            )}
+            {confianza && confianza.total_resenas > 0 && confianza.promedio != null ? (
+              <span className="flex items-center gap-1 font-bold text-[#14231D]">
+                <span className="text-amber-500" aria-hidden="true">★</span>
+                {Number(confianza.promedio).toFixed(1)}
+                <span className="font-normal text-[#8A968F]">({confianza.total_resenas})</span>
+              </span>
+            ) : (
+              confianza && <span className="text-[#8A968F]">Sin reseñas aún</span>
+            )}
+            {confianza && confianza.partidos > 0 && (
+              <span className="text-[#5A5A5A]">
+                {confianza.partidos} partido{confianza.partidos === 1 ? "" : "s"} jugado{confianza.partidos === 1 ? "" : "s"}
+              </span>
+            )}
+            {confianza?.dueno_verificado && <span className="font-bold text-[#0F7A55]">✓ Dueño verificado</span>}
+          </div>
+        )}
+
         {detalles.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {detalles.map((d) => (

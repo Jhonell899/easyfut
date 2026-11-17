@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import CampoTexto from "@/components/CampoTexto";
+import VerificarCodigo from "@/components/VerificarCodigo";
+import { esConfiable } from "@/lib/dispositivo";
+import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
 
 function traducir(msg: string): string {
   if (/invalid login credentials/i.test(msg)) return "Correo o contraseña incorrectos.";
@@ -24,8 +27,10 @@ export default function FormularioIngreso({
   const [clave, setClave] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [sinVerificar, setSinVerificar] = useState(false);
+  // Segundo paso: código por correo al entrar desde un dispositivo nuevo
+  const [paso2, setPaso2] = useState(false);
   const [error, setError] = useState<string | null>(
-    errorEnlace ? "El enlace no es válido o ya expiró. Inicia sesión o regístrate otra vez." : null
+    errorEnlace ? "Ese enlace ya se usó, venció o se abrió en otro navegador. Si estabas creando tu cuenta, probablemente ya quedó confirmada: ingresa con tu correo y contraseña." : null
   );
 
   async function ingresar(e: React.FormEvent) {
@@ -52,11 +57,39 @@ export default function FormularioIngreso({
       }
       return setError(traducir(error.message));
     }
+    // Dispositivo nuevo: la contraseña no basta, se pide un código al correo
+    if ((await esConfiable(supabase)) === false) {
+      await supabase.auth.signOut();
+      const { error: errCodigo } = await (clienteCorreo() ?? supabase).auth.signInWithOtp({
+        email: correo.trim(),
+        options: { shouldCreateUser: false, emailRedirectTo: enlaceDeVuelta(siguiente ?? "/") },
+      });
+      setEnviando(false);
+      if (errCodigo)
+        return setError(
+          /security purposes|rate limit|too many/i.test(errCodigo.message)
+            ? "Ya te enviamos un código hace poco. Espera un minuto e inténtalo de nuevo."
+            : "No pudimos enviarte el código de seguridad. Inténtalo de nuevo."
+        );
+      return setPaso2(true);
+    }
     // Navegación completa para que el servidor lea la nueva sesión
     window.location.assign(`/auth/destino?next=${encodeURIComponent(siguiente ?? "/")}`);
   }
 
   const sufijo = siguiente ? `?next=${encodeURIComponent(siguiente)}` : "";
+
+  if (paso2) {
+    return (
+      <VerificarCodigo
+        correo={correo.trim()}
+        destino={siguiente ?? "/"}
+        tipo="email"
+        explicacion="Estás entrando desde un dispositivo nuevo. Por seguridad, confirma que eres tú con el código que te enviamos."
+        onVolver={() => setPaso2(false)}
+      />
+    );
+  }
 
   return (
     <form onSubmit={ingresar} className="flex flex-col gap-4">

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import BarraInferior from "@/components/BarraInferior";
+import RedirigirEnlace from "@/components/RedirigirEnlace";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="antialiased">
         {children}
         <BarraInferior />
+        <RedirigirEnlace />
       </body>
     </html>
   );

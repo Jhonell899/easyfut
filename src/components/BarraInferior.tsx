@@ -8,7 +8,7 @@ import { supabaseNavegador } from "@/lib/sesionNavegador";
 // Solo en las pantallas principales: las demás ya tienen su propia barra de acción abajo
 const RUTAS = ["/", "/reservas", "/panel", "/admin", "/publicar"];
 
-type Cuenta = "anonimo" | "cliente" | "panel" | "admin";
+type Cuenta = "anonimo" | "cliente" | "panel" | "admin" | "dueno-jugando";
 
 /** Barra de navegación inferior, como en una app de celular. */
 export default function BarraInferior() {
@@ -23,7 +23,8 @@ export default function BarraInferior() {
       if (!data.user) return setCuenta("anonimo");
       const { data: p } = await supabase!.from("perfiles").select("*").eq("id", data.user.id).maybeSingle();
       if (p?.es_admin) return setCuenta("admin");
-      if (p?.rol === "dueno") return setCuenta("panel");
+      if (p?.rol === "dueno")
+        return setCuenta(/(?:^|; )ef_modo=jugador/.test(document.cookie) ? "dueno-jugando" : "panel");
       const { data: locales } = await supabase!.rpc("mis_locales");
       setCuenta(Array.isArray(locales) && locales.length > 0 ? "panel" : "cliente");
     }
@@ -35,7 +36,9 @@ export default function BarraInferior() {
   if (!RUTAS.includes(ruta)) return null;
 
   const tercero =
-    cuenta === "admin"
+    cuenta === "dueno-jugando"
+      ? { href: "/modo?m=dueno", texto: "Modo dueño", icono: <path d="M7 7h11l-3-3M17 17H6l3 3" /> }
+      : cuenta === "admin"
       ? { href: "/admin", texto: "Admin", icono: <path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6z" /> }
       : cuenta === "panel"
         ? {

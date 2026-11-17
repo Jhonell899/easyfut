@@ -6,6 +6,7 @@ import { fmtFecha, soles } from "@/lib/horario";
 import PagoReserva from "@/components/PagoReserva";
 import AccionesReserva from "@/components/AccionesReserva";
 import PedirCancelacion from "@/components/PedirCancelacion";
+import CalificarReserva from "@/components/CalificarReserva";
 
 // El estado de una reserva cambia (pago, expiración): siempre datos frescos
 export const dynamic = "force-dynamic";
@@ -77,6 +78,10 @@ export default async function PaginaReserva({
     !reserva.pago_avisado_en &&
     reserva.expira_en !== null &&
     new Date(reserva.expira_en).getTime() < Date.now();
+  const finMs = new Date(reserva.fin).getTime();
+  const jugado = finMs < Date.now();
+  const haceMenosDe30Dias = Date.now() - finMs < 30 * 24 * 3600 * 1000;
+
   const estado =
     ESTADOS[vencida ? "expirada" : reserva.estado === "pendiente" && reserva.pago_avisado_en ? "revision" : reserva.estado];
 
@@ -127,10 +132,15 @@ export default async function PaginaReserva({
         />
       )}
 
-      {reserva.estado === "confirmada" && (
-        <p className="rounded-2xl bg-[#EDE9FE] p-4 text-sm font-medium text-[#6D28D9]">
+      {reserva.estado === "confirmada" && !jugado && (
+        <p className="rounded-2xl bg-[#DCF5EA] p-4 text-sm font-medium text-[#0F7A55]">
           ¡Listo! El dueño confirmó tu pago. Te esperamos en la cancha.
         </p>
+      )}
+
+      {/* Después del partido: calificar la cancha (solo reservas pagadas, hasta 30 días) */}
+      {reserva.estado === "confirmada" && jugado && haceMenosDe30Dias && (
+        <CalificarReserva codigo={reserva.codigo} canchaNombre={reserva.cancha_nombre} />
       )}
 
       {vencida && (

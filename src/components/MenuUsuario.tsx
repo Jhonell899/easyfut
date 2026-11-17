@@ -86,6 +86,8 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
 
   const nombre = perfil?.nombre?.trim() || correo.split("@")[0];
   const esDueno = perfil?.rol === "dueno";
+  // Un dueño puede usar EasyFut como jugador (cookie "ef_modo", ver /modo)
+  const modoJugador = esDueno && typeof document !== "undefined" && /(?:^|; )ef_modo=jugador/.test(document.cookie);
 
   return (
     <div ref={ref} className="relative">
@@ -115,20 +117,31 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
                 esDueno ? "bg-[#0A3D2E] text-white" : "bg-[#EDE9FE] text-[#6D28D9]"
               }`}
             >
-              {esDueno ? "Rentador" : esEncargado ? "Encargado" : "Comprador"}
+              {esDueno ? (modoJugador ? "Dueño · modo jugador" : "Dueño") : esEncargado ? "Encargado" : "Jugador"}
             </span>
           </div>
           {esDueno ? (
-            <Link href="/panel" role="menuitem" className="block px-3 py-2.5 hover:bg-[#F4F4F4]">
-              Mi panel
-            </Link>
+            modoJugador ? (
+              <a href="/modo?m=dueno" role="menuitem" className="block px-3 py-2.5 font-bold text-[#6D28D9] hover:bg-[#F4F4F4]">
+                ⇄ Volver a modo dueño
+              </a>
+            ) : (
+              <>
+                <Link href="/panel" role="menuitem" className="block px-3 py-2.5 hover:bg-[#F4F4F4]">
+                  Mi panel
+                </Link>
+                <a href="/modo?m=jugador" role="menuitem" className="block px-3 py-2.5 hover:bg-[#F4F4F4]">
+                  ⇄ Cambiar a modo jugador
+                </a>
+              </>
+            )
           ) : esEncargado ? (
             <Link href="/panel" role="menuitem" className="block px-3 py-2.5 font-bold text-[#6D28D9] hover:bg-[#F4F4F4]">
               Panel de encargado
             </Link>
           ) : (
             <Link href="/publicar" role="menuitem" className="block px-3 py-2.5 hover:bg-[#F4F4F4]">
-              Publicar mi cancha
+              ⇄ Tengo una cancha: ser dueño
             </Link>
           )}
           <Link href="/reservas" role="menuitem" className="block px-3 py-2.5 hover:bg-[#F4F4F4]">

@@ -1,18 +1,62 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import TarjetaCancha, { DEPORTES, type Cancha } from "@/components/TarjetaCancha";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { fmtFecha, hoyLima, sumarDias } from "@/lib/horario";
+import TarjetaCancha, { DEPORTES, type Cancha, type Confianza } from "@/components/TarjetaCancha";
 import { distanciaKm, puntoDe, useMiUbicacion } from "@/lib/ubicacion";
 
 type Filtro = { clave: string; texto: string; cumple: (c: Cancha) => boolean };
 
 /** Lista de canchas con filtro por modalidad de fútbol (7, 9, 11…) y otros deportes. */
-export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
+// Horas que se pueden buscar: 06:00 … 23:00
+const HORAS_BUSQUEDA = Array.from({ length: 18 }, (_, i) => `${String(i + 6).padStart(2, "0")}:00`);
+
+export default function ListaCanchas({
+  canchas,
+  confianza = {},
+}: {
+  canchas: Cancha[];
+  confianza?: Record<string, Confianza>;
+}) {
   const [activo, setActivo] = useState("todas");
   const [buscar, setBuscar] = useState("");
   const [distrito, setDistrito] = useState("");
   const [orden, setOrden] = useState<"recomendado" | "precio">("recomendado");
   const { punto, estado, pedir } = useMiUbicacion();
+
+  // "¿Cuándo juegas?": canchas con un turno libre a esa hora (migración 017)
+  const hoy = hoyLima();
+  const [dia, setDia] = useState(hoy);
+  const [hora, setHora] = useState("");
+  const [libres, setLibres] = useState<Record<string, string> | null>(null);
+  const [buscandoLibres, setBuscandoLibres] = useState(false);
+  const [errorLibres, setErrorLibres] = useState(false);
+
+  useEffect(() => {
+    if (!hora || !supabase) {
+      setLibres(null);
+      return;
+    }
+    let cancelado = false;
+    setBuscandoLibres(true);
+    setErrorLibres(false);
+    supabase.rpc("canchas_libres", { p_fecha: dia, p_hora: hora }).then(({ data, error }) => {
+      if (cancelado) return;
+      setBuscandoLibres(false);
+      if (error) {
+        setErrorLibres(true);
+        return setLibres(null);
+      }
+      const mapa: Record<string, string> = {};
+      for (const f of (data ?? []) as { cancha_id: string; inicio: string }[])
+        mapa[f.cancha_id] = fmtFecha(f.inicio, { hour: "2-digit", minute: "2-digit", hour12: false });
+      setLibres(mapa);
+    });
+    return () => {
+      cancelado = true;
+    };
+  }, [dia, hora]);
 
   const distritos = useMemo(() => [...new Set(canchas.map((c) => c.distrito))].sort((a, b) => a.localeCompare(b, "es")), [canchas]);
   const precioDesde = (c: Cancha) => {
@@ -50,6 +94,7 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
       .filter(filtro.cumple)
       .filter((c) => !distrito || c.distrito === distrito)
       .filter((c) => !q || plano(`${c.nombre} ${c.distrito} ${c.direccion}`).includes(q))
+      .filter((c) => !libres || c.id in libres)
       .map((c) => {
         const p = puntoDe(c);
         return { c, km: punto && p ? distanciaKm(punto, p) : null };
@@ -58,8 +103,8 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
     else if (punto) lista.sort((a, b) => (a.km ?? Infinity) - (b.km ?? Infinity));
     return lista;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [canchas, filtro, punto, buscar, distrito, orden]);
-  const hayFiltros = !!buscar.trim() || !!distrito || activo !== "todas";
+  }, [canchas, filtro, punto, buscar, distrito, orden, libres]);
+  const hayFiltros = !!buscar.trim() || !!distrito || activo !== "todas" || !!hora;
 
   return (
     <>
@@ -110,6 +155,53 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
           </select>
         </div>
 
+        {/* ¿Cuándo juegas? */}
+        <div className="flex flex-col gap-2 rounded-2xl bg-[#F5F3FF] p-3">
+          <p className="text-sm font-bold text-[#4C1D95]">¿Cuándo quieres jugar?</p>
+          <div className="flex gap-2">
+            {[
+              { valor: hoy, texto: "Hoy" },
+              { valor: sumarDias(hoy, 1), texto: "Mañana" },
+            ].map((d) => (
+              <button
+                key={d.valor}
+                type="button"
+                onClick={() => setDia(d.valor)}
+                aria-pressed={dia === d.valor}
+                className={`rounded-full px-3 py-1.5 text-sm font-bold ${
+                  dia === d.valor ? "bg-[#6D28D9] text-white" : "bg-white text-[#4C1D95] ring-1 ring-[#C4B5FD]"
+                }`}
+              >
+                {d.texto}
+              </button>
+            ))}
+            <select
+              value={hora}
+              onChange={(e) => setHora(e.target.value)}
+              aria-label="Hora"
+              className="min-w-0 flex-1 rounded-full border border-[#C4B5FD] bg-white px-3 py-1.5 text-sm font-bold text-[#4C1D95] outline-none"
+            >
+              <option value="">A cualquier hora</option>
+              {HORAS_BUSQUEDA.map((h) => (
+                <option key={h} value={h}>
+                  A las {h}
+                </option>
+              ))}
+            </select>
+          </div>
+          {hora && (
+            <p className="text-xs text-[#4C1D95]">
+              {buscandoLibres
+                ? "Buscando canchas libres…"
+                : errorLibres
+                  ? "Esta búsqueda aún no está disponible."
+                  : `${Object.keys(libres ?? {}).length} cancha${Object.keys(libres ?? {}).length === 1 ? "" : "s"} libre${
+                      Object.keys(libres ?? {}).length === 1 ? "" : "s"
+                    } ${dia === hoy ? "hoy" : "mañana"} entre las ${hora} y las ${String(Number(hora.slice(0, 2)) + 1).padStart(2, "0")}:00`}
+            </p>
+          )}
+        </div>
+
         <BotonUbicacion estado={estado} onPedir={pedir} />
 
         {filtros.length > 1 && (
@@ -141,7 +233,7 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
       </div>
 
       {visibles.map(({ c, km }) => (
-        <TarjetaCancha key={c.id} cancha={c} km={km} />
+        <TarjetaCancha key={c.id} cancha={c} km={km} confianza={confianza[c.id]} libre={libres?.[c.id]} />
       ))}
 
       {canchas.length > 0 && visibles.length === 0 && (
@@ -154,6 +246,7 @@ export default function ListaCanchas({ canchas }: { canchas: Cancha[] }) {
                 setBuscar("");
                 setDistrito("");
                 setActivo("todas");
+                setHora("");
               }}
               className="font-bold text-[#6D28D9]"
             >
