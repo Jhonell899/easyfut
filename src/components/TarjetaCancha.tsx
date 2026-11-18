@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cercania, fmtDistancia } from "@/lib/ubicacion";
 
 export type Cancha = {
@@ -70,13 +71,14 @@ export default function TarjetaCancha({
       className="sombra-suave group block overflow-hidden rounded-3xl bg-white transition-all duration-200 hover:-translate-y-1"
     >
       {/* Foto con el nombre encima */}
-      <div className="relative h-44 overflow-hidden">
+      <div className="relative h-48 overflow-hidden bg-[#0A3D2E]">
         {cancha.fotos?.[0] ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={cancha.fotos[0]}
             alt={`Foto de ${cancha.nombre}`}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
           <div className="fondo-cancha flex h-full items-center justify-center">

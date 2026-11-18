@@ -16,7 +16,7 @@ export default async function Inicio() {
         .select("*, franjas(precio_hora)") // "*" incluye modalidades si la columna ya existe
         .eq("activa", true)
         .order("created_at", { ascending: false })
-        .limit(30)
+        .limit(18)
     : { data: null, error: null };
 
   const canchas = (data ?? []) as Cancha[];

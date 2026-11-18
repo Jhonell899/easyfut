@@ -28,7 +28,18 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const ruta = request.nextUrl.pathname;
-  if (user && PROTEGIDAS.some((p) => ruta === p || ruta.startsWith(`${p}/`))) {
+  const esProtegida = PROTEGIDAS.some((p) => ruta === p || ruta.startsWith(`${p}/`));
+
+  if (esProtegida) {
+    if (!user) {
+      const destino = request.nextUrl.clone();
+      destino.pathname = "/ingresar";
+      destino.search = `?next=${encodeURIComponent(ruta + request.nextUrl.search)}`;
+      const redireccion = NextResponse.redirect(destino);
+      response.cookies.getAll().forEach((c) => redireccion.cookies.set(c));
+      return redireccion;
+    }
+
     const dispositivo = request.cookies.get("ef_disp")?.value ?? null;
     const { data, error } = await supabase.rpc("dispositivo_confiable", { p_dispositivo: dispositivo });
     // Si la función aún no existe (migración pendiente) no se bloquea a nadie

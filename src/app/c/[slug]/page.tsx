@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { DEPORTES, ordenarModalidades } from "@/components/TarjetaCancha";
@@ -145,13 +146,16 @@ export default async function DetalleCancha({
         {fotos.length > 0 ? (
           <div className="sin-scroll flex snap-x snap-mandatory overflow-x-auto">
             {fotos.map((src, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={src}
-                src={src}
-                alt={`Foto ${i + 1} de ${cancha.nombre}`}
-                className="h-56 w-full shrink-0 snap-center object-cover"
-              />
+              <div key={src} className="relative h-64 w-full shrink-0 snap-center bg-[#0A3D2E]">
+                <Image
+                  src={src}
+                  alt={`Foto ${i + 1} de ${cancha.nombre}`}
+                  fill
+                  priority={i === 0}
+                  sizes="(max-width: 640px) 100vw, 576px"
+                  className="object-cover"
+                />
+              </div>
             ))}
           </div>
         ) : (
