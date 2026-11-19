@@ -37,7 +37,7 @@ export default function ListaCanchas({
 
   // Paginación y búsqueda remota
   const [cargandoMas, setCargandoMas] = useState(false);
-  const [hayMas, setHayMas] = useState(canchasIniciales.length >= 15);
+  const [hayMas, setHayMas] = useState(canchasIniciales.length >= 12);
   const [pagina, setPagina] = useState(1);
 
   // "¿Cuándo juegas?": canchas con un turno libre a esa hora
@@ -74,7 +74,7 @@ export default function ListaCanchas({
     };
   }, [dia, hora]);
 
-  // Si se busca un distrito específico o texto y no hay canchas suficientes en memoria, consultar a Supabase
+  // Consulta remota a Supabase al buscar
   const buscarRemoto = useCallback(async (termino: string, dist: string) => {
     if (!supabase) return;
     try {
@@ -83,9 +83,7 @@ export default function ListaCanchas({
         .select("*, franjas(precio_hora)")
         .eq("activa", true);
 
-      if (dist) {
-        query = query.eq("distrito", dist);
-      }
+      if (dist) query = query.eq("distrito", dist);
       if (termino.trim()) {
         const t = termino.trim();
         query = query.or(`nombre.ilike.%${t}%,direccion.ilike.%${t}%,distrito.ilike.%${t}%`);
@@ -102,7 +100,6 @@ export default function ListaCanchas({
           return Array.from(mapa.values());
         });
 
-        // Obtener datos de confianza si aplica
         const faltanConfianza = nuevas.filter((n) => !confianza[n.id]).map((n) => n.id);
         if (faltanConfianza.length > 0) {
           const { data: filas } = await supabase.rpc("confianza_canchas", { p_ids: faltanConfianza });
@@ -118,7 +115,6 @@ export default function ListaCanchas({
     } catch {}
   }, [confianza]);
 
-  // Debounce para búsqueda remota cuando el usuario escribe
   const busquedaTimer = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
     if (busquedaTimer.current) clearTimeout(busquedaTimer.current);
@@ -132,7 +128,6 @@ export default function ListaCanchas({
     };
   }, [buscar, distrito, buscarRemoto]);
 
-  // Cargar más canchas (paginación escalable)
   async function cargarMas() {
     if (!supabase || cargandoMas || !hayMas) return;
     setCargandoMas(true);
@@ -164,21 +159,8 @@ export default function ListaCanchas({
       nuevas.forEach((n) => mapa.set(n.id, n));
       return Array.from(mapa.values());
     });
-
-    const faltanConfianza = nuevas.filter((n) => !confianza[n.id]).map((n) => n.id);
-    if (faltanConfianza.length > 0) {
-      const { data: filas } = await supabase.rpc("confianza_canchas", { p_ids: faltanConfianza });
-      if (filas) {
-        setConfianza((prev) => {
-          const copia = { ...prev };
-          for (const f of filas as (Confianza & { cancha_id: string })[]) copia[f.cancha_id] = f;
-          return copia;
-        });
-      }
-    }
   }
 
-  // Lista combinada de distritos
   const distritos = useMemo(() => {
     const existentes = canchas.map((c) => c.distrito);
     return [...new Set([...existentes, ...DISTRITOS_POPULARES])].filter(Boolean).sort((a, b) => a.localeCompare(b, "es"));
@@ -196,7 +178,7 @@ export default function ListaCanchas({
     const otrosDeportes = [...new Set(canchas.map((c) => c.deporte))].filter((d) => d !== "futbol");
 
     return [
-      { clave: "todas", texto: "Todas", cumple: () => true },
+      { clave: "todas", texto: "Todas las canchas", cumple: () => true },
       ...modalidades.map((n) => ({
         clave: `f${n}`,
         texto: `Fútbol ${n}`,
@@ -238,58 +220,61 @@ export default function ListaCanchas({
   }
 
   return (
-    <>
-      <div className="sombra-fuerte flex flex-col gap-3 rounded-3xl bg-white p-4 sm:p-5 transition-all">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h2 className="text-lg font-bold text-[#1B1B1B]">Canchas en Lima</h2>
+    <div className="flex flex-col gap-6">
+      {/* Panel de Filtros y Búsqueda */}
+      <div className="sombra-fuerte flex flex-col gap-4 rounded-3xl bg-white p-4 sm:p-6 border border-slate-100 transition-all">
+        {/* Cabecera del filtro */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">Encuentra tu cancha</h2>
             {hayFiltros && (
-              <span className="rounded-full bg-[#EDE9FE] px-2 py-0.5 text-xs font-semibold text-[#6D28D9]">
-                Filtros activos
+              <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                Filtros aplicados
               </span>
             )}
           </div>
-          <span className="text-sm font-medium text-[#5A5A5A]">
-            {visibles.length} {visibles.length === 1 ? "cancha" : "canchas"}
+          <span className="text-xs sm:text-sm font-semibold text-slate-500">
+            {visibles.length} {visibles.length === 1 ? "cancha disponible" : "canchas disponibles"}
           </span>
         </div>
 
-        {/* Buscador interactivo con botón de limpiar */}
-        <div className="relative flex items-center rounded-2xl border border-[#E3E3E3] bg-[#FAFAFA] px-3 focus-within:border-[#6D28D9] focus-within:bg-white focus-within:ring-2 focus-within:ring-[#6D28D9]/20 transition-all">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8A968F" strokeWidth="2" aria-hidden="true" className="shrink-0">
-            <circle cx="11" cy="11" r="7" />
-            <path d="M20 20l-3.5-3.5" />
-          </svg>
-          <input
-            type="search"
-            value={buscar}
-            onChange={(e) => setBuscar(e.target.value)}
-            placeholder="Busca por nombre, distrito o dirección..."
-            aria-label="Buscar canchas"
-            className="min-w-0 flex-1 bg-transparent py-2.5 px-2 text-sm sm:text-base outline-none placeholder:text-[#8A968F]"
-          />
-          {buscar && (
-            <button
-              type="button"
-              onClick={() => setBuscar("")}
-              aria-label="Limpiar búsqueda"
-              className="rounded-full p-1 text-[#8A968F] hover:bg-[#E3E3E3] hover:text-[#1B1B1B]"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          )}
-        </div>
+        {/* Buscador y selectores en desktop como fila integrada */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-3">
+          {/* Campo de búsqueda */}
+          <div className="lg:col-span-6 relative flex items-center rounded-2xl border border-slate-200 bg-slate-50/70 px-3.5 focus-within:border-emerald-500 focus-within:bg-white focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="2" aria-hidden="true" className="shrink-0">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.5-3.5" />
+            </svg>
+            <input
+              type="search"
+              value={buscar}
+              onChange={(e) => setBuscar(e.target.value)}
+              placeholder="Buscar por club, cancha, distrito o calle..."
+              aria-label="Buscar canchas"
+              className="min-w-0 flex-1 bg-transparent py-2.5 sm:py-3 px-2 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+            />
+            {buscar && (
+              <button
+                type="button"
+                onClick={() => setBuscar("")}
+                aria-label="Limpiar búsqueda"
+                className="rounded-full p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-800"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
 
-        {/* Selectores distrito y orden */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div className="relative">
+          {/* Distrito */}
+          <div className="lg:col-span-3 relative">
             <select
               value={distrito}
               onChange={(e) => setDistrito(e.target.value)}
               aria-label="Distrito"
-              className="w-full appearance-none rounded-xl border border-[#E3E3E3] bg-white px-3 py-2.5 pr-8 text-sm outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20 transition-all"
+              className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50/70 py-2.5 sm:py-3 px-3.5 pr-8 text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition-all"
             >
               <option value="">Todos los distritos</option>
               {distritos.map((d) => (
@@ -298,38 +283,37 @@ export default function ListaCanchas({
                 </option>
               ))}
             </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8A968F]">▼</span>
+            <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">▼</span>
           </div>
 
-          <div className="relative">
+          {/* Ordenar */}
+          <div className="lg:col-span-3 relative">
             <select
               value={orden}
               onChange={(e) => setOrden(e.target.value as typeof orden)}
               aria-label="Ordenar"
-              className="w-full appearance-none rounded-xl border border-[#E3E3E3] bg-white px-3 py-2.5 pr-8 text-sm outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20 transition-all"
+              className="w-full appearance-none rounded-2xl border border-slate-200 bg-slate-50/70 py-2.5 sm:py-3 px-3.5 pr-8 text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-emerald-500 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 transition-all"
             >
-              <option value="recomendado">{punto ? "Más cerca primero" : "Más recientes"}</option>
-              <option value="precio">Menor precio por hora</option>
+              <option value="recomendado">{punto ? "📍 Más cerca primero" : "✨ Más recientes"}</option>
+              <option value="precio">💵 Menor precio por hora</option>
             </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8A968F]">▼</span>
+            <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400">▼</span>
           </div>
         </div>
 
-        {/* ¿Cuándo juegas? */}
-        <div className="flex flex-col gap-2 rounded-2xl bg-[#F5F3FF] p-3 ring-1 ring-[#C4B5FD]/40">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#4C1D95]">¿Cuándo quieres jugar?</p>
-            {hora && (
-              <button
-                type="button"
-                onClick={() => setHora("")}
-                className="text-[11px] font-bold text-[#6D28D9] hover:underline"
-              >
-                Cualquier hora
-              </button>
-            )}
+        {/* Sección Horario "¿Cuándo juegas?" */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl bg-emerald-50/60 p-3 sm:p-4 border border-emerald-100">
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-600 text-white text-xs">
+              ⏱
+            </span>
+            <div>
+              <p className="text-xs font-bold text-emerald-950 uppercase tracking-wider">¿Cuándo juegas?</p>
+              <p className="text-[11px] text-emerald-700">Filtra canchas con turnos disponibles</p>
+            </div>
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex flex-wrap items-center gap-2">
             {[
               { valor: hoy, texto: "Hoy" },
               { valor: sumarDias(hoy, 1), texto: "Mañana" },
@@ -339,21 +323,22 @@ export default function ListaCanchas({
                 type="button"
                 onClick={() => setDia(d.valor)}
                 aria-pressed={dia === d.valor}
-                className={`rounded-xl px-3 py-2 text-xs font-bold transition-all ${
+                className={`rounded-xl px-3.5 py-1.5 text-xs font-bold transition-all ${
                   dia === d.valor
-                    ? "bg-[#6D28D9] text-white shadow-sm"
-                    : "bg-white text-[#4C1D95] ring-1 ring-[#C4B5FD]/60 hover:bg-[#EDE9FE]"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "bg-white text-emerald-900 border border-emerald-200 hover:bg-emerald-100/50"
                 }`}
               >
                 {d.texto}
               </button>
             ))}
-            <div className="relative min-w-0 flex-1">
+
+            <div className="relative min-w-[140px]">
               <select
                 value={hora}
                 onChange={(e) => setHora(e.target.value)}
                 aria-label="Hora de juego"
-                className="w-full appearance-none rounded-xl border border-[#C4B5FD] bg-white px-3 py-2 pr-7 text-xs font-bold text-[#4C1D95] outline-none focus:ring-2 focus:ring-[#6D28D9]/20"
+                className="w-full appearance-none rounded-xl border border-emerald-200 bg-white py-1.5 px-3 pr-7 text-xs font-bold text-emerald-900 outline-none focus:ring-2 focus:ring-emerald-500/20"
               >
                 <option value="">A cualquier hora</option>
                 {HORAS_BUSQUEDA.map((h) => (
@@ -362,31 +347,30 @@ export default function ListaCanchas({
                   </option>
                 ))}
               </select>
-              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-[#4C1D95]">▼</span>
+              <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-emerald-700">▼</span>
             </div>
+
+            {hora && (
+              <button
+                type="button"
+                onClick={() => setHora("")}
+                className="text-[11px] font-bold text-emerald-700 underline underline-offset-2 ml-1"
+              >
+                Limpiar hora
+              </button>
+            )}
           </div>
-          {hora && (
-            <p className="text-xs text-[#4C1D95]">
-              {buscandoLibres
-                ? "Buscando canchas libres…"
-                : errorLibres
-                  ? "Esta búsqueda aún no está disponible."
-                  : `${Object.keys(libres ?? {}).length} cancha${Object.keys(libres ?? {}).length === 1 ? "" : "s"} libre${
-                      Object.keys(libres ?? {}).length === 1 ? "" : "s"
-                    } ${dia === hoy ? "hoy" : "mañana"} entre las ${hora} y las ${String(Number(hora.slice(0, 2)) + 1).padStart(2, "0")}:00`}
-            </p>
-          )}
         </div>
 
-        {/* Ubicación cercana */}
+        {/* Botón de ubicación */}
         <BotonUbicacion estado={estado} onPedir={pedir} />
 
-        {/* Filtros por modalidad / deporte */}
+        {/* Filtros de modalidad / deporte */}
         {filtros.length > 1 && (
           <div
-            className="sin-scroll -mx-4 flex gap-2 overflow-x-auto px-4 pt-1"
+            className="sin-scroll -mx-4 sm:-mx-6 flex gap-2 overflow-x-auto px-4 sm:px-6 pt-1"
             role="group"
-            aria-label="Filtrar por tipo de cancha"
+            aria-label="Filtrar por deporte o modalidad"
           >
             {filtros.map((f) => {
               const sel = f.clave === filtro.clave;
@@ -396,10 +380,10 @@ export default function ListaCanchas({
                   type="button"
                   onClick={() => setActivo(f.clave)}
                   aria-pressed={sel}
-                  className={`shrink-0 rounded-full border px-3.5 py-1.5 text-xs font-bold transition-all ${
+                  className={`shrink-0 rounded-full border px-4 py-1.5 text-xs font-bold transition-all ${
                     sel
-                      ? "border-[#0A3D2E] bg-[#0A3D2E] text-white shadow-sm"
-                      : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#6D28D9] hover:text-[#6D28D9]"
+                      ? "border-emerald-600 bg-emerald-600 text-white shadow-sm"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-emerald-500 hover:text-emerald-700"
                   }`}
                 >
                   {f.texto}
@@ -410,21 +394,21 @@ export default function ListaCanchas({
         )}
       </div>
 
-      {/* Listado de tarjetas de cancha */}
-      <div className="flex flex-col gap-4">
+      {/* Grid Responsive de Canchas: 1 col móvil, 2 cols tablet, 3 cols desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
         {visibles.map(({ c, km }) => (
           <TarjetaCancha key={c.id} cancha={c} km={km} confianza={confianza[c.id]} libre={libres?.[c.id]} />
         ))}
       </div>
 
-      {/* Botón para cargar más canchas (paginación escalable) */}
+      {/* Botón para cargar más canchas */}
       {hayMas && visibles.length > 0 && (
-        <div className="flex justify-center pt-2">
+        <div className="flex justify-center pt-4 pb-6">
           <button
             type="button"
             onClick={cargarMas}
             disabled={cargandoMas}
-            className="flex items-center gap-2 rounded-2xl border-2 border-[#0A3D2E] bg-white px-6 py-3 text-sm font-extrabold text-[#0A3D2E] shadow-sm transition-all hover:bg-[#0A3D2E] hover:text-white disabled:opacity-50"
+            className="flex items-center gap-2 rounded-2xl border-2 border-emerald-600 bg-white px-7 py-3 text-sm font-extrabold text-emerald-700 shadow-sm transition-all hover:bg-emerald-600 hover:text-white disabled:opacity-50 active:scale-95"
           >
             {cargandoMas ? (
               <>
@@ -432,49 +416,49 @@ export default function ListaCanchas({
                 Cargando más canchas…
               </>
             ) : (
-              "Ver más canchas"
+              "Explorar más canchas en Lima"
             )}
           </button>
         </div>
       )}
 
-      {/* Estado vacío cuando no hay resultados */}
+      {/* Estado vacío amigable */}
       {visibles.length === 0 && (
-        <div className="flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-8 text-center sombra-suave">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#EDE9FE] text-[#6D28D9]">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <div className="flex flex-col items-center justify-center gap-3 rounded-3xl bg-white p-8 sm:p-12 text-center sombra-suave border border-slate-100 my-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <circle cx="11" cy="11" r="8" />
               <path d="M21 21l-4.35-4.35" />
             </svg>
           </div>
-          <h3 className="text-base font-bold text-[#1B1B1B]">No encontramos canchas disponibles</h3>
-          <p className="max-w-xs text-xs text-[#5A5A5A]">
-            No hay canchas que coincidan con tus filtros actuales. Intenta cambiar de distrito o limpiar los filtros.
+          <h3 className="text-lg font-bold text-slate-900">No encontramos canchas con esos filtros</h3>
+          <p className="max-w-md text-xs sm:text-sm text-slate-500">
+            Intenta buscando en otro distrito o seleccionando otro horario. Hay muchas canchas disponibles en toda la ciudad.
           </p>
           {hayFiltros && (
             <button
               type="button"
               onClick={limpiarFiltros}
-              className="mt-2 rounded-xl bg-[#6D28D9] px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-[#5B21B6] transition-colors"
+              className="mt-2 rounded-xl bg-emerald-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition-colors"
             >
-              Restablecer filtros
+              Restablecer todos los filtros
             </button>
           )}
         </div>
       )}
-    </>
+    </div>
   );
 }
 
 function BotonUbicacion({ estado, onPedir }: { estado: ReturnType<typeof useMiUbicacion>["estado"]; onPedir: () => void }) {
   if (estado === "listo") {
     return (
-      <div className="flex items-center gap-2 rounded-xl bg-[#EDE9FE] px-3 py-2 text-xs font-semibold text-[#6D28D9]">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="shrink-0">
+      <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3.5 py-2 text-xs font-semibold text-emerald-800 border border-emerald-200">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="shrink-0 text-emerald-600">
           <circle cx="12" cy="12" r="4" />
           <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" strokeWidth="2" />
         </svg>
-        <span className="flex-1 truncate">Ordenadas por cercanía a tu ubicación</span>
+        <span className="flex-1 truncate">Ordenadas por cercanía a tu ubicación GPS</span>
         <button type="button" onClick={onPedir} className="font-bold underline underline-offset-2 hover:opacity-80">
           Actualizar
         </button>
@@ -484,9 +468,9 @@ function BotonUbicacion({ estado, onPedir }: { estado: ReturnType<typeof useMiUb
 
   const mensaje =
     estado === "denegado"
-      ? "Bloqueaste la ubicación. Puedes activarla en el candado de la barra de direcciones."
+      ? "Permiso de ubicación bloqueado. Puedes activarlo en los ajustes del navegador."
       : estado === "error"
-        ? "No pudimos obtener tu ubicación. Inténtalo de nuevo."
+        ? "No pudimos detectar tu ubicación. Revisa tu GPS."
         : estado === "no-soportado"
           ? "Tu navegador no permite compartir la ubicación."
           : null;
@@ -497,14 +481,14 @@ function BotonUbicacion({ estado, onPedir }: { estado: ReturnType<typeof useMiUb
         type="button"
         onClick={onPedir}
         disabled={estado === "buscando" || estado === "no-soportado"}
-        className="flex items-center justify-center gap-2 rounded-xl border border-[#6D28D9] py-2 text-xs font-bold text-[#6D28D9] transition-all hover:bg-[#EDE9FE] disabled:opacity-60 active:scale-[0.99]"
+        className="flex items-center justify-center gap-2 rounded-xl border border-emerald-600/60 bg-emerald-50/40 py-2.5 text-xs font-bold text-emerald-800 transition-all hover:bg-emerald-100 disabled:opacity-60 active:scale-[0.99]"
       >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" className="text-emerald-600">
           <path d="M3 11l18-8-8 18-2-8-8-2z" />
         </svg>
-        {estado === "buscando" ? "Buscando tu ubicación…" : "Ver canchas más cercanas"}
+        {estado === "buscando" ? "Localizando canchas cercanas…" : "Mostrar canchas más cercanas a mí"}
       </button>
-      {mensaje && <p className="text-[11px] text-[#5A5A5A]">{mensaje}</p>}
+      {mensaje && <p className="text-[11px] text-slate-500">{mensaje}</p>}
     </div>
   );
 }
