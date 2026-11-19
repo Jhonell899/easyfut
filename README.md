@@ -86,6 +86,14 @@ El estado de cada una está en **[docs/migraciones.md](docs/migraciones.md)**.
 | **Encargado** (invitado por un dueño) | Ver la agenda, confirmar pagos, cancelar y registrar reservas en las canchas de ese dueño |
 | **Administrador** | Gestionar todas las canchas (publicar, pausar, editar, ver su agenda); aprobar el WhatsApp de rentadores; ver el historial de clientes y bloquearlos en toda EasyFut |
 
+### 🔑 Usuarios de Prueba (Listos para usar)
+
+| Tipo | Correo | Contraseña | Permisos |
+|---|---|---|---|
+| **Administrador** | `admin@easyfut.pe` | `AdminEasyFut2026!` | Control total en `/admin` |
+| **Dueño de Cancha** | `dueno@easyfut.pe` | `DuenoEasyFut2026!` | Acceso al panel `/panel` con canchas activas |
+| **Jugador** | `jugador@easyfut.pe` | `JugadorEasyFut2026!` | Historial en `/reservas` |
+
 ---
 
 ## 🧭 Cómo trabajar
