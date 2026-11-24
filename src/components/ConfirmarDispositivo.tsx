@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
-import { idDispositivo } from "@/lib/dispositivo";
+import { esperaParaEnviar, registrarEnvio } from "@/lib/dispositivo";
 import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
 import VerificarCodigo from "@/components/VerificarCodigo";
 
@@ -14,7 +14,6 @@ export default function ConfirmarDispositivo({ destino }: { destino: string }) {
   const yaEnviado = useRef(false);
 
   useEffect(() => {
-    idDispositivo(); // asegura la cookie de este dispositivo
     const supabase = supabaseNavegador();
     if (!supabase || yaEnviado.current) return;
     yaEnviado.current = true;
@@ -24,6 +23,9 @@ export default function ConfirmarDispositivo({ destino }: { destino: string }) {
       } = await supabase.auth.getUser();
       if (!user?.email) return window.location.assign(`/ingresar?next=${encodeURIComponent(destino)}`);
       setCorreo(user.email);
+      // Si se pidió un correo hace poco (por ejemplo, al recargar la página), no se manda otro
+      if (esperaParaEnviar(user.email) > 0) return setEnviado(true);
+      registrarEnvio(user.email);
       const { error } = await (clienteCorreo() ?? supabase).auth.signInWithOtp({
         email: user.email,
         options: { shouldCreateUser: false, emailRedirectTo: enlaceDeVuelta(destino) },

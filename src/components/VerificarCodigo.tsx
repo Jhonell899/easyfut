@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
-import { confiarDispositivo } from "@/lib/dispositivo";
+import { confiarDispositivo, esperaParaEnviar, registrarEnvio } from "@/lib/dispositivo";
 import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
 
 const ESPERA_REENVIO = 60; // segundos
@@ -39,7 +39,12 @@ export default function VerificarCodigo({
   const [verificando, setVerificando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  // Espera creciente entre correos: 1, 2 y 5 minutos (ver lib/dispositivo)
   const [espera, setEspera] = useState(reenviarAlAbrir ? 0 : ESPERA_REENVIO);
+  useEffect(() => {
+    const falta = esperaParaEnviar(correo);
+    if (falta > 0) setEspera(falta);
+  }, [correo]);
   const inputRef = useRef<HTMLInputElement>(null);
   const yaReenviado = useRef(false);
 
@@ -57,6 +62,9 @@ export default function VerificarCodigo({
     if (!supabase) return;
     setError(null);
     setAviso(null);
+    const falta = esperaParaEnviar(correo);
+    if (falta > 0) return setEspera(falta);
+    registrarEnvio(correo);
     const { error } =
       tipo === "signup"
         ? await (clienteCorreo() ?? supabase).auth.resend({
@@ -69,8 +77,8 @@ export default function VerificarCodigo({
             options: { shouldCreateUser: false, emailRedirectTo: enlaceDeVuelta(destino) },
           });
     if (error) return setError(traducir(error.message));
-    setAviso("Te enviamos un código nuevo.");
-    setEspera(ESPERA_REENVIO);
+    setAviso("Te enviamos un correo nuevo.");
+    setEspera(esperaParaEnviar(correo) || ESPERA_REENVIO);
   }
 
   useEffect(() => {
@@ -94,7 +102,7 @@ export default function VerificarCodigo({
       return setError(traducir(error?.message ?? ""));
     }
     // Entró con un código: este dispositivo queda de confianza por 30 días (migración 018)
-    await confiarDispositivo(supabase).catch(() => {});
+    await confiarDispositivo();
     window.location.assign(`/auth/destino?next=${encodeURIComponent(destino)}`);
   }
 

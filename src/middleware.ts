@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { COOKIE_DISPOSITIVO, dispositivoEsConfiable } from "@/lib/dispositivoServidor";
 
 // Zonas que manejan dinero y datos de clientes: piden el código de correo
 // la primera vez que se entra desde un dispositivo nuevo (migración 018).
@@ -29,11 +30,13 @@ export async function middleware(request: NextRequest) {
 
   const ruta = request.nextUrl.pathname;
   if (user && PROTEGIDAS.some((p) => ruta === p || ruta.startsWith(`${p}/`))) {
-    const dispositivo = request.cookies.get("ef_disp")?.value ?? null;
-    const { data, error } = await supabase.rpc("dispositivo_confiable", { p_dispositivo: dispositivo });
-    // Si la función aún no existe (migración pendiente) no se bloquea a nadie
-    const funcionFalta = error && /dispositivo_confiable|schema cache|does not exist/i.test(error.message);
-    if (!funcionFalta && data !== true) {
+    // Token único del dispositivo (cookie httpOnly). Si la migración 018 no existe, no se bloquea a nadie.
+    const confiable = await dispositivoEsConfiable(
+      supabase,
+      request.cookies.get(COOKIE_DISPOSITIVO)?.value,
+      request.headers
+    );
+    if (confiable === false) {
       const destino = request.nextUrl.clone();
       destino.pathname = "/verificar-dispositivo";
       destino.search = `?next=${encodeURIComponent(ruta + request.nextUrl.search)}`;

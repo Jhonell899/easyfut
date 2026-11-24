@@ -5,7 +5,7 @@ import { useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import CampoTexto from "@/components/CampoTexto";
 import VerificarCodigo from "@/components/VerificarCodigo";
-import { esConfiable } from "@/lib/dispositivo";
+import { esConfiable, esperaParaEnviar, registrarEnvio } from "@/lib/dispositivo";
 import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
 
 function traducir(msg: string): string {
@@ -58,8 +58,14 @@ export default function FormularioIngreso({
       return setError(traducir(error.message));
     }
     // Dispositivo nuevo: la contraseña no basta, se pide un código al correo
-    if ((await esConfiable(supabase)) === false) {
+    if ((await esConfiable()) === false) {
       await supabase.auth.signOut();
+      // Respeta la espera entre correos (1, 2 y 5 minutos): si hay uno reciente, usa ese
+      if (esperaParaEnviar(correo.trim()) > 0) {
+        setEnviando(false);
+        return setPaso2(true);
+      }
+      registrarEnvio(correo.trim());
       const { error: errCodigo } = await (clienteCorreo() ?? supabase).auth.signInWithOtp({
         email: correo.trim(),
         options: { shouldCreateUser: false, emailRedirectTo: enlaceDeVuelta(siguiente ?? "/") },

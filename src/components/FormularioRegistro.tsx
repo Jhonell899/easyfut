@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
+import { registrarEnvio } from "@/lib/dispositivo";
 import CampoTexto from "@/components/CampoTexto";
 import VerificarCodigo from "@/components/VerificarCodigo";
 
@@ -83,6 +84,7 @@ export default function FormularioRegistro({
     await supabase.rpc("liberar_correo_no_verificado", { p_correo: email });
 
     // El correo de confirmación se pide con el cliente de enlaces (funciona en cualquier navegador)
+    registrarEnvio(email);
     const { data, error } = await (clienteCorreo() ?? supabase).auth.signUp({
       email,
       password: clave,

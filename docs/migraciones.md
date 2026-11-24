@@ -23,7 +23,7 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | 015 | `015_proteccion_pagos.sql` | Medios de pago: contraseña reciente para cambiarlos, historial de cambios y aviso al cliente | ✅ Ejecutada |
 | 016 | `016_politica_cancelacion.sql` | Política de cancelación por cancha (Flexible, Moderada, Estricta) | ✅ Ejecutada |
 | 017 | `017_libres_resenas_confianza.sql` | Buscar "libre a tal hora", reseñas verificadas, confianza de cada cancha | ✅ Ejecutada |
-| 018 | `018_dispositivos.sql` | Código por correo al entrar desde un dispositivo nuevo (2 pasos) | ⏳ Pendiente |
+| 018 | `018_dispositivos.sql` | Dos pasos por dispositivo: token único (solo se guarda su huella), IP y navegador registrados, límites de escritura e intentos | ✅ Ejecutada |
 
 ## Plantillas de correo (Supabase → Authentication → Emails → Templates)
 

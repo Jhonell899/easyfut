@@ -52,7 +52,7 @@ export default function ProcesarEnlace() {
       // Quita la sesión de la dirección para que no quede en el historial
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
       // Entró con el enlace de su correo: este dispositivo queda de confianza (migración 018)
-      await confiarDispositivo(supabase).catch(() => {});
+      await confiarDispositivo();
       window.location.assign(`/auth/destino?next=${encodeURIComponent(destino)}`);
     })();
   }, []);
