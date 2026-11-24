@@ -86,6 +86,13 @@ El estado de cada una está en **[docs/migraciones.md](docs/migraciones.md)**.
 | **Encargado** (invitado por un dueño) | Ver la agenda, confirmar pagos, cancelar y registrar reservas en las canchas de ese dueño |
 | **Administrador** | Gestionar todas las canchas (publicar, pausar, editar, ver su agenda); aprobar el WhatsApp de rentadores; ver el historial de clientes y bloquearlos en toda EasyFut |
 
+### 🔑 Cuentas de prueba
+
+Las cuentas de prueba **no se escriben en el repositorio**: sus contraseñas se comparten
+por un canal privado. Para crear una: Supabase → Authentication → Users → *Add user* →
+*Create new user* (con *Auto Confirm User*). Nunca des permisos de administrador a una
+cuenta de prueba.
+
 ---
 
 ## 🧭 Cómo trabajar

@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 // Cabeceras de seguridad para todas las páginas
 const seguridad = [
@@ -16,9 +17,22 @@ const seguridad = [
 ];
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: path.resolve(__dirname),
   // Oculta el botón flotante "N" de Next.js en desarrollo
   devIndicators: false,
   poweredByHeader: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "**.supabase.co",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+    ],
+  },
   async headers() {
     return [{ source: "/:path*", headers: seguridad }];
   },

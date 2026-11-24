@@ -69,13 +69,15 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
   if (estado === "anonimo") {
     return (
       <div className="flex items-center gap-2">
-        <Link href="/reservas" className={`rounded-full px-3 py-1.5 text-sm font-medium ${pastilla}`}>
+        <Link href="/reservas" className={`rounded-full px-3.5 py-1.5 text-xs sm:text-sm font-semibold transition-all ${pastilla}`}>
           Mis reservas
         </Link>
         <Link
           href="/ingresar"
-          className={`rounded-full px-4 py-1.5 text-sm font-bold ${
-            claro ? "bg-white text-[#6D28D9]" : "bg-[#6D28D9] text-white"
+          className={`rounded-full px-4 py-1.5 text-xs sm:text-sm font-black transition-all shadow-sm ${
+            claro
+              ? "bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-emerald-950/20"
+              : "bg-emerald-600 hover:bg-emerald-700 text-white"
           }`}
         >
           Ingresar
@@ -98,7 +100,7 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
         aria-haspopup="menu"
         className={`flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-medium ${pastilla}`}
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#C4B5FD] text-xs font-bold text-[#6D28D9]">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-800">
           {nombre.charAt(0).toUpperCase()}
         </span>
         <span className="max-w-24 truncate">{nombre.split(" ")[0]}</span>
@@ -107,14 +109,14 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
       {abierto && (
         <div
           role="menu"
-          className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-2xl border border-[#E3E3E3] bg-white text-sm text-[#1B1B1B] shadow-lg"
+          className="absolute right-0 z-20 mt-2 w-56 overflow-hidden rounded-2xl border border-slate-200 bg-white text-sm text-slate-800 shadow-xl"
         >
-          <div className="border-b border-[#E3E3E3] p-3">
-            <p className="truncate font-bold">{nombre}</p>
-            <p className="truncate text-xs text-[#5A5A5A]">{correo}</p>
+          <div className="border-b border-slate-100 p-3 bg-slate-50">
+            <p className="truncate font-bold text-slate-900">{nombre}</p>
+            <p className="truncate text-xs text-slate-500">{correo}</p>
             <span
-              className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-medium ${
-                esDueno ? "bg-[#0A3D2E] text-white" : "bg-[#EDE9FE] text-[#6D28D9]"
+              className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
+                esDueno ? "bg-[#0A2E1F] text-emerald-300" : "bg-emerald-100 text-emerald-800"
               }`}
             >
               {esDueno ? (modoJugador ? "Dueño · modo jugador" : "Dueño") : esEncargado ? "Encargado" : "Jugador"}

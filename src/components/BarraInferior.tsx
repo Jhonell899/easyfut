@@ -96,8 +96,8 @@ export default function BarraInferior() {
                 <Link
                   href={i.href}
                   aria-current={activo ? "page" : undefined}
-                  className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium ${
-                    activo ? "text-[#6D28D9]" : "text-[#8A968F]"
+                  className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-bold ${
+                    activo ? "text-[#16A34A]" : "text-slate-400"
                   }`}
                 >
                   <svg

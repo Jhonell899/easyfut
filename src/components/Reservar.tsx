@@ -290,8 +290,8 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                 aria-pressed={activo}
                 className={`flex w-14 shrink-0 flex-col items-center gap-0.5 rounded-2xl border py-2.5 transition-colors ${
                   activo
-                    ? "border-[#6D28D9] bg-[#6D28D9] text-white"
-                    : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#6D28D9]"
+                    ? "border-[#16A34A] bg-[#16A34A] text-white shadow-sm"
+                    : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#16A34A]"
                 } disabled:border-transparent disabled:bg-[#F4F4F4] disabled:text-[#B0B0B0]`}
               >
                 <span className={`text-[11px] capitalize ${activo ? "text-white/80" : "text-[#5A5A5A]"}`}>
@@ -316,8 +316,8 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                 aria-pressed={d === duracion}
                 className={`rounded-xl border py-2.5 text-sm transition-colors ${
                   d === duracion
-                    ? "border-[#6D28D9] bg-[#EDE9FE] font-bold text-[#6D28D9]"
-                    : "border-[#E3E3E3] text-[#1B1B1B] hover:border-[#6D28D9]"
+                    ? "border-[#16A34A] bg-[#DCFCE7] font-bold text-[#15803D]"
+                    : "border-[#E3E3E3] text-[#1B1B1B] hover:border-[#16A34A]"
                 }`}
               >
                 {textoDuracion(d)}
@@ -352,7 +352,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
               <button
                 type="button"
                 onClick={() => setFecha(siguienteDia)}
-                className="font-bold text-[#6D28D9]"
+                className="font-bold text-[#16A34A]"
               >
                 Ver el {diaLargo(siguienteDia)} →
               </button>
@@ -371,8 +371,8 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                   aria-pressed={activo}
                   className={`flex flex-col items-center rounded-xl border py-2 transition-colors ${
                     activo
-                      ? "border-[#6D28D9] bg-[#6D28D9] text-white"
-                      : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#6D28D9]"
+                      ? "border-[#16A34A] bg-[#16A34A] text-white shadow-sm"
+                      : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#16A34A]"
                   } disabled:border-transparent ${
                     s.espera ? "disabled:bg-amber-50 disabled:text-amber-900/60" : "disabled:bg-[#F4F4F4] disabled:text-[#B0B0B0]"
                   }`}
@@ -410,7 +410,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                   autoComplete="name"
                   placeholder="Ej. Juan Pérez"
                   required
-                  className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9]"
+                  className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-[#16A34A]/20"
                 />
               </Campo>
               <Campo
@@ -430,7 +430,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                   placeholder="987 654 321"
                   maxLength={11}
                   required
-                  className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9]"
+                  className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-[#16A34A]/20"
                 />
               </Campo>
               {celularValido && (
@@ -438,7 +438,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
               )}
               {conCuenta === false && (
                 <p className="rounded-xl bg-[#F7F8F7] p-3 text-xs text-[#4A4A4A]">
-                  <Link href={`/ingresar?next=${encodeURIComponent(ruta)}`} className="font-bold text-[#6D28D9]">
+                  <Link href={`/ingresar?next=${encodeURIComponent(ruta)}`} className="font-bold text-[#16A34A]">
                     Ingresa
                   </Link>{" "}
                   para guardar esta reserva en tu cuenta. También puedes reservar sin cuenta.
@@ -469,7 +469,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
               type="submit"
               form="form-reserva"
               disabled={!nombreValido || !celularValido || !whatsappOk || enviando}
-              className="shrink-0 rounded-xl bg-[#6D28D9] px-5 py-3 font-bold text-white transition-opacity disabled:opacity-40"
+              className="boton-verde shrink-0 rounded-2xl px-6 py-3 font-bold text-white transition-opacity disabled:opacity-40 shadow-md"
             >
               {enviando ? "Reservando…" : "Reservar"}
             </button>

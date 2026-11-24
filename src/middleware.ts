@@ -29,7 +29,19 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const ruta = request.nextUrl.pathname;
-  if (user && PROTEGIDAS.some((p) => ruta === p || ruta.startsWith(`${p}/`))) {
+  const esProtegida = PROTEGIDAS.some((p) => ruta === p || ruta.startsWith(`${p}/`));
+
+  if (esProtegida) {
+    // Sin sesión: directo a Ingresar
+    if (!user) {
+      const destino = request.nextUrl.clone();
+      destino.pathname = "/ingresar";
+      destino.search = `?next=${encodeURIComponent(ruta + request.nextUrl.search)}`;
+      const redireccion = NextResponse.redirect(destino);
+      response.cookies.getAll().forEach((c) => redireccion.cookies.set(c));
+      return redireccion;
+    }
+
     // Token único del dispositivo (cookie httpOnly). Si la migración 018 no existe, no se bloquea a nadie.
     const confiable = await dispositivoEsConfiable(
       supabase,

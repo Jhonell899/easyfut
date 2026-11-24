@@ -53,17 +53,40 @@ export default function PagoReserva(p: Props) {
   const avisado = !!p.pagoAvisadoEn;
   const restante = p.expiraEn && ahora !== null ? new Date(p.expiraEn).getTime() - ahora : null;
 
-  // Reloj y actualización del estado (para ver cuando el dueño confirme)
+  // Reloj y actualización del estado en tiempo real (cuando el dueño confirme)
   useEffect(() => {
     setAhora(Date.now());
     setOrigen(window.location.origin);
     const reloj = setInterval(() => setAhora(Date.now()), 1000);
-    const refresco = setInterval(() => router.refresh(), 10000);
+
+    // Actualización inmediata al volver a la pestaña (por ejemplo tras pagar en Yape/Plin)
+    const alVolver = () => {
+      if (document.visibilityState === "visible") router.refresh();
+    };
+    window.addEventListener("focus", alVolver);
+    document.addEventListener("visibilitychange", alVolver);
+
+    // Escucha en tiempo real si el dueño confirma o cancela la reserva
+    const canal = supabase
+      ?.channel(`reserva-${p.codigo}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "reservas", filter: `codigo=eq.${p.codigo}` },
+        () => router.refresh()
+      )
+      .subscribe();
+
+    // Respaldo periódico espaciado por si la conexión de sockets se corta
+    const respaldo = setInterval(() => router.refresh(), 45000);
+
     return () => {
       clearInterval(reloj);
-      clearInterval(refresco);
+      clearInterval(respaldo);
+      window.removeEventListener("focus", alVolver);
+      document.removeEventListener("visibilitychange", alVolver);
+      if (canal) supabase?.removeChannel(canal);
     };
-  }, [router]);
+  }, [router, p.codigo]);
 
   useEffect(() => {
     if (restante !== null && restante <= 0 && !avisado) router.refresh();
