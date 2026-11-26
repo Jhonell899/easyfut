@@ -19,14 +19,18 @@ alter table reservas add column if not exists confirmada_en timestamptz;
 update reservas set confirmada_en = coalesce(pago_avisado_en, created_at)
  where estado = 'confirmada' and confirmada_en is null;
 
--- confirmada_en solo la pone la base de datos, y nadie puede cambiar el cliente de
--- una reserva por otro (para no abrir chats con personas ajenas).
+-- confirmada_en solo la pone la base de datos, y desde la app nadie puede cambiar el
+-- cliente de una reserva por otro (para no abrir chats con personas ajenas).
+-- Las reglas sobre el cliente aplican a quien usa la app (auth.uid() no vacío); el
+-- SQL Editor de Supabase y las tareas internas no tienen usuario y quedan libres.
 create or replace function proteger_chat_reserva() returns trigger
 language plpgsql security definer set search_path = public as $$
+declare
+  v_app boolean := auth.uid() is not null and not es_admin();
 begin
   if tg_op = 'INSERT' then
     new.confirmada_en := case when new.estado = 'confirmada' then now() end;
-    if new.cliente_id is not null and new.cliente_id is distinct from auth.uid() and not es_admin() then
+    if v_app and new.cliente_id is not null and new.cliente_id is distinct from auth.uid() then
       new.cliente_id := null;
     end if;
   else
@@ -36,7 +40,7 @@ begin
       new.confirmada_en := old.confirmada_en;
     end if;
     -- Se permite dejarlo vacío (por ejemplo, si se borra la cuenta), no cambiarlo por otro
-    if new.cliente_id is not null and new.cliente_id is distinct from old.cliente_id and not es_admin() then
+    if v_app and new.cliente_id is not null and new.cliente_id is distinct from old.cliente_id then
       new.cliente_id := old.cliente_id;
     end if;
   end if;
