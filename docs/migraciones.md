@@ -24,6 +24,12 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | 016 | `016_politica_cancelacion.sql` | Política de cancelación por cancha (Flexible, Moderada, Estricta) | ✅ Ejecutada |
 | 017 | `017_libres_resenas_confianza.sql` | Buscar "libre a tal hora", reseñas verificadas, confianza de cada cancha | ✅ Ejecutada |
 | 018 | `018_dispositivos.sql` | Dos pasos por dispositivo: token único (solo se guarda su huella), IP y navegador registrados, límites de escritura e intentos | ✅ Ejecutada |
+| 019 | `019_nombres_claros.sql` | Nombres claros (perfiles→usuarios, franjas→tarifas_horarias, bloqueos_clientes→clientes_bloqueados, cambios_pagos→historial_medios_pago, registro_accesos→historial_accesos), descripción en cada tabla y columna, y reservar exige cuenta. Va en una transacción: si falla no cambia nada; no se ejecuta dos veces | ✅ Ejecutada |
+| 020 | `020_sin_encargados.sql` | Quita los encargados: cada cancha se maneja solo con la cuenta del dueño. Borra la tabla `encargados`, sus reglas de acceso y sus funciones. Va en una transacción | ✅ Ejecutada |
+| 021 | `021_saldo_reservas.sql` | Saldo de reservas: S/ 1 por reserva confirmada, regalo de bienvenida (S/ 5), recargas por Yape o transferencia BCP desde S/ 1 que aprueba el admin, cuenta BCP en `ajustes_easyfut`, promociones de bono que activa el admin, Yape de EasyFut en `ajustes_easyfut`. Sin saldo, la cancha no recibe reservas. Va en una transacción | ✅ Ejecutada |
+| — | `deshacer/deshacer_022_recargas_automaticas.sql` | La 022 (recargas que se confirman solas) se ejecutó por error y se deshace con este script. La 022 está guardada en la rama `mejora/recargas-automaticas` para probarla | ⏳ Pendiente |
+
+> Desde la 019, las migraciones 001–018 muestran los **nombres antiguos**. Los nombres actuales están en la 019 y en el diagrama de la base de datos.
 
 ## Plantillas de correo (Supabase → Authentication → Emails → Templates)
 

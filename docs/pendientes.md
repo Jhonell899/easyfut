@@ -29,7 +29,7 @@ Marca con `[x]` lo que vayas terminando. Para trabajar una tarea, créala como *
 - [x] Código de la reserva en el mensaje del pago, para conciliar
 - [ ] Membresía mensual para dueños (cobro, prueba gratis, pausa si no paga)
 - [x] Agenda del día con todas las canchas
-- [x] Encargados
+- [x] ~~Encargados~~ (quitados en la 020: cada cancha se maneja solo con la cuenta del dueño)
 - [x] Resumen de ingresos: hoy, semana y mes
 - [ ] Reservas fijas (todos los martes 8 pm)
 - [ ] Canchas divididas (una de 7 dentro de una de 11)

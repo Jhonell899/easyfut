@@ -60,7 +60,7 @@ export default function VerificarCelular({ celularInicial }: { celularInicial?: 
     } = await supabase.auth.getUser();
     // Se guarda como celular de contacto; el administrador lo aprueba en /admin
     const { error } = user
-      ? await supabase.from("perfiles").update({ celular: limpio }).eq("id", user.id)
+      ? await supabase.from("usuarios").update({ celular: limpio }).eq("id", user.id)
       : { error: new Error("sin_sesion") };
     setOcupado(false);
     if (error) return setError("No pudimos guardar tu número. Inténtalo de nuevo.");

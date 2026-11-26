@@ -35,7 +35,7 @@ export default function AdminCambiosPagos() {
 
   useEffect(() => {
     supabaseNavegador()
-      ?.rpc("admin_cambios_pagos")
+      ?.rpc("admin_historial_medios_pago")
       .then(({ data, error }) => {
         if (error)
           setError(

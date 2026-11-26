@@ -16,7 +16,7 @@ const SECCIONES: Seccion[] = [
     titulo: "Cuentas",
     parrafos: [
       "Puedes reservar sin cuenta. Para publicar canchas necesitas una cuenta con correo verificado y un número de WhatsApp confirmado.",
-      "Eres responsable de la veracidad de tus datos y del uso de tu cuenta. Un rentador puede invitar encargados, que actúan en su nombre.",
+      "Eres responsable de la veracidad de tus datos y del uso de tu cuenta. Cada cancha se administra solo desde la cuenta de su rentador.",
     ],
   },
   {
@@ -27,6 +27,14 @@ const SECCIONES: Seccion[] = [
       "Puedes cancelar tu reserva desde la app mientras no hayas avisado el pago, sin costo.",
       "Después de pagar, cada cancha aplica una de tres políticas de cancelación fijas (Flexible, Moderada o Estricta), que ves antes de reservar. La devolución que corresponda la hace el rentador por el mismo medio de pago, en un máximo de 48 horas.",
       "En todas las canchas, si el rentador cancela o la cancha no se puede usar, recibes la devolución completa o eliges otro horario. Si no llegas sin avisar, no hay devolución.",
+    ],
+  },
+  {
+    titulo: "Tarifa para rentadores",
+    parrafos: [
+      "Publicar canchas es gratis. EasyFut cobra al rentador S/ 1 por cada reserva hecha por la app que el rentador confirma; si después la cancela, ese S/ 1 no se devuelve. No se cobran las reservas vencidas o canceladas, los horarios bloqueados ni las reservas que el rentador anota por su cuenta. El jugador no paga nada a EasyFut.",
+      "Cada rentador nuevo recibe saldo de regalo para sus primeras reservas. Después recarga su saldo por Yape o transferencia BCP desde su panel (desde S/ 1); EasyFut suma el saldo cuando verifica el pago. EasyFut puede lanzar promociones con saldo extra por tiempo limitado. Si el saldo no alcanza para una reserva, sus canchas dejan de recibir reservas nuevas hasta que recargue.",
+      "El saldo no vence ni se devuelve en efectivo. Un número de operación falso o reutilizado hace que la recarga se rechace y puede llevar a la suspensión de la cuenta.",
     ],
   },
   {

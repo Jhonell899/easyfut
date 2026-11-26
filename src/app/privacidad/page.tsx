@@ -28,7 +28,7 @@ const SECCIONES: Seccion[] = [
   {
     titulo: "Quién puede verlos",
     parrafos: [
-      "El rentador de la cancha que reservas (y sus encargados) ven tu nombre, tu celular y el historial de tus reservas en EasyFut (cuántas pagaste, dejaste vencer o fueron rechazadas).",
+      "El rentador de la cancha que reservas ve tu nombre, tu celular y el historial de tus reservas en EasyFut (cuántas pagaste, dejaste vencer o fueron rechazadas).",
       "El número de WhatsApp de cada rentador y los medios de pago de su cancha son públicos, porque los jugadores los necesitan para pagar y coordinar.",
       "Usamos Supabase como proveedor de base de datos y de cuentas, y OpenStreetMap para mostrar mapas.",
     ],

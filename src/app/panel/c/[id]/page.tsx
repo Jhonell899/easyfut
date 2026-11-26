@@ -26,7 +26,7 @@ export default async function PanelCancha({
 
   let consulta = sesion.supabase
     .from("canchas")
-    .select("*, franjas(dia_semana, hora_inicio, hora_fin, precio_hora)")
+    .select("*, franjas:tarifas_horarias(dia_semana, hora_inicio, hora_fin, precio_hora)")
     .eq("id", id);
   if (!esAdmin) consulta = consulta.eq("dueno_id", sesion.user.id);
   const { data } = await consulta.maybeSingle();
@@ -42,7 +42,7 @@ export default async function PanelCancha({
     modalidades: resto.modalidades ?? [],
     servicios: resto.servicios ?? [],
     fotos: resto.fotos ?? [],
-    pagos: pagosDe(resto.pagos),
+    pagos: pagosDe(resto.medios_pago),
     politica: politicaDe(resto.politica_cancelacion),
     latitud: resto.latitud != null ? Number(resto.latitud) : null,
     longitud: resto.longitud != null ? Number(resto.longitud) : null,
@@ -59,13 +59,13 @@ export default async function PanelCancha({
           Estás gestionando esta cancha como <strong>administrador</strong>. Los cambios se guardan en la cancha del dueño.
         </p>
       )}
-      {esSuya && !sesion.perfil?.telefono_verificado && <VerificarCelular celularInicial={sesion.perfil?.celular} />}
+      {esSuya && !sesion.perfil?.celular_verificado && <VerificarCelular celularInicial={sesion.perfil?.celular} />}
       <GestorCancha
         key={cancha.id}
         cancha={cancha}
         franjas={franjas ?? []}
         nueva={nueva === "1"}
-        verificado={!esSuya || !!sesion.perfil?.telefono_verificado}
+        verificado={!esSuya || !!sesion.perfil?.celular_verificado}
       />
     </MarcoPanel>
   );

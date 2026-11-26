@@ -6,8 +6,6 @@ import AgendaDia from "@/components/panel/AgendaDia";
 export const metadata = { title: "Agenda" };
 export const dynamic = "force-dynamic";
 
-type Local = { dueno_id: string; dueno_nombre: string | null; canchas: number };
-
 export default async function Agenda({ searchParams }: { searchParams: Promise<{ d?: string }> }) {
   const { d } = await searchParams;
   const sesion = await usuarioActual();
@@ -31,19 +29,6 @@ export default async function Agenda({ searchParams }: { searchParams: Promise<{
     );
   }
 
-  // Encargado: la agenda del local donde trabaja
-  const { data } = await sesion.supabase.rpc("mis_locales");
-  const locales = (data ?? []) as Local[];
-  const local = locales.find((l) => l.dueno_id === d) ?? locales[0];
-  if (!local) redirect("/panel");
-
-  return (
-    <MarcoPanel
-      subtitulo={`Encargado · ${local.dueno_nombre ?? "Local"}`}
-      titulo="Agenda del día"
-      volver={{ href: `/panel?d=${local.dueno_id}`, texto: "Panel" }}
-    >
-      <AgendaDia duenoId={local.dueno_id} puedeBloquearClientes={false} />
-    </MarcoPanel>
-  );
+  // Solo la cuenta dueña (o el administrador) ve la agenda
+  redirect("/panel");
 }

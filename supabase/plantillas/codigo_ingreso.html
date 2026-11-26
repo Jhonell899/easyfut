@@ -3,7 +3,7 @@
   Dónde pegarla: Supabase → Authentication → Emails → Templates → "Magic Link"
     Subject:  Código para entrar a EasyFut: {{ .Token }}
     Body:     (todo este archivo)
-  {{ .Token }} es el código de verificación que el usuario escribe en la app.
+  {{ .ConfirmationURL }} es el botón; {{ .Token }} es el código de verificación que el usuario escribe en la app.
 -->
 <div style="margin:0;padding:24px 0;background:#F1EFF8;font-family:Arial,Helvetica,sans-serif;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
@@ -20,12 +20,22 @@
             <td style="padding:28px 24px 8px;color:#1b1b1b;">
               <h1 style="margin:0 0 8px;font-size:20px;">¿Eres tú quien intenta entrar?</h1>
               <p style="margin:0;font-size:15px;line-height:22px;color:#4a4a4a;">
-                Alguien inició sesión en tu cuenta desde un dispositivo nuevo. Si fuiste tú, escribe este código en EasyFut:
+                Alguien inició sesión en tu cuenta desde un dispositivo nuevo. Si fuiste tú, toca el botón para continuar (funciona en cualquier navegador):
               </p>
             </td>
           </tr>
           <tr>
-            <td align="center" style="padding:20px 24px;">
+            <td align="center" style="padding:20px 24px 4px;">
+              <a href="{{ .ConfirmationURL }}"
+                 style="display:inline-block;padding:14px 28px;background:#6D28D9;border-radius:14px;
+                        color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;">
+                Sí, fui yo · Entrar
+              </a>
+              <p style="margin:14px 0 0;font-size:13px;color:#5a5a5a;">o escribe este código en la app:</p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:8px 24px 20px;">
               <div style="display:inline-block;padding:16px 24px;background:#EDE9FE;border-radius:14px;
                           font-family:'Courier New',monospace;font-size:34px;font-weight:700;
                           letter-spacing:8px;color:#6D28D9;">

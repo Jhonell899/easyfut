@@ -127,7 +127,7 @@ export default function AsistenteCancha() {
     }
 
     // 2. Horarios y precios
-    const { error: errFranjas } = await supabase.rpc("guardar_franjas", {
+    const { error: errFranjas } = await supabase.rpc("guardar_tarifas_horarias", {
       p_cancha_id: cancha.id,
       p_franjas: franjasParaGuardar(horario),
     });

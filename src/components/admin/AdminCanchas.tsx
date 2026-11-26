@@ -21,7 +21,7 @@ type CanchaAdmin = {
   dueno_nombre: string | null;
   dueno_correo: string;
   dueno_whatsapp: string | null;
-  franjas: number;
+  tarifas_horarias: number;
   tiene_pagos: boolean;
   proximas: number;
   por_confirmar: number;
@@ -34,7 +34,7 @@ type Filtro = "todas" | "publicadas" | "pausadas" | "revisar";
 function problemas(c: CanchaAdmin): string[] {
   const p: string[] = [];
   if (!c.dueno_whatsapp) p.push("Dueño sin WhatsApp confirmado");
-  if (c.franjas === 0) p.push("Sin horarios");
+  if (c.tarifas_horarias === 0) p.push("Sin horarios");
   if (!c.tiene_pagos) p.push("Sin medios de pago");
   if (!c.foto) p.push("Sin fotos");
   return p;

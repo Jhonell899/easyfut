@@ -30,7 +30,7 @@ const hora = (iso: string) => fmtFecha(iso, { hour: "2-digit", minute: "2-digit"
 
 /**
  * Agenda de un día con TODAS las canchas de un dueño: una columna por cancha.
- * La usan el dueño y sus encargados (los encargados no pueden bloquear clientes).
+ * La usan el dueño (puede bloquear clientes) y el administrador.
  */
 export default function AgendaDia({ duenoId, puedeBloquearClientes }: { duenoId: string; puedeBloquearClientes: boolean }) {
   const hoy = hoyLima();
@@ -53,7 +53,7 @@ export default function AgendaDia({ duenoId, puedeBloquearClientes }: { duenoId:
   useEffect(() => {
     supabaseNavegador()
       ?.from("canchas")
-      .select("id, nombre, duracion_turno_min, activa, franjas(dia_semana, hora_inicio, hora_fin, precio_hora)")
+      .select("id, nombre, duracion_turno_min, activa, franjas:tarifas_horarias(dia_semana, hora_inicio, hora_fin, precio_hora)")
       .eq("dueno_id", duenoId)
       .order("created_at")
       .then(({ data, error }) => {

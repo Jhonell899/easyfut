@@ -14,7 +14,7 @@ export default function BloqueadosDueno({ duenoId }: { duenoId: string }) {
     const supabase = supabaseNavegador();
     if (!supabase) return;
     const { data } = await supabase
-      .from("bloqueos_clientes")
+      .from("clientes_bloqueados")
       .select("id, celular, motivo, created_at")
       .eq("dueno_id", duenoId)
       .order("created_at", { ascending: false });
@@ -27,7 +27,7 @@ export default function BloqueadosDueno({ duenoId }: { duenoId: string }) {
 
   async function desbloquear(b: Bloqueo) {
     if (!confirm(`¿Desbloquear +51 ${b.celular}? Podrá volver a reservar en tus canchas.`)) return;
-    await supabaseNavegador()?.from("bloqueos_clientes").delete().eq("id", b.id);
+    await supabaseNavegador()?.from("clientes_bloqueados").delete().eq("id", b.id);
     cargar();
   }
 

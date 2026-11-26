@@ -29,7 +29,7 @@ export type Perfil = {
   celular: string | null;
   rol: "cliente" | "dueno";
   /** Celular confirmado por SMS (9 dígitos), o null. Migración 005. */
-  telefono_verificado?: string | null;
+  celular_verificado?: string | null;
   /** Administrador de EasyFut. Migración 008. */
   es_admin?: boolean;
 };
@@ -43,8 +43,8 @@ export async function usuarioActual() {
   } = await supabase.auth.getUser();
   if (!user) return null;
   const { data: perfil } = await supabase
-    .from("perfiles")
-    .select("*") // "*" para no fallar si aún no existe telefono_verificado
+    .from("usuarios")
+    .select("*") // "*" para no fallar si aún no existe celular_verificado
     .eq("id", user.id)
     .maybeSingle();
   return { supabase, user, perfil: perfil as Perfil | null };

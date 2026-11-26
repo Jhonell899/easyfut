@@ -24,11 +24,11 @@ type Reserva = {
   cancha_id?: string;
   cancha_slug?: string;
   nombre_cliente?: string | null;
-  pagos?: unknown;
+  medios_pago?: unknown;
   dueno_nombre?: string | null;
   dueno_celular?: string | null;
   pago_avisado_en?: string | null;
-  pagos_cambiado_en?: string | null; // migración 015
+  medios_pago_cambiado_en?: string | null; // migración 015 (019: nombre nuevo)
   politica_cancelacion?: string | null; // migración 016
 };
 
@@ -121,13 +121,13 @@ export default async function PaginaReserva({
           monto={Number(reserva.monto)}
           expiraEn={reserva.expira_en}
           pagoAvisadoEn={reserva.pago_avisado_en ?? null}
-          pagos={reserva.pagos}
+          pagos={reserva.medios_pago}
           duenoNombre={reserva.dueno_nombre ?? null}
           duenoCelular={reserva.dueno_celular ?? null}
           nombreCliente={reserva.nombre_cliente ?? null}
           canchaNombre={reserva.cancha_nombre}
           canchaId={reserva.cancha_id ?? ""}
-          pagosCambiadoEn={reserva.pagos_cambiado_en ?? null}
+          pagosCambiadoEn={reserva.medios_pago_cambiado_en ?? null}
           cuando={`${fmtFecha(reserva.inicio, { weekday: "long", day: "numeric", month: "long" })}, ${hora(reserva.inicio)} – ${hora(reserva.fin)}`}
         />
       )}

@@ -11,7 +11,6 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
   const [estado, setEstado] = useState<"cargando" | "anonimo" | "conectado">("cargando");
   const [perfil, setPerfil] = useState<PerfilMenu | null>(null);
   const [correo, setCorreo] = useState("");
-  const [esEncargado, setEsEncargado] = useState(false);
   const [abierto, setAbierto] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -27,14 +26,11 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
       }
       setCorreo(data.user.email ?? "");
       const { data: p } = await supabase!
-        .from("perfiles")
+        .from("usuarios")
         .select("*") // "*" incluye es_admin si ya existe (migración 008)
         .eq("id", data.user.id)
         .maybeSingle();
       setPerfil((p as PerfilMenu) ?? { nombre: null, rol: "cliente" });
-      // ¿Es encargado de algún local? (migración 011; si no existe, simplemente no)
-      const { data: locales } = await supabase!.rpc("mis_locales");
-      setEsEncargado(Array.isArray(locales) && locales.length > 0);
       setEstado("conectado");
     }
 
@@ -76,8 +72,8 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
           href="/ingresar"
           className={`rounded-full px-4 py-1.5 text-xs sm:text-sm font-black transition-all shadow-sm ${
             claro
-              ? "bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-emerald-950/20"
-              : "bg-emerald-600 hover:bg-emerald-700 text-white"
+              ? "bg-violet-400 hover:bg-violet-300 text-slate-950 shadow-violet-950/20"
+              : "bg-violet-600 hover:bg-violet-700 text-white"
           }`}
         >
           Ingresar
@@ -100,7 +96,7 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
         aria-haspopup="menu"
         className={`flex items-center gap-2 rounded-full py-1 pl-1 pr-3 text-sm font-medium ${pastilla}`}
       >
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-100 text-xs font-black text-emerald-800">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100 text-xs font-black text-violet-800">
           {nombre.charAt(0).toUpperCase()}
         </span>
         <span className="max-w-24 truncate">{nombre.split(" ")[0]}</span>
@@ -116,10 +112,10 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
             <p className="truncate text-xs text-slate-500">{correo}</p>
             <span
               className={`mt-2 inline-block rounded-full px-2.5 py-0.5 text-[11px] font-bold ${
-                esDueno ? "bg-[#0A2E1F] text-emerald-300" : "bg-emerald-100 text-emerald-800"
+                esDueno ? "bg-[#0A2E1F] text-violet-300" : "bg-violet-100 text-violet-800"
               }`}
             >
-              {esDueno ? (modoJugador ? "Dueño · modo jugador" : "Dueño") : esEncargado ? "Encargado" : "Jugador"}
+              {esDueno ? (modoJugador ? "Dueño · modo jugador" : "Dueño") : "Jugador"}
             </span>
           </div>
           {esDueno ? (
@@ -137,10 +133,6 @@ export default function MenuUsuario({ claro = false }: { claro?: boolean }) {
                 </a>
               </>
             )
-          ) : esEncargado ? (
-            <Link href="/panel" role="menuitem" className="block px-3 py-2.5 font-bold text-[#6D28D9] hover:bg-[#F4F4F4]">
-              Panel de encargado
-            </Link>
           ) : (
             <Link href="/publicar" role="menuitem" className="block px-3 py-2.5 hover:bg-[#F4F4F4]">
               ⇄ Tengo una cancha: ser dueño

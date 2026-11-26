@@ -96,7 +96,7 @@ export function BotonBloquear({
       );
       if (motivo === null) return;
       setOcupado(true);
-      const { error } = await supabase.from("bloqueos_clientes").insert({
+      const { error } = await supabase.from("clientes_bloqueados").insert({
         celular,
         dueno_id: user.id,
         creado_por: user.id,
@@ -107,7 +107,7 @@ export function BotonBloquear({
     } else {
       if (!confirm(`¿Desbloquear +51 ${celular}? Podrá volver a reservar en tus canchas.`)) return;
       setOcupado(true);
-      await supabase.from("bloqueos_clientes").delete().eq("celular", celular).eq("dueno_id", user.id);
+      await supabase.from("clientes_bloqueados").delete().eq("celular", celular).eq("dueno_id", user.id);
       setOcupado(false);
     }
     onCambio();

@@ -45,6 +45,8 @@ const ERRORES: Record<string, string> = {
   cruza_medianoche: "La reserva no puede pasar de la medianoche.",
   fuera_de_horario: "Ese horario está fuera de la atención de la cancha.",
   horario_ocupado: "Alguien acaba de reservar ese horario. Elige otro.",
+  requiere_cuenta: "Para reservar necesitas ingresar a tu cuenta.",
+  cancha_sin_saldo: "Esta cancha no está recibiendo reservas por ahora. Prueba con otra cancha o escríbele al dueño.",
   // Protección contra reservas falsas (migración 009)
   cliente_bloqueado: "Este número no puede hacer reservas aquí. Si crees que es un error, comunícate con la cancha.",
   pendiente_activa:
@@ -81,7 +83,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
   const router = useRouter();
   const supabase = supabaseNavegador();
   const ruta = usePathname();
-  const formRef = useRef<HTMLFormElement>(null);
+  const formRef = useRef<HTMLFormElement & HTMLDivElement>(null);
 
   const [hoy] = useState(hoyLima);
   const diasConAtencion = useMemo(() => new Set(franjas.map((f) => f.dia_semana)), [franjas]);
@@ -114,7 +116,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
       if (!data.user) return setConCuenta(false);
       setConCuenta(true);
       const { data: p } = await supabase
-        .from("perfiles")
+        .from("usuarios")
         .select("nombre, celular")
         .eq("id", data.user.id)
         .maybeSingle();
@@ -290,8 +292,8 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                 aria-pressed={activo}
                 className={`flex w-14 shrink-0 flex-col items-center gap-0.5 rounded-2xl border py-2.5 transition-colors ${
                   activo
-                    ? "border-[#16A34A] bg-[#16A34A] text-white shadow-sm"
-                    : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#16A34A]"
+                    ? "border-[#6D28D9] bg-[#6D28D9] text-white shadow-sm"
+                    : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#6D28D9]"
                 } disabled:border-transparent disabled:bg-[#F4F4F4] disabled:text-[#B0B0B0]`}
               >
                 <span className={`text-[11px] capitalize ${activo ? "text-white/80" : "text-[#5A5A5A]"}`}>
@@ -316,8 +318,8 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                 aria-pressed={d === duracion}
                 className={`rounded-xl border py-2.5 text-sm transition-colors ${
                   d === duracion
-                    ? "border-[#16A34A] bg-[#DCFCE7] font-bold text-[#15803D]"
-                    : "border-[#E3E3E3] text-[#1B1B1B] hover:border-[#16A34A]"
+                    ? "border-[#6D28D9] bg-[#EDE9FE] font-bold text-[#5B21B6]"
+                    : "border-[#E3E3E3] text-[#1B1B1B] hover:border-[#6D28D9]"
                 }`}
               >
                 {textoDuracion(d)}
@@ -352,7 +354,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
               <button
                 type="button"
                 onClick={() => setFecha(siguienteDia)}
-                className="font-bold text-[#16A34A]"
+                className="font-bold text-[#6D28D9]"
               >
                 Ver el {diaLargo(siguienteDia)} →
               </button>
@@ -371,8 +373,8 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                   aria-pressed={activo}
                   className={`flex flex-col items-center rounded-xl border py-2 transition-colors ${
                     activo
-                      ? "border-[#16A34A] bg-[#16A34A] text-white shadow-sm"
-                      : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#16A34A]"
+                      ? "border-[#6D28D9] bg-[#6D28D9] text-white shadow-sm"
+                      : "border-[#E3E3E3] bg-white text-[#1B1B1B] hover:border-[#6D28D9]"
                   } disabled:border-transparent ${
                     s.espera ? "disabled:bg-amber-50 disabled:text-amber-900/60" : "disabled:bg-[#F4F4F4] disabled:text-[#B0B0B0]"
                   }`}
@@ -398,8 +400,35 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
         )}
       </Paso>
 
+      {/* Paso 4: sin cuenta no se reserva */}
+      {elegido && conCuenta === false && (
+        <div ref={formRef} className="scroll-mt-6">
+          <Paso numero={duraciones.length > 1 ? 4 : 3} titulo="Ingresa para reservar">
+            <div className="flex flex-col gap-3 rounded-2xl border border-[#E3E3E3] bg-white p-4">
+              <p className="text-sm text-[#4A4A4A]">
+                Para reservar necesitas una cuenta. Así el dueño sabe quién reservó y tus reservas quedan guardadas.
+              </p>
+              <div className="flex gap-2">
+                <Link
+                  href={`/ingresar?next=${encodeURIComponent(ruta)}`}
+                  className="boton-morado flex-1 rounded-xl py-3 text-center font-bold text-white"
+                >
+                  Ingresar
+                </Link>
+                <Link
+                  href={`/registro?next=${encodeURIComponent(ruta)}`}
+                  className="flex-1 rounded-xl border border-[#6D28D9] py-3 text-center font-bold text-[#6D28D9]"
+                >
+                  Crear cuenta
+                </Link>
+              </div>
+            </div>
+          </Paso>
+        </div>
+      )}
+
       {/* Paso 4: datos */}
-      {elegido && (
+      {elegido && conCuenta === true && (
         <form id="form-reserva" ref={formRef} onSubmit={reservar} className="scroll-mt-6">
           <Paso numero={duraciones.length > 1 ? 4 : 3} titulo="Tus datos">
             <div className="flex flex-col gap-3">
@@ -410,7 +439,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                   autoComplete="name"
                   placeholder="Ej. Juan Pérez"
                   required
-                  className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-[#16A34A]/20"
+                  className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20"
                 />
               </Campo>
               <Campo
@@ -430,19 +459,11 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                   placeholder="987 654 321"
                   maxLength={11}
                   required
-                  className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#16A34A] focus:ring-2 focus:ring-[#16A34A]/20"
+                  className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20"
                 />
               </Campo>
               {celularValido && (
                 <ComprobarWhatsapp numero={celularLimpio} confirmado={whatsappOk} onCambio={marcarWhatsapp} />
-              )}
-              {conCuenta === false && (
-                <p className="rounded-xl bg-[#F7F8F7] p-3 text-xs text-[#4A4A4A]">
-                  <Link href={`/ingresar?next=${encodeURIComponent(ruta)}`} className="font-bold text-[#16A34A]">
-                    Ingresa
-                  </Link>{" "}
-                  para guardar esta reserva en tu cuenta. También puedes reservar sin cuenta.
-                </p>
               )}
               {error && (
                 <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">
@@ -465,14 +486,23 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                 <span className="font-bold text-[#1B1B1B]">{soles(elegido.monto)}</span>
               </p>
             </div>
-            <button
-              type="submit"
-              form="form-reserva"
-              disabled={!nombreValido || !celularValido || !whatsappOk || enviando}
-              className="boton-verde shrink-0 rounded-2xl px-6 py-3 font-bold text-white transition-opacity disabled:opacity-40 shadow-md"
-            >
-              {enviando ? "Reservando…" : "Reservar"}
-            </button>
+            {conCuenta === false ? (
+              <Link
+                href={`/ingresar?next=${encodeURIComponent(ruta)}`}
+                className="boton-morado shrink-0 rounded-2xl px-6 py-3 font-bold text-white shadow-md"
+              >
+                Ingresa para reservar
+              </Link>
+            ) : (
+              <button
+                type="submit"
+                form="form-reserva"
+                disabled={conCuenta !== true || !nombreValido || !celularValido || !whatsappOk || enviando}
+                className="boton-verde shrink-0 rounded-2xl px-6 py-3 font-bold text-white transition-opacity disabled:opacity-40 shadow-md"
+              >
+                {enviando ? "Reservando…" : "Reservar"}
+              </button>
+            )}
           </div>
           <p className="mx-auto max-w-xl px-5 pb-3 text-[11px] text-[#5A5A5A]">
             Separamos tu horario por 10 minutos para que pagues y avises al dueño. Al reservar aceptas la <a href="#politica" className="underline">política de cancelación</a> de la cancha.

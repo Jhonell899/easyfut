@@ -13,3 +13,6 @@ next-env.d.ts
 
 # Supabase CLI temp
 supabase/.temp/
+
+# Datos privados que no van a GitHub (Yape de EasyFut, etc.)
+supabase/privado/

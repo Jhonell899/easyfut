@@ -24,6 +24,8 @@ type ReservaPanel = {
   canchas: { id: string; nombre: string } | null;
 };
 
+type SaldoPanel = { saldo: number; precio_reserva: number; reservas_disponibles: number };
+
 const ESTADOS: Record<string, string> = {
   pendiente: "bg-amber-50 text-amber-800",
   confirmada: "bg-[#DCF5EA] text-[#0F7A55]",
@@ -32,20 +34,10 @@ const ESTADOS: Record<string, string> = {
 
 const hora = (iso: string) => fmtFecha(iso, { hour: "2-digit", minute: "2-digit", hour12: false });
 
-export default async function Panel({ searchParams }: { searchParams: Promise<{ d?: string }> }) {
-  const { d } = await searchParams;
+export default async function Panel() {
   const sesion = await usuarioActual();
   if (!sesion) redirect("/ingresar?next=/panel");
   const { supabase, user, perfil } = sesion;
-
-  // ¿Trabaja como encargado de algún local? (migración 011)
-  const { data: datosLocales } = await supabase.rpc("mis_locales");
-  const locales = (datosLocales ?? []) as { dueno_id: string; dueno_nombre: string | null; canchas: number }[];
-
-  if (perfil?.rol !== "dueno" || (d && d !== user.id && locales.some((l) => l.dueno_id === d))) {
-    const local = locales.find((l) => l.dueno_id === d) ?? locales[0];
-    if (local) return <PanelEncargado local={local} locales={locales} nombre={perfil?.nombre ?? null} />;
-  }
 
   if (perfil?.rol !== "dueno") {
     return (
@@ -62,7 +54,7 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
     );
   }
 
-  const [{ data: canchas }, { data: reservas }] = await Promise.all([
+  const [{ data: canchas }, { data: reservas }, { data: datosSaldo }] = await Promise.all([
     supabase
       .from("canchas")
       .select("id, nombre, slug, distrito, activa")
@@ -76,8 +68,10 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
       .gte("fin", new Date().toISOString())
       .order("inicio")
       .limit(30),
+    supabase.rpc("mi_saldo"), // migración 021
   ]);
 
+  const saldo = (datosSaldo as SaldoPanel[] | null)?.[0] ?? null;
   const misCanchas = (canchas ?? []) as CanchaPanel[];
   const proximas = (reservas ?? []) as unknown as ReservaPanel[];
   const pendientes = proximas.filter((r) => r.estado === "pendiente").length;
@@ -105,11 +99,11 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
       </header>
 
       <main className="mx-auto -mt-8 flex max-w-xl flex-col gap-5 px-5 pb-10">
-        {perfil.telefono_verificado ? (
+        {perfil.celular_verificado ? (
           <p className="flex items-center gap-2 rounded-2xl bg-white px-4 py-3 text-sm shadow-sm">
             <span className="rounded-full bg-[#DCF5EA] px-2 py-0.5 text-xs font-bold text-[#0F7A55]">✓ WhatsApp confirmado</span>
             <span className="text-[#5A5A5A]">
-              Contacto público: <strong className="text-[#1B1B1B]">+51 {perfil.telefono_verificado}</strong>
+              Contacto público: <strong className="text-[#1B1B1B]">+51 {perfil.celular_verificado}</strong>
             </span>
           </p>
         ) : (
@@ -122,16 +116,10 @@ export default async function Panel({ searchParams }: { searchParams: Promise<{ 
           <Dato valor={pendientes} etiqueta="Por cobrar" resaltar={pendientes > 0} />
         </div>
 
+        {saldo && <TarjetaSaldo saldo={saldo} />}
+
         {misCanchas.length > 0 && (
-          <div className="grid grid-cols-2 gap-2">
-            <Atajo href="/panel/agenda" icono="📅" titulo="Agenda del día" detalle="Todas tus canchas" />
-            <Atajo href="/panel/encargados" icono="👥" titulo="Encargados" detalle="Tu equipo" />
-          </div>
-        )}
-        {locales.length > 0 && (
-          <Link href={`/panel?d=${locales[0].dueno_id}`} className="rounded-2xl bg-white px-4 py-3 text-sm font-bold text-[#6D28D9] shadow-sm">
-            También eres encargado en {locales[0].dueno_nombre ?? "otro local"} →
-          </Link>
+          <Atajo href="/panel/agenda" icono="📅" titulo="Agenda del día" detalle="Todas tus canchas" />
         )}
 
         {misCanchas.length > 0 && <PendientesEnVivo duenoId={user.id} />}
@@ -220,6 +208,40 @@ function Dato({ valor, etiqueta, resaltar }: { valor: number; etiqueta: string; 
   );
 }
 
+/** Saldo para recibir reservas (S/ 1 por reserva confirmada). */
+function TarjetaSaldo({ saldo }: { saldo: SaldoPanel }) {
+  const quedan = saldo.reservas_disponibles;
+  const estilo =
+    quedan === 0
+      ? "border-red-200 bg-red-50"
+      : quedan <= 5
+        ? "border-amber-200 bg-amber-50"
+        : "border-transparent bg-white";
+  return (
+    <Link href="/panel/saldo" className={`flex items-center justify-between gap-3 rounded-2xl border p-4 shadow-sm ${estilo}`}>
+      <span className="min-w-0">
+        <span className="block text-xs text-[#5A5A5A]">Saldo para reservas</span>
+        <span className="block text-xl font-extrabold text-[#1B1B1B]">
+          {soles(Number(saldo.saldo))}{" "}
+          <span className="text-sm font-medium text-[#5A5A5A]">
+            · {quedan} reserva{quedan === 1 ? "" : "s"}
+          </span>
+        </span>
+        {quedan === 0 ? (
+          <span className="block text-xs font-bold text-red-700">Tus canchas no reciben reservas. Recarga para seguir.</span>
+        ) : quedan <= 5 ? (
+          <span className="block text-xs font-bold text-amber-800">Te quedan pocas reservas. Recarga pronto.</span>
+        ) : (
+          <span className="block text-xs text-[#5A5A5A]">
+            Se descuenta {soles(Number(saldo.precio_reserva))} por cada reserva confirmada.
+          </span>
+        )}
+      </span>
+      <span className="boton-morado shrink-0 rounded-xl px-4 py-2 text-sm font-bold text-white">Recargar</span>
+    </Link>
+  );
+}
+
 function Atajo({ href, icono, titulo, detalle }: { href: string; icono: string; titulo: string; detalle: string }) {
   return (
     <Link href={href} className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-sm hover:bg-[#FAFAFA]">
@@ -231,60 +253,5 @@ function Atajo({ href, icono, titulo, detalle }: { href: string; icono: string; 
         <span className="block truncate text-xs text-[#5A5A5A]">{detalle}</span>
       </span>
     </Link>
-  );
-}
-
-/** Panel de quien trabaja como encargado en el local de otro dueño. */
-function PanelEncargado({
-  local,
-  locales,
-  nombre,
-}: {
-  local: { dueno_id: string; dueno_nombre: string | null; canchas: number };
-  locales: { dueno_id: string; dueno_nombre: string | null; canchas: number }[];
-  nombre: string | null;
-}) {
-  return (
-    <div className="min-h-screen">
-      <header className="fondo-cancha text-white">
-        <div className="mx-auto flex max-w-xl flex-col gap-6 px-5 pb-14 pt-5">
-          <nav className="flex items-center justify-between">
-            <Logo claro />
-            <MenuUsuario claro />
-          </nav>
-          <div>
-            <p className="text-sm text-white/80">Encargado · {local.dueno_nombre ?? "Local"}</p>
-            <h1 className="text-2xl font-extrabold">Hola, {nombre?.split(" ")[0] ?? "encargado"}</h1>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto -mt-8 flex max-w-xl flex-col gap-5 px-5 pb-10">
-        {locales.length > 1 && (
-          <div className="sin-scroll -mx-5 flex gap-2 overflow-x-auto px-5">
-            {locales.map((l) => (
-              <Link
-                key={l.dueno_id}
-                href={`/panel?d=${l.dueno_id}`}
-                className={`shrink-0 rounded-full px-4 py-2 text-sm font-bold ${
-                  l.dueno_id === local.dueno_id ? "bg-[#0A3D2E] text-white" : "bg-white shadow-sm"
-                }`}
-              >
-                {l.dueno_nombre ?? "Local"}
-              </Link>
-            ))}
-          </div>
-        )}
-        <Atajo
-          href={`/panel/agenda?d=${local.dueno_id}`}
-          icono="📅"
-          titulo="Agenda del día"
-          detalle={`${local.canchas} cancha${local.canchas === 1 ? "" : "s"}`}
-        />
-        <PendientesEnVivo duenoId={local.dueno_id} puedeBloquear={false} />
-        <p className="text-center text-xs text-[#8A968F]">
-          Como encargado puedes confirmar pagos, cancelar y registrar reservas. Los precios y horarios los cambia el dueño.
-        </p>
-      </main>
-    </div>
   );
 }

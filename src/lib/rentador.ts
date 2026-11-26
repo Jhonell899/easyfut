@@ -24,7 +24,7 @@ export function pagosDe(v: unknown): Pagos {
   return r;
 }
 
-/** Solo los campos con valor (para guardar en canchas.pagos). */
+/** Solo los campos con valor (para guardar en canchas.medios_pago). */
 export function pagosParaGuardar(p: Pagos) {
   const r: Partial<Pagos> = {};
   for (const [k, v] of Object.entries(p) as [keyof Pagos, string][]) if (v.trim()) r[k] = v.trim();
@@ -204,14 +204,14 @@ export function filaCancha(d: DatosCancha) {
     longitud: d.longitud != null ? Number(d.longitud.toFixed(6)) : null,
     servicios: d.servicios,
     fotos: d.fotos,
-    pagos: pagosParaGuardar(d.pagos),
+    medios_pago: pagosParaGuardar(d.pagos),
     politica_cancelacion: d.politica,
   };
 }
 
 /** Igual que filaCancha pero sin los medios de pago, que se guardan aparte (con contraseña). */
 export function filaSinPagos(d: DatosCancha) {
-  const { pagos: _pagos, ...resto } = filaCancha(d);
+  const { medios_pago: _pagos, ...resto } = filaCancha(d);
   void _pagos;
   return resto;
 }

@@ -21,12 +21,11 @@ export default function BarraInferior() {
     async function cargar() {
       const { data } = await supabase!.auth.getUser();
       if (!data.user) return setCuenta("anonimo");
-      const { data: p } = await supabase!.from("perfiles").select("*").eq("id", data.user.id).maybeSingle();
+      const { data: p } = await supabase!.from("usuarios").select("*").eq("id", data.user.id).maybeSingle();
       if (p?.es_admin) return setCuenta("admin");
       if (p?.rol === "dueno")
         return setCuenta(/(?:^|; )ef_modo=jugador/.test(document.cookie) ? "dueno-jugando" : "panel");
-      const { data: locales } = await supabase!.rpc("mis_locales");
-      setCuenta(Array.isArray(locales) && locales.length > 0 ? "panel" : "cliente");
+      setCuenta("cliente");
     }
     cargar();
     const { data: sub } = supabase.auth.onAuthStateChange(() => cargar());
@@ -97,7 +96,7 @@ export default function BarraInferior() {
                   href={i.href}
                   aria-current={activo ? "page" : undefined}
                   className={`flex flex-col items-center gap-0.5 py-2 text-[11px] font-bold ${
-                    activo ? "text-[#16A34A]" : "text-slate-400"
+                    activo ? "text-[#6D28D9]" : "text-slate-400"
                   }`}
                 >
                   <svg

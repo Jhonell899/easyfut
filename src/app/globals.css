@@ -1,13 +1,9 @@
 @import "tailwindcss";
 
-/* ==========================================================================
-   Paleta Deportiva EasyFut · Fútbol & Canchas
-   - Verde Estadio    #062319 / #0A3D2A (Fondos oscuros, césped nocturno)
-   - Verde Césped     #16A34A (Acento principal, botones de acción, energía)
-   - Verde Lima       #22C55E / #4ADE80 (Luz de estadio, detalles dinámicos)
-   - Verde Suave      #DCFCE7 / #ECFDF5 (Badges, tags activos, selecciones)
-   - Fondo Base       #F8FAFC (Limpio, moderno y de alto contraste)
-   ========================================================================== */
+/* Paleta EasyFut
+   Verde oscuro  #062A1F / #0A3D2E  → portadas, barras y superficies oscuras
+   Morado        #6D28D9 (tinte #EDE9FE, claro #C4B5FD) → botones y acciones
+   Verde éxito   #0F7A55 (tinte #DCF5EA) → pagado, confirmado, verificado */
 
 /* Carruseles horizontales sin barra visible */
 .sin-scroll {
@@ -17,45 +13,41 @@
   display: none;
 }
 
-/* Fondo general: pizarra ultra limpia para resaltar las tarjetas y fotografías */
+/* Fondo general: lavanda muy suave para que las tarjetas blancas resalten */
 body {
-  background: #f8fafc;
-  color: #0f172a;
+  background: #f3f1fa;
+  color: #14231d;
 }
 
-/* Portada: césped de estadio bajo reflectores nocturnos con marcas de cancha */
+/* Portada: verde oscuro que se funde en morado, con luces y líneas de cancha */
 .fondo-cancha {
   background:
-    /* Focos de estadio */
-    radial-gradient(70% 90% at 90% 0%, rgb(34 197 94 / 0.4) 0%, transparent 60%),
-    radial-gradient(60% 80% at 10% 100%, rgb(16 185 129 / 0.3) 0%, transparent 65%),
-    /* Círculo central y área */
-    radial-gradient(circle at 85% 112%, transparent 0 88px, rgb(255 255 255 / 0.12) 89px 91px, transparent 92px),
-    linear-gradient(90deg, transparent calc(85% - 1px), rgb(255 255 255 / 0.08) calc(85% - 1px) calc(85% + 1px), transparent calc(85% + 1px)),
-    /* Patrón de césped profesional cortado */
-    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 48px, transparent 48px 96px),
-    linear-gradient(145deg, #051d14 0%, #0a3525 50%, #0d4a34 100%);
+    /* luces */
+    radial-gradient(60% 80% at 100% 0%, rgb(139 92 246 / 0.55) 0%, transparent 60%),
+    radial-gradient(50% 70% at 0% 100%, rgb(16 185 129 / 0.22) 0%, transparent 65%),
+    /* círculo central y línea media */
+    radial-gradient(circle at 85% 112%, transparent 0 88px, rgb(255 255 255 / 0.13) 89px 91px, transparent 92px),
+    linear-gradient(90deg, transparent calc(85% - 1px), rgb(255 255 255 / 0.1) calc(85% - 1px) calc(85% + 1px), transparent calc(85% + 1px)),
+    /* franjas de césped */
+    repeating-linear-gradient(90deg, rgb(255 255 255 / 0.03) 0 48px, transparent 48px 96px),
+    linear-gradient(150deg, #062a1f 0%, #0a3d2e 48%, #2e1a66 100%);
 }
 
-/* Sombras con tono verde sutil para sensación de elevación deportiva */
+/* Sombra suave con un toque morado: da profundidad a las tarjetas */
 .sombra-suave {
   box-shadow:
-    0 1px 3px rgb(15 23 42 / 0.06),
-    0 8px 20px -6px rgb(16 185 129 / 0.12);
+    0 1px 2px rgb(20 35 29 / 0.04),
+    0 8px 24px -8px rgb(76 29 149 / 0.18);
 }
 .sombra-fuerte {
   box-shadow:
-    0 4px 6px -1px rgb(15 23 42 / 0.07),
-    0 16px 36px -10px rgb(16 185 129 / 0.2);
+    0 2px 4px rgb(20 35 29 / 0.06),
+    0 18px 40px -12px rgb(76 29 149 / 0.32);
 }
 
-/* Botón principal de acción deportiva */
-.boton-verde,
-.boton-morado {
-  background: linear-gradient(135deg, #22c55e 0%, #16a34a 60%, #15803d 100%);
-  box-shadow: 0 6px 18px -4px rgb(22 163 74 / 0.5);
-}
-.boton-verde:hover,
-.boton-morado:hover {
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+/* Botón principal con degradado morado */
+.boton-morado,
+.boton-verde {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 60%, #5b21b6 100%);
+  box-shadow: 0 6px 16px -6px rgb(109 40 217 / 0.6);
 }

@@ -13,7 +13,7 @@ export default async function Inicio() {
   const { data, error } = supabase
     ? await supabase
         .from("canchas")
-        .select("*, franjas(precio_hora)")
+        .select("*, franjas:tarifas_horarias(precio_hora)")
         .eq("activa", true)
         .order("created_at", { ascending: false })
         .limit(18)
@@ -39,10 +39,10 @@ export default async function Inicio() {
 
             {/* Enlaces Desktop */}
             <div className="hidden md:flex items-center gap-6 text-sm font-semibold text-white/90">
-              <Link href="/" className="hover:text-emerald-400 transition-colors">
+              <Link href="/" className="hover:text-violet-400 transition-colors">
                 Canchas
               </Link>
-              <Link href="/reservas" className="hover:text-emerald-400 transition-colors">
+              <Link href="/reservas" className="hover:text-violet-400 transition-colors">
                 Mis Reservas
               </Link>
               <Link
@@ -59,13 +59,13 @@ export default async function Inicio() {
           {/* Hero Content */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 pt-4">
             <div className="flex max-w-xl flex-col gap-4">
-              <span className="self-start rounded-full bg-emerald-500/20 px-3.5 py-1 text-xs font-bold text-emerald-300 ring-1 ring-emerald-400/30 backdrop-blur-md flex items-center gap-1.5">
+              <span className="self-start rounded-full bg-violet-500/20 px-3.5 py-1 text-xs font-bold text-violet-300 ring-1 ring-violet-400/30 backdrop-blur-md flex items-center gap-1.5">
                 <span>⚽</span> Fútbol en Lima
               </span>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.08] tracking-tight">
                 Reserva tu cancha
                 <br />
-                <span className="bg-gradient-to-r from-emerald-400 via-green-300 to-lime-300 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-violet-400 via-violet-200 to-fuchsia-200 bg-clip-text text-transparent">
                   en minutos
                 </span>
               </h1>
@@ -82,7 +82,7 @@ export default async function Inicio() {
                 { valor: "24/7", texto: "disponibilidad" },
               ].map((d) => (
                 <div key={d.texto} className="rounded-2xl bg-white/10 p-3 ring-1 ring-white/15 backdrop-blur-md">
-                  <dd className="text-xl sm:text-2xl font-black text-emerald-300">{d.valor}</dd>
+                  <dd className="text-xl sm:text-2xl font-black text-violet-300">{d.valor}</dd>
                   <dt className="text-[11px] sm:text-xs text-slate-300 font-medium">{d.texto}</dt>
                 </div>
               ))}
@@ -113,7 +113,7 @@ export default async function Inicio() {
         <div className="fondo-cancha sombra-fuerte mt-6 rounded-3xl p-6 sm:p-8 text-white">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/20 text-emerald-400 border border-emerald-400/30">
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-violet-500/20 text-violet-400 border border-violet-400/30">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <path d="M3 21V9l9-6 9 6v12h-6v-7H9v7z" />
                 </svg>
@@ -128,7 +128,7 @@ export default async function Inicio() {
 
             <Link
               href="/publicar"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black px-6 py-3.5 text-sm transition-all shadow-lg active:scale-95 shrink-0"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-violet-500 hover:bg-violet-400 text-slate-950 font-black px-6 py-3.5 text-sm transition-all shadow-lg active:scale-95 shrink-0"
             >
               Publicar mi cancha
               <span aria-hidden="true">→</span>
@@ -142,16 +142,16 @@ export default async function Inicio() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <Logo />
           <div className="flex flex-wrap items-center gap-5 font-medium text-slate-600">
-            <Link href="/terminos" className="hover:text-emerald-600 transition-colors">
+            <Link href="/terminos" className="hover:text-violet-600 transition-colors">
               Términos
             </Link>
-            <Link href="/privacidad" className="hover:text-emerald-600 transition-colors">
+            <Link href="/privacidad" className="hover:text-violet-600 transition-colors">
               Privacidad
             </Link>
-            <Link href="/publicar" className="hover:text-emerald-600 transition-colors">
+            <Link href="/publicar" className="hover:text-violet-600 transition-colors">
               Publica tu cancha
             </Link>
-            <Link href="/reservas" className="hover:text-emerald-600 transition-colors">
+            <Link href="/reservas" className="hover:text-violet-600 transition-colors">
               Mis reservas
             </Link>
           </div>

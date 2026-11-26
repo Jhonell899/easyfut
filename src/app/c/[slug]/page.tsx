@@ -95,7 +95,7 @@ export default async function DetalleCancha({
 
   const { data, error } = await supabase
     .from("canchas")
-    .select("*, franjas(*)")
+    .select("*, franjas:tarifas_horarias(*)")
     .eq("slug", slug)
     .eq("activa", true)
     .maybeSingle();
@@ -143,9 +143,9 @@ export default async function DetalleCancha({
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8 py-3.5">
           <Link
             href="/"
-            className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-emerald-700 transition-colors"
+            className="flex items-center gap-2 text-xs sm:text-sm font-bold text-slate-700 hover:text-violet-700 transition-colors"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 hover:bg-emerald-50">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-100 hover:bg-violet-50">
               ←
             </span>
             <span>Volver a canchas</span>
@@ -196,7 +196,7 @@ export default async function DetalleCancha({
             <div className="flex flex-col gap-4 rounded-3xl bg-white p-6 sm:p-7 sombra-suave border border-slate-100">
               {/* Badges de Deporte y Superficie */}
               <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
-                <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-800 border border-emerald-200">
+                <span className="rounded-full bg-violet-50 px-3 py-1 text-violet-800 border border-violet-200">
                   {DEPORTES[cancha.deporte] ?? cancha.deporte}
                 </span>
                 {cancha.superficie && (
@@ -210,7 +210,7 @@ export default async function DetalleCancha({
               <div>
                 <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">{cancha.nombre}</h1>
                 <p className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-500 mt-1.5">
-                  <svg className="shrink-0 text-emerald-600" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <svg className="shrink-0 text-violet-600" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M12 22s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z" />
                     <circle cx="12" cy="10" r="2.5" />
                   </svg>
@@ -224,7 +224,7 @@ export default async function DetalleCancha({
               {/* Contacto del dueño */}
               {contacto?.nombre && (
                 <div className="flex items-center gap-2.5 rounded-2xl bg-slate-50 p-3 text-xs sm:text-sm text-slate-700 border border-slate-100">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-100 text-violet-800 font-bold text-xs">
                     {contacto.nombre.charAt(0).toUpperCase()}
                   </span>
                   <div className="flex-1 truncate">
@@ -232,7 +232,7 @@ export default async function DetalleCancha({
                     <strong className="font-bold text-slate-900">{contacto.nombre}</strong>
                   </div>
                   {contacto.celular && (
-                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800">
+                    <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] font-bold text-violet-800">
                       ✓ Verificado
                     </span>
                   )}
@@ -254,7 +254,7 @@ export default async function DetalleCancha({
                   <ul className="grid grid-cols-2 gap-2 text-xs sm:text-sm text-slate-700">
                     {servicios.map((s) => (
                       <li key={s} className="flex items-center gap-2">
-                        <svg className="text-emerald-600 shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <svg className="text-violet-600 shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <path d="M5 12l5 5L20 7" />
                         </svg>
                         <span>{s}</span>
@@ -272,11 +272,11 @@ export default async function DetalleCancha({
                     {modalidades.map((n) => (
                       <div
                         key={n}
-                        className="flex flex-col items-center rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3 text-center"
+                        className="flex flex-col items-center rounded-2xl border border-violet-200 bg-violet-50/50 p-3 text-center"
                       >
-                        <span className="text-xs font-semibold text-emerald-800">Fútbol</span>
-                        <span className="text-2xl font-black text-emerald-950">{n}</span>
-                        <span className="text-[10px] text-emerald-700">{n} vs {n}</span>
+                        <span className="text-xs font-semibold text-violet-800">Fútbol</span>
+                        <span className="text-2xl font-black text-violet-950">{n}</span>
+                        <span className="text-[10px] text-violet-700">{n} vs {n}</span>
                       </div>
                     ))}
                   </div>
@@ -295,7 +295,7 @@ export default async function DetalleCancha({
                         <span className="font-semibold text-slate-800">{r.dias}</span>
                         <span className="text-slate-400 ml-2">({r.horas})</span>
                       </div>
-                      <span className="font-black text-emerald-700">{soles(r.precio)}/h</span>
+                      <span className="font-black text-violet-700">{soles(r.precio)}/h</span>
                     </li>
                   ))}
                 </ul>
@@ -331,7 +331,7 @@ export default async function DetalleCancha({
                     {desde !== null ? soles(desde) : "Consultar"}
                     <span className="text-xs font-medium text-slate-500"> /hora</span>
                   </div>
-                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-200">
+                  <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-bold text-violet-700 border border-violet-200">
                     Pago con Yape / Plin
                   </span>
                 </div>

@@ -68,7 +68,7 @@ export default function TarjetaCancha({
   return (
     <Link
       href={`/c/${cancha.slug}`}
-      className="sombra-suave group flex flex-col overflow-hidden rounded-3xl bg-white border border-slate-100 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-emerald-200"
+      className="sombra-suave group flex flex-col overflow-hidden rounded-3xl bg-white border border-slate-100 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-violet-200"
     >
       {/* Foto con el nombre encima */}
       <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-[#0A2E1F]">
@@ -93,7 +93,7 @@ export default function TarjetaCancha({
         {/* Degradado para lectura óptima */}
         <div className="absolute inset-0 bg-gradient-to-t from-[#051D14]/95 via-[#051D14]/25 to-transparent" />
 
-        <span className="absolute left-3.5 top-3.5 rounded-full bg-slate-900/60 px-3 py-1 text-xs font-bold text-emerald-400 ring-1 ring-emerald-400/30 backdrop-blur-md">
+        <span className="absolute left-3.5 top-3.5 rounded-full bg-slate-900/60 px-3 py-1 text-xs font-bold text-violet-400 ring-1 ring-violet-400/30 backdrop-blur-md">
           {etiquetaDeporte(cancha.deporte, cancha.modalidades)}
         </span>
         {cerca && (
@@ -108,7 +108,7 @@ export default function TarjetaCancha({
         <div className="absolute inset-x-4 bottom-3 text-white">
           <h2 className="truncate text-xl font-extrabold leading-tight tracking-tight drop-shadow">{cancha.nombre}</h2>
           <p className="flex items-center gap-1.5 text-xs sm:text-sm text-slate-200 mt-0.5">
-            <svg className="shrink-0 text-emerald-400" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <svg className="shrink-0 text-violet-400" width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M12 2a7 7 0 0 0-7 7c0 5.3 7 13 7 13s7-7.7 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z" />
             </svg>
             <span className="truncate">

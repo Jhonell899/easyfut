@@ -9,7 +9,7 @@ type Rentador = {
   nombre: string | null;
   correo: string;
   celular: string | null;
-  telefono_verificado: string | null;
+  celular_verificado: string | null;
   referencia: string;
   canchas: number;
   creado: string;
@@ -75,7 +75,7 @@ export default function AdminRentadores() {
       r.correo.toLowerCase().includes(q) ||
       (r.celular ?? "").includes(q)
   );
-  const porVerificar = (lista ?? []).filter((r) => !r.telefono_verificado).length;
+  const porVerificar = (lista ?? []).filter((r) => !r.celular_verificado).length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -122,7 +122,7 @@ export default function AdminRentadores() {
                     <span className="rounded-lg bg-[#0A3D2E] px-2 py-0.5 font-mono text-xs font-bold tracking-wider text-white">
                       {r.referencia}
                     </span>
-                    {r.telefono_verificado ? (
+                    {r.celular_verificado ? (
                       <span className="rounded-full bg-[#DCF5EA] px-2 py-0.5 text-[11px] font-bold text-[#0F7A55]">✓ WhatsApp</span>
                     ) : (
                       <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-800">Sin confirmar</span>
@@ -130,10 +130,10 @@ export default function AdminRentadores() {
                   </div>
                 </div>
 
-                {r.telefono_verificado ? (
+                {r.celular_verificado ? (
                   <div className="flex items-center justify-between gap-3">
                     <span>
-                      +51 <strong>{r.telefono_verificado}</strong>
+                      +51 <strong>{r.celular_verificado}</strong>
                     </span>
                     <button
                       type="button"

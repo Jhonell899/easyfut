@@ -87,11 +87,7 @@ export default function GestorCancha({
     // contraseña se haya escrito en los últimos 10 minutos (migración 015).
     if (pagosCambiaron) {
       const pagos = pagosParaGuardar(datos.pagos);
-      let { error } = await supabase.rpc("guardar_pagos", { p_cancha_id: cancha.id, p_pagos: pagos });
-      // Si la migración 015 aún no está aplicada, se guarda como antes
-      if (error && /guardar_pagos|schema cache|does not exist/i.test(error.message)) {
-        ({ error } = await supabase.from("canchas").update({ pagos }).eq("id", cancha.id));
-      }
+      const { error } = await supabase.rpc("guardar_medios_pago", { p_cancha_id: cancha.id, p_pagos: pagos });
       if (error) {
         setGuardando(false);
         if (/requiere_clave/.test(error.message)) return setPideClave(true);
@@ -107,7 +103,7 @@ export default function GestorCancha({
       }
     }
     if (horarioCambio) {
-      const { error } = await supabase.rpc("guardar_franjas", {
+      const { error } = await supabase.rpc("guardar_tarifas_horarias", {
         p_cancha_id: cancha.id,
         p_franjas: franjasParaGuardar(horario),
       });

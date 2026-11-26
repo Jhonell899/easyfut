@@ -12,7 +12,7 @@ export default async function NuevaCancha() {
   if (!sesion || sesion.perfil?.rol !== "dueno") redirect("/publicar");
 
   // Primero el celular verificado: se muestra público en la cancha
-  if (!sesion.perfil.telefono_verificado) {
+  if (!sesion.perfil.celular_verificado) {
     return (
       <MarcoPanel subtitulo="Antes de publicar" titulo="Confirma tu WhatsApp" volver={{ href: "/panel", texto: "Mi panel" }}>
         <VerificarCelular celularInicial={sesion.perfil.celular} />
