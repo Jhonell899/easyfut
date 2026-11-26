@@ -6,7 +6,18 @@ import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { fmtFecha, soles } from "@/lib/horario";
 
 type Datos = {
-  reserva_id: string;
+  chat_id: string;
+  soy: "dueno" | "cliente";
+  otra_nombre: string | null;
+  otra_celular: string | null;
+  abierto: boolean;
+  abierto_hasta: string;
+  cliente_pagadas: number | null;
+  cliente_vencidas: number | null;
+  cliente_canceladas: number | null;
+  cliente_pagos_falsos: number | null;
+};
+type ReservaChat = {
   codigo: string;
   estado: string;
   inicio: string;
@@ -14,21 +25,12 @@ type Datos = {
   monto: number;
   cancha_nombre: string;
   cancha_direccion: string;
-  cancha_slug: string;
-  soy: "dueno" | "cliente";
-  otra_nombre: string | null;
-  otra_celular: string | null;
-  abierto: boolean;
-  cliente_pagadas: number | null;
-  cliente_vencidas: number | null;
-  cliente_canceladas: number | null;
-  cliente_pagos_falsos: number | null;
 };
 type Mensaje = { id: string; autor: "cliente" | "dueno" | "sistema"; texto: string; created_at: string };
 
 const ERRORES: Record<string, string> = {
   texto_invalido: "Escribe un mensaje de hasta 1000 caracteres.",
-  chat_cerrado: "Este chat ya está cerrado.",
+  chat_cerrado: "Este chat está cerrado hasta tu próxima reserva confirmada.",
   sin_permiso: "No participas en este chat.",
   muy_rapido: "Estás enviando muy rápido. Espera un momento.",
 };
@@ -36,59 +38,63 @@ const ERRORES: Record<string, string> = {
 const hora = (iso: string) => fmtFecha(iso, { hour: "2-digit", minute: "2-digit", hour12: false });
 const dia = (iso: string) => fmtFecha(iso, { weekday: "short", day: "numeric", month: "short" });
 
-/** Chat entre el cliente y el dueño de una reserva confirmada. */
-export default function ChatReserva({ codigo }: { codigo: string }) {
+/** Chat entre el dueño (rentador) y el jugador (alquilador). Uno por pareja, con su propio id. */
+export default function ChatReserva({ chatId }: { chatId: string }) {
   const supabase = supabaseNavegador();
   const [datos, setDatos] = useState<Datos | null | undefined>(undefined);
+  const [reservas, setReservas] = useState<ReservaChat[]>([]);
   const [mensajes, setMensajes] = useState<Mensaje[]>([]);
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fin = useRef<HTMLDivElement>(null);
 
-  // Datos de la reserva y de la otra persona
+  // Datos de la otra persona y las reservas confirmadas entre los dos
   useEffect(() => {
     if (!supabase) return;
-    supabase.rpc("datos_chat", { p_codigo: codigo }).then(({ data, error }) => {
-      if (error) return setDatos(null);
-      setDatos(((data ?? []) as Datos[])[0] ?? null);
+    Promise.all([
+      supabase.rpc("datos_chat", { p_chat: chatId }),
+      supabase.rpc("reservas_del_chat", { p_chat: chatId }),
+    ]).then(([d, r]) => {
+      setDatos(d.error ? null : (((d.data ?? []) as Datos[])[0] ?? null));
+      setReservas((r.data ?? []) as ReservaChat[]);
     });
-  }, [supabase, codigo]);
+  }, [supabase, chatId]);
 
-  const reservaId = datos?.reserva_id;
+  const participa = !!datos;
 
   const cargarMensajes = useCallback(async () => {
-    if (!supabase || !reservaId) return;
+    if (!supabase || !participa) return;
     const { data } = await supabase
-      .from("mensajes_reserva")
+      .from("mensajes_chat")
       .select("id, autor, texto, created_at")
-      .eq("reserva_id", reservaId)
+      .eq("chat_id", chatId)
       .order("created_at")
       .limit(300);
     setMensajes((data ?? []) as Mensaje[]);
-    supabase.rpc("marcar_chat_leido", { p_reserva: reservaId });
-  }, [supabase, reservaId]);
+    supabase.rpc("marcar_chat_leido", { p_chat: chatId });
+  }, [supabase, chatId, participa]);
 
   // Mensajes y nuevos mensajes en vivo
   useEffect(() => {
-    if (!supabase || !reservaId) return;
+    if (!supabase || !participa) return;
     cargarMensajes();
     const canal = supabase
-      .channel(`chat-${reservaId}`)
+      .channel(`chat-${chatId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "mensajes_reserva", filter: `reserva_id=eq.${reservaId}` },
+        { event: "INSERT", schema: "public", table: "mensajes_chat", filter: `chat_id=eq.${chatId}` },
         (cambio) => {
           const nuevo = cambio.new as Mensaje;
           setMensajes((lista) => (lista.some((m) => m.id === nuevo.id) ? lista : [...lista, nuevo]));
-          supabase.rpc("marcar_chat_leido", { p_reserva: reservaId });
+          supabase.rpc("marcar_chat_leido", { p_chat: chatId });
         }
       )
       .subscribe();
     return () => {
       supabase.removeChannel(canal);
     };
-  }, [supabase, reservaId, cargarMensajes]);
+  }, [supabase, chatId, participa, cargarMensajes]);
 
   // Bajar al último mensaje
   useEffect(() => {
@@ -98,10 +104,10 @@ export default function ChatReserva({ codigo }: { codigo: string }) {
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
     const limpio = texto.trim();
-    if (!supabase || !reservaId || !limpio) return;
+    if (!supabase || !limpio) return;
     setEnviando(true);
     setError(null);
-    const { error } = await supabase.rpc("enviar_mensaje", { p_reserva: reservaId, p_texto: limpio });
+    const { error } = await supabase.rpc("enviar_mensaje", { p_chat: chatId, p_texto: limpio });
     setEnviando(false);
     if (error) {
       const clave = Object.keys(ERRORES).find((k) => error.message.includes(k));
@@ -115,14 +121,10 @@ export default function ChatReserva({ codigo }: { codigo: string }) {
   if (datos === null)
     return (
       <div className="flex flex-col gap-3 rounded-2xl bg-white p-5 text-sm shadow-sm">
-        <p className="font-bold">Este chat todavía no está disponible</p>
+        <p className="font-bold">Este chat no está disponible</p>
         <p className="text-[#5A5A5A]">
-          El chat se abre recién cuando el dueño confirma el pago de la reserva, y solo lo ven el cliente y el dueño de la
-          cancha.
+          El chat se abre cuando el dueño confirma en la app el pago de una reserva, y solo lo ven el dueño y el jugador.
         </p>
-        <Link href={`/r/${codigo}`} className="font-bold text-[#6D28D9]">
-          Ver la reserva →
-        </Link>
       </div>
     );
 
@@ -131,11 +133,11 @@ export default function ChatReserva({ codigo }: { codigo: string }) {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Datos de la otra persona y de la reserva */}
+      {/* La otra persona */}
       <section className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-sm">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-xs text-[#5A5A5A]">{esDueno ? "Cliente" : "Dueño de la cancha"}</p>
+            <p className="text-xs text-[#5A5A5A]">{esDueno ? "Jugador" : "Dueño de la cancha"}</p>
             <p className="truncate text-lg font-extrabold">{datos.otra_nombre ?? "Sin nombre"}</p>
             {celular && <p className="text-sm text-[#4A4A4A]">+51 {celular.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3")}</p>}
           </div>
@@ -166,16 +168,30 @@ export default function ChatReserva({ codigo }: { codigo: string }) {
           </div>
         )}
 
-        <div className="rounded-xl bg-[#F4F4F4] p-3 text-sm">
-          <p className="font-bold">{datos.cancha_nombre}</p>
-          {!esDueno && <p className="text-[#5A5A5A]">{datos.cancha_direccion}</p>}
-          <p className="first-letter:uppercase">
-            {dia(datos.inicio)} · {hora(datos.inicio)}–{hora(datos.fin)} · {soles(Number(datos.monto))}
-          </p>
-          <Link href={`/r/${datos.codigo}`} className="text-xs font-bold text-[#6D28D9]">
-            Reserva {datos.codigo} →
-          </Link>
-        </div>
+        {/* Reservas confirmadas entre los dos */}
+        {reservas.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <p className="text-xs font-bold text-[#5A5A5A]">Reservas entre ustedes</p>
+            <ul className="flex flex-col gap-1.5">
+              {reservas.slice(0, 3).map((r) => (
+                <li key={r.codigo}>
+                  <Link
+                    href={`/r/${r.codigo}`}
+                    className="flex items-center justify-between gap-2 rounded-xl bg-[#F4F4F4] px-3 py-2 text-xs hover:bg-[#EDE9FE]"
+                  >
+                    <span className="min-w-0">
+                      <span className="block truncate font-bold text-[#1B1B1B]">{r.cancha_nombre}</span>
+                      <span className="block first-letter:uppercase">
+                        {dia(r.inicio)} · {hora(r.inicio)}–{hora(r.fin)}
+                      </span>
+                    </span>
+                    <span className="shrink-0 font-bold">{soles(Number(r.monto))}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       {/* Mensajes */}
@@ -197,7 +213,7 @@ export default function ChatReserva({ codigo }: { codigo: string }) {
               >
                 {m.texto}
                 <span className={`mt-1 block text-right text-[10px] ${m.autor === datos.soy ? "text-white/70" : "text-[#8A968F]"}`}>
-                  {hora(m.created_at)}
+                  {dia(m.created_at)} · {hora(m.created_at)}
                 </span>
               </p>
             </div>
@@ -244,7 +260,7 @@ export default function ChatReserva({ codigo }: { codigo: string }) {
         </form>
       ) : (
         <p className="rounded-2xl bg-[#F4F4F4] p-3 text-center text-sm text-[#5A5A5A]">
-          El chat se cerró 2 días después del partido. Puedes leer los mensajes, pero ya no escribir.
+          El chat se cerró 2 días después de su último partido. Se vuelve a abrir con la próxima reserva confirmada.
         </p>
       )}
     </div>

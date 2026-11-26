@@ -1,250 +1,304 @@
 -- =============================================================================
--- 023 · Chat de la reserva
+-- 023 · Chat entre el dueño (rentador) y el jugador (alquilador)
 --
--- Recién cuando el dueño CONFIRMA el pago de una reserva hecha por un jugador con
--- cuenta, se abre un chat entre los dos:
---   · el dueño ve los datos del cliente (nombre, celular e historial de reservas)
---   · el cliente ve los datos de la cancha y del dueño
---   · se puede escribir hasta 2 días después del partido; después queda solo lectura
---   · solo el cliente y el dueño de esa cancha ven los mensajes
+-- · Cada pareja dueño–jugador tiene UN chat con su propio id (tabla chats).
+-- · El chat se abre SOLO desde la app: cuando el dueño (con su sesión) confirma el
+--   pago de una reserva que el jugador hizo en la app. Confirmaciones hechas por
+--   fuera (SQL Editor, scripts) no abren ni crean chats.
+-- · Cada reserva confirmada deja un aviso dentro del chat de la pareja y lo
+--   mantiene abierto hasta 2 días después de su partido.
+-- · Solo el dueño y el jugador de ese chat leen los mensajes.
+-- · El cliente de una reserva solo lo pone la app al reservar (crear_reserva):
+--   nadie puede ponerlo ni cambiarlo por otro desde fuera.
 --
--- Tablas nuevas: mensajes_reserva, lecturas_chat. Columna nueva: reservas.confirmada_en
+-- Tablas nuevas: chats, mensajes_chat, lecturas_chat.
+-- Columnas nuevas: reservas.confirmada_en, reservas.chat_id.
 -- Requiere la 021. Todo va en una sola transacción: si algo falla, no cambia nada.
 -- =============================================================================
 
 begin;
 
--- 1. Cuándo se confirmó cada reserva (abre el chat) --------------------------------
+-- 1. Chats (uno por pareja dueño–jugador) ---------------------------------------
+create table if not exists chats (
+  id                uuid primary key default gen_random_uuid(),
+  dueno_id          uuid not null references usuarios(id) on delete cascade,
+  cliente_id        uuid not null references usuarios(id) on delete cascade,
+  abierto_hasta     timestamptz not null default now(),
+  ultima_reserva_id uuid,
+  created_at        timestamptz not null default now(),
+  unique (dueno_id, cliente_id),
+  check (dueno_id <> cliente_id)
+);
+
 alter table reservas add column if not exists confirmada_en timestamptz;
-update reservas set confirmada_en = coalesce(pago_avisado_en, created_at)
- where estado = 'confirmada' and confirmada_en is null;
+alter table reservas add column if not exists chat_id uuid references chats(id) on delete set null;
+alter table chats drop constraint if exists chats_ultima_reserva_fk;
+alter table chats add constraint chats_ultima_reserva_fk
+  foreign key (ultima_reserva_id) references reservas(id) on delete set null;
 
--- confirmada_en solo la pone la base de datos, y desde la app nadie puede cambiar el
--- cliente de una reserva por otro (para no abrir chats con personas ajenas).
--- Las reglas sobre el cliente aplican a quien usa la app (auth.uid() no vacío); el
--- SQL Editor de Supabase y las tareas internas no tienen usuario y quedan libres.
-create or replace function proteger_chat_reserva() returns trigger
-language plpgsql security definer set search_path = public as $$
-declare
-  v_app boolean := auth.uid() is not null and not es_admin();
-begin
-  if tg_op = 'INSERT' then
-    new.confirmada_en := case when new.estado = 'confirmada' then now() end;
-    if v_app and new.cliente_id is not null and new.cliente_id is distinct from auth.uid() then
-      new.cliente_id := null;
-    end if;
-  else
-    if new.estado = 'confirmada' and old.estado is distinct from 'confirmada' then
-      new.confirmada_en := coalesce(old.confirmada_en, now());
-    else
-      new.confirmada_en := old.confirmada_en;
-    end if;
-    -- Se permite dejarlo vacío (por ejemplo, si se borra la cuenta), no cambiarlo por otro
-    if v_app and new.cliente_id is not null and new.cliente_id is distinct from old.cliente_id then
-      new.cliente_id := old.cliente_id;
-    end if;
-  end if;
-  return new;
-end $$;
-drop trigger if exists proteger_chat_reserva on reservas;
-create trigger proteger_chat_reserva before insert or update on reservas
-  for each row execute function proteger_chat_reserva();
-
--- 2. Mensajes y lecturas ----------------------------------------------------------
-create table if not exists mensajes_reserva (
+create table if not exists mensajes_chat (
   id         uuid primary key default gen_random_uuid(),
-  reserva_id uuid not null references reservas(id) on delete cascade,
+  chat_id    uuid not null references chats(id) on delete cascade,
+  reserva_id uuid references reservas(id) on delete set null,
   autor_id   uuid references usuarios(id) on delete set null,
   autor      text not null check (autor in ('cliente', 'dueno', 'sistema')),
   texto      text not null check (length(texto) between 1 and 1000),
   created_at timestamptz not null default now()
 );
-create index if not exists mensajes_reserva_idx on mensajes_reserva (reserva_id, created_at);
+create index if not exists mensajes_chat_idx on mensajes_chat (chat_id, created_at);
 
 create table if not exists lecturas_chat (
-  reserva_id uuid not null references reservas(id) on delete cascade,
+  chat_id    uuid not null references chats(id) on delete cascade,
   usuario_id uuid not null references usuarios(id) on delete cascade,
   leido_en   timestamptz not null default now(),
-  primary key (reserva_id, usuario_id)
+  primary key (chat_id, usuario_id)
 );
 
--- ¿El usuario actual es el cliente o el dueño de una reserva con chat abierto?
-create or replace function es_participante_chat(p_reserva uuid) returns boolean
+-- ¿El usuario actual es el dueño o el jugador de este chat?
+create or replace function es_participante_chat(p_chat uuid) returns boolean
 language sql stable security definer set search_path = public as $$
-  select exists (
-    select 1 from reservas r join canchas c on c.id = r.cancha_id
-    where r.id = p_reserva and r.confirmada_en is not null and r.cliente_id is not null
-      and auth.uid() in (r.cliente_id, c.dueno_id)
-  );
+  select exists (select 1 from chats where id = p_chat and auth.uid() in (dueno_id, cliente_id));
 $$;
 revoke execute on function es_participante_chat(uuid) from public, anon;
 grant execute on function es_participante_chat(uuid) to authenticated;
 
--- Solo se leen directo; todo lo que escribe pasa por funciones
-alter table mensajes_reserva enable row level security;
-drop policy if exists mensajes_ver on mensajes_reserva;
-create policy mensajes_ver on mensajes_reserva for select to authenticated using (es_participante_chat(reserva_id));
+-- Solo se leen directo; todo lo que se escribe pasa por funciones
+alter table chats enable row level security;
+drop policy if exists chats_ver on chats;
+create policy chats_ver on chats for select to authenticated using (auth.uid() in (dueno_id, cliente_id));
+
+alter table mensajes_chat enable row level security;
+drop policy if exists mensajes_chat_ver on mensajes_chat;
+create policy mensajes_chat_ver on mensajes_chat for select to authenticated using (es_participante_chat(chat_id));
 
 alter table lecturas_chat enable row level security;
-drop policy if exists lecturas_ver on lecturas_chat;
-create policy lecturas_ver on lecturas_chat for select to authenticated using (usuario_id = auth.uid());
+drop policy if exists lecturas_chat_ver on lecturas_chat;
+create policy lecturas_chat_ver on lecturas_chat for select to authenticated using (usuario_id = auth.uid());
 
 -- Mensajes en vivo (Realtime respeta las reglas de arriba)
 do $$
 begin
   if not exists (select 1 from pg_publication_tables
-                  where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'mensajes_reserva') then
-    alter publication supabase_realtime add table mensajes_reserva;
+                  where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'mensajes_chat') then
+    alter publication supabase_realtime add table mensajes_chat;
   end if;
 end $$;
 
--- 3. Al confirmar el pago se abre el chat con un mensaje automático ----------------
-create or replace function abrir_chat_reserva() returns trigger
+-- 2. Reservas: cliente solo desde la app y chat al confirmar desde la app ----------
+create or replace function preparar_chat_reserva() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  v_dueno uuid;
+  v_chat  uuid;
+begin
+  if tg_op = 'INSERT' then
+    new.confirmada_en := null;
+    new.chat_id := null;
+    -- Solo la app (crear_reserva, con la sesión del jugador) pone el cliente
+    if new.cliente_id is not null and new.cliente_id is distinct from auth.uid() then
+      new.cliente_id := null;
+    end if;
+    return new;
+  end if;
+
+  -- Nadie cambia estos datos a mano
+  new.confirmada_en := old.confirmada_en;
+  new.chat_id := old.chat_id;
+  -- Se puede dejar vacío (si se borra la cuenta), no cambiar por otro
+  if new.cliente_id is not null and new.cliente_id is distinct from old.cliente_id then
+    new.cliente_id := old.cliente_id;
+  end if;
+
+  -- ¿El dueño (o el admin) confirma el pago desde la app?
+  if new.estado = 'confirmada' and old.estado is distinct from 'confirmada'
+     and new.cliente_id is not null and auth.uid() is not null then
+    select dueno_id into v_dueno from canchas where id = new.cancha_id;
+    if (auth.uid() = v_dueno or es_admin()) and v_dueno <> new.cliente_id then
+      new.confirmada_en := now();
+      insert into chats (dueno_id, cliente_id, abierto_hasta, ultima_reserva_id)
+      values (v_dueno, new.cliente_id, new.fin + interval '2 days', new.id)
+      on conflict (dueno_id, cliente_id) do update
+        set abierto_hasta = greatest(chats.abierto_hasta, excluded.abierto_hasta),
+            ultima_reserva_id = excluded.ultima_reserva_id
+      returning id into v_chat;
+      new.chat_id := v_chat;
+    end if;
+  end if;
+  return new;
+end $$;
+drop trigger if exists preparar_chat_reserva on reservas;
+create trigger preparar_chat_reserva before insert or update on reservas
+  for each row execute function preparar_chat_reserva();
+
+-- Aviso automático dentro del chat cuando se confirma una reserva
+create or replace function avisar_chat_reserva() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
   v_cancha text;
 begin
-  if new.estado = 'confirmada' and old.estado is distinct from 'confirmada' and new.cliente_id is not null
-     and not exists (select 1 from mensajes_reserva where reserva_id = new.id and autor = 'sistema') then
+  if new.chat_id is not null and old.chat_id is distinct from new.chat_id then
     select nombre into v_cancha from canchas where id = new.cancha_id;
-    insert into mensajes_reserva (reserva_id, autor, texto)
-    values (new.id, 'sistema',
+    insert into mensajes_chat (chat_id, reserva_id, autor, texto)
+    values (new.chat_id, new.id, 'sistema',
             'Pago confirmado ✓ Reserva ' || new.codigo || ' en ' || coalesce(v_cancha, 'la cancha') || ', el '
             || to_char(new.inicio at time zone 'America/Lima', 'DD/MM') || ' de '
             || to_char(new.inicio at time zone 'America/Lima', 'HH24:MI') || ' a '
-            || to_char(new.fin at time zone 'America/Lima', 'HH24:MI')
-            || '. Usen este chat para coordinar lo que necesiten.');
+            || to_char(new.fin at time zone 'America/Lima', 'HH24:MI') || '.');
   end if;
   return new;
 end $$;
-drop trigger if exists abrir_chat_reserva on reservas;
-create trigger abrir_chat_reserva after update of estado on reservas
-  for each row execute function abrir_chat_reserva();
+drop trigger if exists avisar_chat_reserva on reservas;
+create trigger avisar_chat_reserva after update of estado on reservas
+  for each row execute function avisar_chat_reserva();
 
--- 4. Datos del chat para quien lo abre ---------------------------------------------
--- El dueño ve al cliente (nombre, celular, historial). El cliente ve la cancha y al dueño.
-create or replace function datos_chat(p_codigo text)
-returns table (reserva_id uuid, codigo text, estado text, inicio timestamptz, fin timestamptz, monto numeric,
-               cancha_nombre text, cancha_direccion text, cancha_slug text,
-               soy text, otra_nombre text, otra_celular text, abierto boolean,
+-- 3. Datos del chat para quien lo abre ---------------------------------------------
+-- El dueño ve al jugador (nombre, celular, historial). El jugador ve al dueño.
+create or replace function datos_chat(p_chat uuid)
+returns table (chat_id uuid, soy text, otra_nombre text, otra_celular text, abierto boolean,
+               abierto_hasta timestamptz,
                cliente_pagadas bigint, cliente_vencidas bigint, cliente_canceladas bigint, cliente_pagos_falsos bigint)
 language plpgsql stable security definer set search_path = public as $$
 declare
-  r reservas%rowtype;
-  c canchas%rowtype;
+  ch chats%rowtype;
   v_soy text;
+  v_nombre text;
+  v_cel text;
 begin
-  select * into r from reservas where reservas.codigo = upper(trim(p_codigo));
-  if not found or r.confirmada_en is null or r.cliente_id is null then return; end if;
-  select * into c from canchas where canchas.id = r.cancha_id;
-  if auth.uid() = c.dueno_id then v_soy := 'dueno';
-  elsif auth.uid() = r.cliente_id then v_soy := 'cliente';
+  select * into ch from chats where chats.id = p_chat;
+  if not found then return; end if;
+  if auth.uid() = ch.dueno_id then v_soy := 'dueno';
+  elsif auth.uid() = ch.cliente_id then v_soy := 'cliente';
   else return;
   end if;
 
+  if v_soy = 'dueno' then
+    -- Los datos que el jugador dejó en su última reserva con este dueño
+    select r.nombre_cliente, r.celular_cliente into v_nombre, v_cel
+    from reservas r where r.chat_id = ch.id order by r.inicio desc limit 1;
+  else
+    select u.nombre, u.celular_verificado into v_nombre, v_cel from usuarios u where u.id = ch.dueno_id;
+  end if;
+
   return query
-    select r.id, r.codigo, r.estado, r.inicio, r.fin, r.monto,
-           c.nombre, c.direccion || coalesce(', ' || c.distrito, ''), c.slug,
-           v_soy,
-           case when v_soy = 'dueno' then r.nombre_cliente else d.nombre end,
-           case when v_soy = 'dueno' then r.celular_cliente else d.celular_verificado end,
-           now() <= r.fin + interval '2 days',
+    select ch.id, v_soy, v_nombre, v_cel, now() <= ch.abierto_hasta, ch.abierto_hasta,
            case when v_soy = 'dueno' then h.pagadas end,
            case when v_soy = 'dueno' then h.vencidas end,
            case when v_soy = 'dueno' then h.canceladas end,
            case when v_soy = 'dueno' then h.falsos end
-    from usuarios d
-    cross join lateral (
+    from (
       select count(*) filter (where x.estado = 'confirmada') as pagadas,
              count(*) filter (where x.estado = 'expirada'
                               or (x.estado = 'pendiente' and x.pago_avisado_en is null and x.expira_en < now())) as vencidas,
              count(*) filter (where x.estado = 'cancelada' and x.pago_rechazado_en is null) as canceladas,
              count(*) filter (where x.pago_rechazado_en is not null) as falsos
-      from reservas x where x.celular_cliente = r.celular_cliente
-    ) h
-    where d.id = c.dueno_id;
+      from reservas x where x.cliente_id = ch.cliente_id
+    ) h;
 end $$;
-revoke execute on function datos_chat(text) from public, anon;
-grant execute on function datos_chat(text) to authenticated;
+revoke execute on function datos_chat(uuid) from public, anon;
+grant execute on function datos_chat(uuid) to authenticated;
 
--- 5. Enviar un mensaje -------------------------------------------------------------
--- Errores: texto_invalido, chat_cerrado, sin_permiso, muy_rapido
-create or replace function enviar_mensaje(p_reserva uuid, p_texto text) returns uuid
+-- Reservas confirmadas de la pareja (las más recientes primero)
+create or replace function reservas_del_chat(p_chat uuid)
+returns table (codigo text, estado text, inicio timestamptz, fin timestamptz, monto numeric,
+               cancha_nombre text, cancha_direccion text)
+language sql stable security definer set search_path = public as $$
+  select r.codigo, r.estado, r.inicio, r.fin, r.monto, c.nombre, c.direccion || coalesce(', ' || c.distrito, '')
+  from reservas r join canchas c on c.id = r.cancha_id
+  where r.chat_id = p_chat and es_participante_chat(p_chat)
+  order by r.inicio desc
+  limit 10;
+$$;
+revoke execute on function reservas_del_chat(uuid) from public, anon;
+grant execute on function reservas_del_chat(uuid) to authenticated;
+
+-- El chat de una reserva (para el enlace en la página de la reserva)
+create or replace function chat_de_reserva(p_codigo text) returns uuid
+language sql stable security definer set search_path = public as $$
+  select r.chat_id from reservas r
+  where r.codigo = upper(trim(p_codigo)) and r.chat_id is not null and es_participante_chat(r.chat_id);
+$$;
+revoke execute on function chat_de_reserva(text) from public, anon;
+grant execute on function chat_de_reserva(text) to authenticated;
+
+-- 4. Enviar y leer -------------------------------------------------------------------
+-- Errores: texto_invalido, sin_permiso, chat_cerrado, muy_rapido
+create or replace function enviar_mensaje(p_chat uuid, p_texto text) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare
   v_texto text := trim(coalesce(p_texto, ''));
-  r reservas%rowtype;
-  v_dueno uuid;
+  ch chats%rowtype;
   v_autor text;
   v_id uuid;
 begin
   if length(v_texto) < 1 or length(v_texto) > 1000 then raise exception 'texto_invalido'; end if;
-  select * into r from reservas where id = p_reserva;
-  if not found or r.confirmada_en is null or r.cliente_id is null then raise exception 'chat_cerrado'; end if;
-  select dueno_id into v_dueno from canchas where id = r.cancha_id;
-  if auth.uid() = r.cliente_id then v_autor := 'cliente';
-  elsif auth.uid() = v_dueno then v_autor := 'dueno';
+  select * into ch from chats where id = p_chat;
+  if not found then raise exception 'sin_permiso'; end if;
+  if auth.uid() = ch.dueno_id then v_autor := 'dueno';
+  elsif auth.uid() = ch.cliente_id then v_autor := 'cliente';
   else raise exception 'sin_permiso';
   end if;
-  if now() > r.fin + interval '2 days' then raise exception 'chat_cerrado'; end if;
-  if (select count(*) from mensajes_reserva
-       where reserva_id = r.id and autor_id = auth.uid() and created_at > now() - interval '1 minute') >= 15 then
+  if now() > ch.abierto_hasta then raise exception 'chat_cerrado'; end if;
+  if (select count(*) from mensajes_chat
+       where chat_id = ch.id and autor_id = auth.uid() and created_at > now() - interval '1 minute') >= 15 then
     raise exception 'muy_rapido';
   end if;
 
-  insert into mensajes_reserva (reserva_id, autor_id, autor, texto)
-  values (r.id, auth.uid(), v_autor, v_texto)
+  insert into mensajes_chat (chat_id, reserva_id, autor_id, autor, texto)
+  values (ch.id, ch.ultima_reserva_id, auth.uid(), v_autor, v_texto)
   returning id into v_id;
-  insert into lecturas_chat (reserva_id, usuario_id, leido_en) values (r.id, auth.uid(), now())
-  on conflict (reserva_id, usuario_id) do update set leido_en = excluded.leido_en;
+  insert into lecturas_chat (chat_id, usuario_id, leido_en) values (ch.id, auth.uid(), now())
+  on conflict (chat_id, usuario_id) do update set leido_en = excluded.leido_en;
   return v_id;
 end $$;
 revoke execute on function enviar_mensaje(uuid, text) from public, anon;
 grant execute on function enviar_mensaje(uuid, text) to authenticated;
 
--- 6. Marcar como leído ---------------------------------------------------------------
-create or replace function marcar_chat_leido(p_reserva uuid) returns void
+create or replace function marcar_chat_leido(p_chat uuid) returns void
 language plpgsql security definer set search_path = public as $$
 begin
-  if not es_participante_chat(p_reserva) then return; end if;
-  insert into lecturas_chat (reserva_id, usuario_id, leido_en) values (p_reserva, auth.uid(), now())
-  on conflict (reserva_id, usuario_id) do update set leido_en = excluded.leido_en;
+  if not es_participante_chat(p_chat) then return; end if;
+  insert into lecturas_chat (chat_id, usuario_id, leido_en) values (p_chat, auth.uid(), now())
+  on conflict (chat_id, usuario_id) do update set leido_en = excluded.leido_en;
 end $$;
 revoke execute on function marcar_chat_leido(uuid) from public, anon;
 grant execute on function marcar_chat_leido(uuid) to authenticated;
 
--- 7. Mis chats (dueño o cliente), con mensajes sin leer --------------------------------
+-- 5. Mis chats, con mensajes sin leer -----------------------------------------------
 create or replace function mis_chats()
-returns table (reserva_id uuid, codigo text, cancha_nombre text, inicio timestamptz, soy text,
-               otra_nombre text, ultimo_texto text, ultimo_en timestamptz, no_leidos bigint, abierto boolean)
+returns table (chat_id uuid, soy text, otra_nombre text, ultimo_texto text, ultimo_en timestamptz,
+               no_leidos bigint, abierto boolean, proxima_cancha text, proxima_inicio timestamptz)
 language sql stable security definer set search_path = public as $$
-  select r.id, r.codigo, c.nombre, r.inicio,
-         case when c.dueno_id = auth.uid() then 'dueno' else 'cliente' end,
-         case when c.dueno_id = auth.uid() then r.nombre_cliente else d.nombre end,
-         u.texto, u.created_at,
-         (select count(*) from mensajes_reserva m
-           where m.reserva_id = r.id and m.autor_id is distinct from auth.uid()
+  select ch.id,
+         case when ch.dueno_id = auth.uid() then 'dueno' else 'cliente' end,
+         case when ch.dueno_id = auth.uid() then coalesce(ur.nombre_cliente, cli.nombre) else due.nombre end,
+         um.texto, um.created_at,
+         (select count(*) from mensajes_chat m
+           where m.chat_id = ch.id and m.autor_id is distinct from auth.uid()
              and m.created_at > coalesce((select l.leido_en from lecturas_chat l
-                                           where l.reserva_id = r.id and l.usuario_id = auth.uid()), '-infinity')),
-         now() <= r.fin + interval '2 days'
-  from reservas r
-  join canchas c on c.id = r.cancha_id
-  join usuarios d on d.id = c.dueno_id
-  left join lateral (select m.texto, m.created_at from mensajes_reserva m
-                      where m.reserva_id = r.id order by m.created_at desc limit 1) u on true
-  where r.confirmada_en is not null and r.cliente_id is not null
-    and auth.uid() in (r.cliente_id, c.dueno_id)
-  order by coalesce(u.created_at, r.confirmada_en) desc
+                                           where l.chat_id = ch.id and l.usuario_id = auth.uid()), '-infinity')),
+         now() <= ch.abierto_hasta,
+         uc.nombre, ur.inicio
+  from chats ch
+  join usuarios due on due.id = ch.dueno_id
+  join usuarios cli on cli.id = ch.cliente_id
+  left join reservas ur on ur.id = ch.ultima_reserva_id
+  left join canchas uc on uc.id = ur.cancha_id
+  left join lateral (select m.texto, m.created_at from mensajes_chat m
+                      where m.chat_id = ch.id order by m.created_at desc limit 1) um on true
+  where auth.uid() in (ch.dueno_id, ch.cliente_id)
+  order by coalesce(um.created_at, ch.created_at) desc
   limit 50;
 $$;
 revoke execute on function mis_chats() from public, anon;
 grant execute on function mis_chats() to authenticated;
 
--- 8. Descripciones --------------------------------------------------------------------
-comment on column reservas.confirmada_en is 'Cuándo el dueño confirmó el pago. Desde ese momento existe el chat de la reserva.';
-comment on table mensajes_reserva is 'Chat entre el cliente y el dueño de una reserva confirmada.';
-comment on column mensajes_reserva.autor is 'cliente, dueno o sistema (mensaje automático al confirmar).';
-comment on column mensajes_reserva.texto is 'Mensaje (1 a 1000 caracteres).';
+-- 6. Descripciones -------------------------------------------------------------------
+comment on table chats is 'Un chat por pareja dueño (rentador) – jugador (alquilador). Se crea cuando el dueño confirma desde la app el pago de una reserva.';
+comment on column chats.abierto_hasta is 'Se puede escribir hasta 2 días después del último partido confirmado entre los dos.';
+comment on column chats.ultima_reserva_id is 'Última reserva confirmada que abrió o reabrió el chat.';
+comment on column reservas.confirmada_en is 'Cuándo el dueño confirmó el pago desde la app.';
+comment on column reservas.chat_id is 'Chat de la pareja dueño–jugador al que pertenece esta reserva.';
+comment on table mensajes_chat is 'Mensajes de cada chat (autor: cliente, dueno o sistema).';
 comment on table lecturas_chat is 'Hasta cuándo leyó cada persona cada chat (para contar mensajes sin leer).';
 
 commit;

@@ -28,7 +28,7 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | 020 | `020_sin_encargados.sql` | Quita los encargados: cada cancha se maneja solo con la cuenta del dueño. Borra la tabla `encargados`, sus reglas de acceso y sus funciones. Va en una transacción | ✅ Ejecutada |
 | 021 | `021_saldo_reservas.sql` | Saldo de reservas: S/ 1 por reserva confirmada, regalo de bienvenida (S/ 5), recargas por Yape o transferencia BCP desde S/ 1 que aprueba el admin, cuenta BCP en `ajustes_easyfut`, promociones de bono que activa el admin, Yape de EasyFut en `ajustes_easyfut`. Sin saldo, la cancha no recibe reservas. Va en una transacción | ✅ Ejecutada |
 | — | `deshacer/deshacer_022_recargas_automaticas.sql` | La 022 (recargas que se confirman solas) se ejecutó por error y se deshace con este script. La 022 está guardada en la rama `mejora/recargas-automaticas` para probarla | ⏳ Pendiente |
-| 023 | `023_chat_reservas.sql` | Chat de la reserva: se abre recién cuando el dueño confirma el pago; el dueño ve los datos e historial del cliente y el cliente los de la cancha; se escribe hasta 2 días después del partido. Va en una transacción | ⏳ Pendiente (rama `mejora/chat-reservas`) |
+| 023 | `023_chat_reservas.sql` | Chat dueño–jugador: uno por pareja con su propio id; se abre solo cuando el dueño confirma el pago desde la app; el cliente de una reserva solo lo pone la app. Va en una transacción | ⏳ Pendiente (rama `mejora/chat-reservas`) |
 
 > Desde la 019, las migraciones 001–018 muestran los **nombres antiguos**. Los nombres actuales están en la 019 y en el diagrama de la base de datos.
 

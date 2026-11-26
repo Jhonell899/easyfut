@@ -6,19 +6,18 @@ import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { fmtFecha } from "@/lib/horario";
 
 type Chat = {
-  reserva_id: string;
-  codigo: string;
-  cancha_nombre: string;
-  inicio: string;
+  chat_id: string;
   soy: "dueno" | "cliente";
   otra_nombre: string | null;
   ultimo_texto: string | null;
   ultimo_en: string | null;
   no_leidos: number;
   abierto: boolean;
+  proxima_cancha: string | null;
+  proxima_inicio: string | null;
 };
 
-/** Chats de reservas confirmadas (dueño o cliente), con los mensajes sin leer. */
+/** Chats del dueño o del jugador (uno por pareja), con los mensajes sin leer. */
 export default function ChatsRecientes({ titulo = "Chats" }: { titulo?: string }) {
   const [chats, setChats] = useState<Chat[] | null>(null);
 
@@ -31,7 +30,7 @@ export default function ChatsRecientes({ titulo = "Chats" }: { titulo?: string }
     // Si llega un mensaje nuevo a cualquiera de mis chats, actualizar la lista
     const canal = supabase
       .channel("mis-chats")
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensajes_reserva" }, () => cargar())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensajes_chat" }, () => cargar())
       .subscribe();
     return () => {
       supabase.removeChannel(canal);
@@ -49,16 +48,15 @@ export default function ChatsRecientes({ titulo = "Chats" }: { titulo?: string }
       </h2>
       <ul className="divide-y divide-[#E3E3E3] overflow-hidden rounded-2xl bg-white shadow-sm">
         {chats.slice(0, 8).map((c) => (
-          <li key={c.reserva_id}>
-            <Link href={`/chat/${c.codigo}`} className="flex items-center justify-between gap-3 p-4 text-sm hover:bg-[#FAFAFA]">
+          <li key={c.chat_id}>
+            <Link href={`/chat/${c.chat_id}`} className="flex items-center justify-between gap-3 p-4 text-sm hover:bg-[#FAFAFA]">
               <span className="min-w-0">
-                <span className="block truncate font-bold">
-                  {c.soy === "dueno" ? c.otra_nombre ?? "Cliente" : c.cancha_nombre}
-                </span>
-                <span className="block truncate text-xs text-[#5A5A5A] first-letter:uppercase">
-                  {fmtFecha(c.inicio, { weekday: "short", day: "numeric", month: "short" })}
-                  {c.soy === "dueno" ? ` · ${c.cancha_nombre}` : ""}
-                </span>
+                <span className="block truncate font-bold">{c.otra_nombre ?? (c.soy === "dueno" ? "Jugador" : "Dueño")}</span>
+                {c.proxima_cancha && c.proxima_inicio && (
+                  <span className="block truncate text-xs text-[#5A5A5A] first-letter:uppercase">
+                    {fmtFecha(c.proxima_inicio, { weekday: "short", day: "numeric", month: "short" })} · {c.proxima_cancha}
+                  </span>
+                )}
                 {c.ultimo_texto && <span className="block truncate text-xs text-[#8A968F]">{c.ultimo_texto}</span>}
               </span>
               <span className="flex shrink-0 flex-col items-end gap-1">
