@@ -46,6 +46,7 @@ const ERRORES: Record<string, string> = {
   fuera_de_horario: "Ese horario está fuera de la atención de la cancha.",
   horario_ocupado: "Alguien acaba de reservar ese horario. Elige otro.",
   requiere_cuenta: "Para reservar necesitas ingresar a tu cuenta.",
+  sin_celular: "Vincula un celular a tu cuenta para poder reservar.",
   cancha_sin_saldo: "Esta cancha no está recibiendo reservas por ahora. Prueba con otra cancha o escríbele al dueño.",
   // Protección contra reservas falsas (migración 009)
   cliente_bloqueado: "Este número no puede hacer reservas aquí. Si crees que es un error, comunícate con la cancha.",
@@ -103,7 +104,13 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
   const [recarga, setRecarga] = useState(0);
 
   const [nombre, setNombre] = useState("");
+  // Celular vinculado a la cuenta: la reserva siempre usa este número
+  const [celularCuenta, setCelularCuenta] = useState<string | null>(null);
+  const [usuarioId, setUsuarioId] = useState<string | null>(null);
+  const [editandoCelular, setEditandoCelular] = useState(false);
   const [celular, setCelular] = useState("");
+  const [guardandoCelular, setGuardandoCelular] = useState(false);
+  const [errorCelular, setErrorCelular] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conCuenta, setConCuenta] = useState<boolean | null>(null);
@@ -115,13 +122,15 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
       const { data } = await supabase.auth.getUser();
       if (!data.user) return setConCuenta(false);
       setConCuenta(true);
+      setUsuarioId(data.user.id);
       const { data: p } = await supabase
         .from("usuarios")
-        .select("nombre, celular")
+        .select("nombre, celular, celular_verificado")
         .eq("id", data.user.id)
         .maybeSingle();
       if (p?.nombre) setNombre((n) => n || p.nombre);
-      if (p?.celular) setCelular((c) => c || p.celular);
+      const vinculado = (p?.celular_verificado ?? p?.celular ?? "").replace(/\D/g, "");
+      setCelularCuenta(/^9\d{8}$/.test(vinculado) ? vinculado : null);
     })();
   }, [supabase]);
 
@@ -223,9 +232,24 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
     (f) => f > fecha && diasConAtencion.has(diaSemana(f))
   );
 
-  const celularLimpio = celular.replace(/\D/g, "");
+  // La reserva usa el celular de la cuenta; "celular" es solo lo que se escribe para vincularlo
+  const celularLimpio = celularCuenta ?? "";
   const nombreValido = nombre.trim().length >= 2;
   const celularValido = /^9\d{8}$/.test(celularLimpio);
+  const celularNuevo = celular.replace(/\D/g, "");
+  const celularNuevoValido = /^9\d{8}$/.test(celularNuevo);
+
+  async function vincularCelular() {
+    if (!supabase || !usuarioId || !celularNuevoValido) return;
+    setGuardandoCelular(true);
+    setErrorCelular(null);
+    const { error } = await supabase.from("usuarios").update({ celular: celularNuevo }).eq("id", usuarioId);
+    setGuardandoCelular(false);
+    if (error) return setErrorCelular("No se pudo guardar el celular. Inténtalo de nuevo.");
+    setCelularCuenta(celularNuevo);
+    setEditandoCelular(false);
+    setCelular("");
+  }
 
   // Números que este navegador ya confirmó que tienen WhatsApp (no volver a preguntar)
   const [conWhatsapp, setConWhatsapp] = useState<string[]>([]);
@@ -247,7 +271,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
 
   async function reservar(e: React.FormEvent) {
     e.preventDefault();
-    if (!elegido || !supabase || !nombreValido || !celularValido || !whatsappOk) return;
+    if (!elegido || !supabase || !nombreValido || !celularValido || editandoCelular || !whatsappOk) return;
     setEnviando(true);
     setError(null);
 
@@ -442,27 +466,71 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
                   className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20"
                 />
               </Campo>
-              <Campo
-                etiqueta="Celular"
-                ayuda={
-                  celular && !celularValido
-                    ? "Debe tener 9 dígitos y empezar con 9."
-                    : "Debe tener WhatsApp: por ahí coordinas el pago con el dueño."
-                }
-                error={!!celular && !celularValido}
-              >
-                <input
-                  value={celular}
-                  onChange={(e) => setCelular(e.target.value)}
-                  inputMode="numeric"
-                  autoComplete="tel-national"
-                  placeholder="987 654 321"
-                  maxLength={11}
-                  required
-                  className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20"
-                />
-              </Campo>
-              {celularValido && (
+              {celularCuenta && !editandoCelular ? (
+                <div className="flex items-center justify-between gap-3 rounded-xl border border-[#E3E3E3] bg-[#F7F8F7] px-3 py-3">
+                  <div className="min-w-0">
+                    <p className="text-xs text-[#5A5A5A]">Celular vinculado a tu cuenta</p>
+                    <p className="font-bold text-[#1B1B1B]">{celularCuenta.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3")}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditandoCelular(true);
+                      setCelular(celularCuenta);
+                    }}
+                    className="shrink-0 text-sm font-bold text-[#6D28D9]"
+                  >
+                    Cambiar
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-2 rounded-xl border border-[#E3E3E3] p-3">
+                  <Campo
+                    etiqueta={celularCuenta ? "Nuevo celular para tu cuenta" : "Vincula tu celular para reservar"}
+                    ayuda={
+                      celular && !celularNuevoValido
+                        ? "Debe tener 9 dígitos y empezar con 9."
+                        : "Se guarda en tu cuenta. Debe tener WhatsApp: por ahí coordinas con el dueño."
+                    }
+                    error={!!celular && !celularNuevoValido}
+                  >
+                    <input
+                      value={celular}
+                      onChange={(e) => setCelular(e.target.value)}
+                      inputMode="numeric"
+                      autoComplete="tel-national"
+                      placeholder="987 654 321"
+                      maxLength={11}
+                      className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20"
+                    />
+                  </Campo>
+                  {errorCelular && (
+                    <p className="text-xs text-red-700" role="alert">
+                      {errorCelular}
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={vincularCelular}
+                      disabled={!celularNuevoValido || guardandoCelular}
+                      className="boton-morado flex-1 rounded-xl py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                    >
+                      {guardandoCelular ? "Guardando…" : "Guardar en mi cuenta"}
+                    </button>
+                    {celularCuenta && (
+                      <button
+                        type="button"
+                        onClick={() => setEditandoCelular(false)}
+                        className="rounded-xl px-3 py-2.5 text-sm font-bold text-[#5A5A5A]"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+              {celularValido && !editandoCelular && (
                 <ComprobarWhatsapp numero={celularLimpio} confirmado={whatsappOk} onCambio={marcarWhatsapp} />
               )}
               {error && (
@@ -497,7 +565,7 @@ export default function Reservar({ canchaId, turnoMin, franjas }: Props) {
               <button
                 type="submit"
                 form="form-reserva"
-                disabled={conCuenta !== true || !nombreValido || !celularValido || !whatsappOk || enviando}
+                disabled={conCuenta !== true || !nombreValido || !celularValido || editandoCelular || !whatsappOk || enviando}
                 className="boton-verde shrink-0 rounded-2xl px-6 py-3 font-bold text-white transition-opacity disabled:opacity-40 shadow-md"
               >
                 {enviando ? "Reservando…" : "Reservar"}

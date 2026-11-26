@@ -9,8 +9,9 @@ import AdminCambiosPagos from "@/components/admin/AdminCambiosPagos";
 import AdminResenas from "@/components/admin/AdminResenas";
 import AdminAccesos from "@/components/admin/AdminAccesos";
 import AdminRecargas from "@/components/admin/AdminRecargas";
+import AdminChats from "@/components/admin/AdminChats";
 
-type Clave = "recargas" | "pagos" | "canchas" | "rentadores" | "clientes" | "resenas" | "accesos";
+type Clave = "recargas" | "pagos" | "canchas" | "rentadores" | "clientes" | "resenas" | "chats" | "accesos";
 
 const SECCIONES: { clave: Clave; icono: string; titulo: string; detalle: string; grupo: string }[] = [
   { clave: "recargas", icono: "💰", titulo: "Recargas", detalle: "Aprueba los pagos (Yape o BCP) y mira el saldo de cada dueño", grupo: "Dinero" },
@@ -19,6 +20,7 @@ const SECCIONES: { clave: Clave; icono: string; titulo: string; detalle: string;
   { clave: "rentadores", icono: "🏟️", titulo: "Dueños", detalle: "Confirma su WhatsApp para que puedan publicar", grupo: "Canchas y personas" },
   { clave: "clientes", icono: "👤", titulo: "Jugadores", detalle: "Historial de reservas y bloqueos", grupo: "Canchas y personas" },
   { clave: "resenas", icono: "⭐", titulo: "Reseñas", detalle: "Oculta las reseñas falsas o denunciadas", grupo: "Confianza y seguridad" },
+  { clave: "chats", icono: "💬", titulo: "Chats reportados", detalle: "Revisa los chats que alguien reportó", grupo: "Confianza y seguridad" },
   { clave: "accesos", icono: "🔒", titulo: "Accesos", detalle: "Dispositivos, IPs y actividad rara", grupo: "Confianza y seguridad" },
 ];
 
@@ -42,6 +44,11 @@ const AVISOS: { clave: Clave; texto: (n: number) => string; ayuda: string }[] = 
     clave: "resenas",
     texto: (n) => `${n} reseña${n === 1 ? "" : "s"} denunciada${n === 1 ? "" : "s"}`,
     ayuda: "Revisa si son falsas y ocúltalas.",
+  },
+  {
+    clave: "chats",
+    texto: (n) => `${n} chat${n === 1 ? "" : "s"} reportado${n === 1 ? "" : "s"}`,
+    ayuda: "Lee el chat y decide si cerrarlo.",
   },
   {
     clave: "canchas",
@@ -77,11 +84,12 @@ export default function PestanasAdmin() {
   const contar = useCallback(async () => {
     const supabase = supabaseNavegador();
     if (!supabase) return;
-    const [rec, ren, res, can] = await Promise.all([
+    const [rec, ren, res, can, cha] = await Promise.all([
       supabase.rpc("admin_recargas"),
       supabase.rpc("admin_rentadores"),
       supabase.rpc("admin_resenas"),
       supabase.rpc("admin_canchas"),
+      supabase.rpc("admin_reportes_chat"),
     ]);
     type Fila = Record<string, unknown>;
     const filas = (r: { data: unknown }) => (Array.isArray(r.data) ? (r.data as Fila[]) : []);
@@ -89,6 +97,7 @@ export default function PestanasAdmin() {
       recargas: filas(rec).filter((r) => r.estado === "pendiente").length,
       rentadores: filas(ren).filter((r) => !r.celular_verificado).length,
       resenas: filas(res).filter((r) => Number(r.reportes) > 0 && !r.oculta).length,
+      chats: filas(cha).filter((r) => r.estado === "pendiente").length,
       canchas: filas(can).filter(
         (c) => !c.dueno_whatsapp || Number(c.tarifas_horarias) === 0 || !c.tiene_pagos || !c.foto
       ).length,
@@ -131,6 +140,8 @@ export default function PestanasAdmin() {
           <AdminRentadores />
         ) : actual.clave === "clientes" ? (
           <AdminClientes />
+        ) : actual.clave === "chats" ? (
+          <AdminChats />
         ) : actual.clave === "resenas" ? (
           <AdminResenas />
         ) : (

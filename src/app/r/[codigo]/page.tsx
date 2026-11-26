@@ -7,6 +7,7 @@ import PagoReserva from "@/components/PagoReserva";
 import AccionesReserva from "@/components/AccionesReserva";
 import PedirCancelacion from "@/components/PedirCancelacion";
 import CalificarReserva from "@/components/CalificarReserva";
+import EnlaceChat from "@/components/EnlaceChat";
 
 // El estado de una reserva cambia (pago, expiración): siempre datos frescos
 export const dynamic = "force-dynamic";
@@ -137,6 +138,9 @@ export default async function PaginaReserva({
           ¡Listo! El dueño confirmó tu pago. Te esperamos en la cancha.
         </p>
       )}
+
+      {/* Chat con el dueño: solo aparece para el dueño o el jugador, cuando el pago se confirmó en la app */}
+      {reserva.estado === "confirmada" && <EnlaceChat codigo={reserva.codigo} />}
 
       {/* Después del partido: calificar la cancha (solo reservas pagadas, hasta 30 días) */}
       {reserva.estado === "confirmada" && jugado && haceMenosDe30Dias && (

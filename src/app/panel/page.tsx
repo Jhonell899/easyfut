@@ -8,6 +8,7 @@ import VerificarCelular from "@/components/panel/VerificarCelular";
 import PendientesEnVivo from "@/components/panel/PendientesEnVivo";
 import BloqueadosDueno from "@/components/panel/BloqueadosDueno";
 import IngresosDueno from "@/components/panel/IngresosDueno";
+import ChatsRecientes from "@/components/ChatsRecientes";
 
 export const metadata = { title: "Mi panel" };
 export const dynamic = "force-dynamic";
@@ -123,6 +124,7 @@ export default async function Panel() {
         )}
 
         {misCanchas.length > 0 && <PendientesEnVivo duenoId={user.id} />}
+        {misCanchas.length > 0 && <ChatsRecientes titulo="Chats con tus clientes" />}
         {misCanchas.length > 0 && <IngresosDueno duenoId={user.id} />}
         {misCanchas.length > 0 && <BloqueadosDueno duenoId={user.id} />}
 
