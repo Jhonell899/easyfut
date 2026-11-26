@@ -44,6 +44,7 @@ easyfut/
 │
 ├── docs/                    ← Guías (léelas cuando las necesites)
 │   ├── migraciones.md         Qué migración hace qué y cuáles ya se ejecutaron
+│   ├── diseno.md              Sistema de diseño: colores, componentes y hooks de React
 │   ├── como-trabajar.md       Ramas, commits y versiones: paso a paso
 │   ├── pendientes.md          Lista de mejoras por hacer
 │   └── whatsapp-meta.md       (En pausa) Código por WhatsApp con Meta
