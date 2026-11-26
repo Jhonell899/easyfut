@@ -16,7 +16,7 @@ export default function SaldoDueno() {
       sb.rpc("mi_saldo"),
       sb
         .from("recargas_saldo")
-        .select("id, monto, medio, operacion, estado, nota, created_at")
+        .select("id, monto, medio, operacion, estado, verificacion, nota, created_at")
         .order("created_at", { ascending: false })
         .limit(20),
       sb

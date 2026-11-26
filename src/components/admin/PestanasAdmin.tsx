@@ -32,7 +32,7 @@ type Pendientes = Partial<Record<Clave, number>>;
 const AVISOS: { clave: Clave; texto: (n: number) => string; ayuda: string }[] = [
   {
     clave: "recargas",
-    texto: (n) => `${n} recarga${n === 1 ? "" : "s"} por aprobar`,
+    texto: (n) => `${n} recarga${n === 1 ? "" : "s"} por aprobar o verificar`,
     ayuda: "Busca cada pago en tu Yape o en tu BCP y apruébalo o recházalo.",
   },
   {
@@ -94,7 +94,7 @@ export default function PestanasAdmin() {
     type Fila = Record<string, unknown>;
     const filas = (r: { data: unknown }) => (Array.isArray(r.data) ? (r.data as Fila[]) : []);
     setPendientes({
-      recargas: filas(rec).filter((r) => r.estado === "pendiente").length,
+      recargas: filas(rec).filter((r) => r.estado === "pendiente" || r.verificacion === "por_verificar").length,
       rentadores: filas(ren).filter((r) => !r.celular_verificado).length,
       resenas: filas(res).filter((r) => Number(r.reportes) > 0 && !r.oculta).length,
       chats: filas(cha).filter((r) => r.estado === "pendiente").length,

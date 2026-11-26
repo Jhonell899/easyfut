@@ -15,6 +15,7 @@ const ERRORES: Record<string, string> = {
   monto_invalido: "El monto debe ser de S/ 1 a S/ 500.",
   operacion_invalida: "Escribe el número de operación tal como aparece en tu Yape o en tu constancia del BCP.",
   medio_no_disponible: "Ese medio de pago no está disponible ahora. Elige el otro.",
+  codigo_invalido: "El código de seguridad de Yape tiene 3 números.",
   operacion_repetida: "Ese número de operación ya se usó en otra recarga.",
   demasiadas_pendientes: "Tienes 3 recargas esperando revisión. Espera a que las aprobemos.",
   sin_permiso: "Solo los dueños pueden recargar.",
@@ -25,6 +26,7 @@ export function FormularioRecarga({ saldo, alAvisar }: { saldo: Saldo; alAvisar:
   const [monto, setMonto] = useState(50);
   const [otro, setOtro] = useState("");
   const [operacion, setOperacion] = useState("");
+  const [codigo, setCodigo] = useState("");
   const [medioElegido, setMedio] = useState<Medio>("yape");
   const [enviando, setEnviando] = useState(false);
   const [mensaje, setMensaje] = useState<{ tono: "exito" | "error"; texto: string } | null>(null);
@@ -52,21 +54,26 @@ export function FormularioRecarga({ saldo, alAvisar }: { saldo: Saldo; alAvisar:
     if (!supabase || !montoValido || !operacionValida) return;
     setEnviando(true);
     setMensaje(null);
-    const { error } = await supabase.rpc("pedir_recarga", {
+    const { data, error } = await supabase.rpc("pedir_recarga", {
       p_monto: montoFinal,
       p_operacion: operacionLimpia,
       p_medio: medio,
+      p_codigo_seguridad: medio === "yape" && codigo ? codigo : null,
     });
     setEnviando(false);
     if (error) {
       const clave = Object.keys(ERRORES).find((k) => error.message.includes(k));
       return setMensaje({ tono: "error", texto: clave ? ERRORES[clave] : "No se pudo enviar. Inténtalo de nuevo." });
     }
+    const alInstante = !!(data as { al_instante: boolean }[] | null)?.[0]?.al_instante;
     setOperacion("");
+    setCodigo("");
     setOtro("");
     setMensaje({
       tono: "exito",
-      texto: `¡Listo! Revisaremos tu ${medio === "bcp" ? "transferencia" : "Yape"} y sumaremos el saldo. Normalmente toma unas horas.`,
+      texto: alInstante
+        ? `¡Listo! Sumamos ${soles(montoFinal)} a tu saldo. Lo verificaremos con tu ${medio === "bcp" ? "transferencia" : "Yape"}.`
+        : `¡Listo! Lo confirmaremos apenas veamos tu ${medio === "bcp" ? "transferencia" : "Yape"}. Normalmente toma unas horas.`,
     });
     alAvisar();
   }
@@ -172,6 +179,31 @@ export function FormularioRecarga({ saldo, alAvisar }: { saldo: Saldo; alAvisar:
           ) : null}
         </Tarjeta>
 
+        {/* De quién debe venir el pago para que se confirme solo */}
+        <Aviso>
+          Paga desde <strong>tu propio {medio === "bcp" ? "banco" : "Yape"}</strong>
+          {saldo.mi_nombre ? (
+            <>
+              {" "}
+              (a nombre de <strong>{saldo.mi_nombre}</strong>
+              {medio === "yape" && saldo.mi_celular ? (
+                <>
+                  {" "}
+                  y desde el <strong>{saldo.mi_celular}</strong>
+                </>
+              ) : null}
+              )
+            </>
+          ) : null}
+          . Así se confirma solo. Si pagas desde la cuenta de otra persona, lo revisamos a mano.
+          {Number(saldo.auto_hasta) > 0 && !saldo.recarga_auto_bloqueada && (
+            <>
+              {" "}
+              Las recargas de hasta <strong>{soles(Number(saldo.auto_hasta))}</strong> se suman al instante.
+            </>
+          )}
+        </Aviso>
+
         {/* 4. Número de operación */}
         <Campo
           etiqueta="4. Escribe el número de operación"
@@ -182,9 +214,22 @@ export function FormularioRecarga({ saldo, alAvisar }: { saldo: Saldo; alAvisar:
           error={operacion && !operacionValida ? "Entre 4 y 20 letras o números." : undefined}
         />
 
+        {medio === "yape" && (
+          <Campo
+            etiqueta="Código de seguridad (3 números, en tu comprobante de Yape)"
+            value={codigo}
+            onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 3))}
+            inputMode="numeric"
+            placeholder="123"
+            autoComplete="off"
+            className="max-w-xs"
+            error={codigo && codigo.length !== 3 ? "Son 3 números." : undefined}
+          />
+        )}
+
         {mensaje && <Aviso tono={mensaje.tono}>{mensaje.texto}</Aviso>}
 
-        <Boton type="submit" tamano="lg" ancho cargando={enviando} disabled={!montoValido || !operacionValida}>
+        <Boton type="submit" tamano="lg" ancho cargando={enviando} disabled={!montoValido || !operacionValida || (medio === "yape" && codigo.length > 0 && codigo.length !== 3)}>
           {enviando ? "Enviando…" : medio === "bcp" ? "Ya transferí · Avisar recarga" : "Ya yapeé · Avisar recarga"}
         </Boton>
         <p className="text-center text-xs text-tinta-suave">

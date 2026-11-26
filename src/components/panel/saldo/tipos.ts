@@ -12,6 +12,12 @@ export type Saldo = {
   bono_hasta: string | null;
   reservas_mes: number;
   gastado_mes: number;
+  /** Recargas de hasta este monto se suman al instante (022) */
+  auto_hasta: number;
+  recarga_auto_bloqueada: boolean;
+  /** El pago debe venir de este nombre y número (022) */
+  mi_nombre: string | null;
+  mi_celular: string | null;
 };
 
 export type Recarga = {
@@ -20,6 +26,8 @@ export type Recarga = {
   medio: string;
   operacion: string;
   estado: string;
+  /** no_aplica, por_verificar (sumada al instante), verificada o fallida (022) */
+  verificacion: string;
   nota: string | null;
   created_at: string;
 };

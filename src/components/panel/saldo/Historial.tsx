@@ -23,7 +23,12 @@ export function ListaRecargas({ recargas }: { recargas: Recarga[] }) {
       <h2 className="font-bold">Tus recargas</h2>
       <Lista>
         {recargas.map((r) => {
-          const e = ESTADO[r.estado] ?? { texto: r.estado, tono: "neutro" as const };
+          const e =
+            r.verificacion === "por_verificar"
+              ? { texto: "Sumada · por verificar", tono: "marca" as const }
+              : r.verificacion === "fallida"
+                ? { texto: "Anulada", tono: "peligro" as const }
+                : (ESTADO[r.estado] ?? { texto: r.estado, tono: "neutro" as const });
           return (
             <li key={r.id} className="flex items-center justify-between gap-3 p-4 text-sm">
               <span className="min-w-0">

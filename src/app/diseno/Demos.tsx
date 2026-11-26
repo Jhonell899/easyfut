@@ -22,6 +22,10 @@ const SALDO_EJEMPLO: Saldo = {
   bono_hasta: null,
   reservas_mes: 12,
   gastado_mes: 12,
+  auto_hasta: 20,
+  recarga_auto_bloqueada: false,
+  mi_nombre: "Dueño de ejemplo",
+  mi_celular: "912345678",
 };
 
 /** La pantalla de saldo del dueño con datos de ejemplo (no envía nada). */
