@@ -1,5 +1,6 @@
 import Link from "next/link";
 import MisReservas from "@/components/MisReservas";
+import ChatsRecientes from "@/components/ChatsRecientes";
 
 export const metadata = { title: "Mis reservas" };
 
@@ -10,6 +11,7 @@ export default function PaginaMisReservas() {
         ← Todas las canchas
       </Link>
       <h1 className="text-2xl font-bold text-[#1B1B1B]">Mis reservas</h1>
+      <ChatsRecientes titulo="Chats con las canchas" />
       <MisReservas />
     </main>
   );

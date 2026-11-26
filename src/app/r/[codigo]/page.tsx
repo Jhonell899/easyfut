@@ -138,6 +138,22 @@ export default async function PaginaReserva({
         </p>
       )}
 
+      {/* El chat existe desde que el dueño confirma el pago (solo cliente y dueño lo ven) */}
+      {reserva.estado === "confirmada" && (
+        <Link
+          href={`/chat/${reserva.codigo}`}
+          className="flex items-center justify-between gap-3 rounded-2xl bg-white p-4 text-sm shadow-sm hover:bg-[#FAFAFA]"
+        >
+          <span>
+            <span className="block font-bold">💬 Chat con {jugado ? "la cancha" : "el dueño"}</span>
+            <span className="block text-xs text-[#5A5A5A]">Coordina lo que necesites sobre esta reserva</span>
+          </span>
+          <span className="shrink-0 text-[#C4B5FD]" aria-hidden="true">
+            ›
+          </span>
+        </Link>
+      )}
+
       {/* Después del partido: calificar la cancha (solo reservas pagadas, hasta 30 días) */}
       {reserva.estado === "confirmada" && jugado && haceMenosDe30Dias && (
         <CalificarReserva codigo={reserva.codigo} canchaNombre={reserva.cancha_nombre} />

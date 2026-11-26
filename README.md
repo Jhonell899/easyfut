@@ -18,6 +18,7 @@ easyfut/
 │   │   ├── c/[slug]/          /c/olivos-arena Detalle de una cancha y reserva
 │   │   ├── r/[codigo]/        /r/AB12CD34     Pago y estado de una reserva
 │   │   ├── reservas/          /reservas       Mis reservas
+│   │   ├── chat/[codigo]/     /chat/AB12CD34  Chat de una reserva confirmada (cliente y dueño)
 │   │   ├── ingresar/          /ingresar       Iniciar sesión
 │   │   ├── registro/          /registro       Crear cuenta (código por correo)
 │   │   ├── publicar/          /publicar       Página para dueños de canchas
