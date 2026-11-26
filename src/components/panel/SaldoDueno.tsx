@@ -18,8 +18,21 @@ type Saldo = {
   bono_hasta: string | null;
   reservas_mes: number;
   gastado_mes: number;
+  auto_hasta: number;
+  recarga_auto_bloqueada: boolean;
+  mi_nombre: string | null;
+  mi_celular: string | null;
 };
-type Recarga = { id: string; monto: number; medio: string; operacion: string; estado: string; nota: string | null; created_at: string };
+type Recarga = {
+  id: string;
+  monto: number;
+  medio: string;
+  operacion: string;
+  estado: string;
+  verificacion: string;
+  nota: string | null;
+  created_at: string;
+};
 type Medio = "yape" | "bcp";
 type Movimiento = { id: string; tipo: string; monto: number; detalle: string | null; created_at: string };
 
@@ -30,6 +43,7 @@ const ERRORES: Record<string, string> = {
   monto_invalido: "El monto debe ser de S/ 1 a S/ 500.",
   operacion_invalida: "Escribe el número de operación tal como aparece en tu Yape o en tu constancia del BCP.",
   medio_no_disponible: "Ese medio de pago no está disponible ahora. Elige el otro.",
+  codigo_invalido: "El código de seguridad de Yape tiene 3 números.",
   operacion_repetida: "Ese número de operación ya se usó en otra recarga.",
   demasiadas_pendientes: "Tienes 3 recargas esperando revisión. Espera a que las aprobemos.",
   sin_permiso: "Solo los dueños pueden recargar.",
@@ -66,12 +80,13 @@ export default function SaldoDueno() {
   const [mensaje, setMensaje] = useState<{ tipo: "ok" | "error"; texto: string } | null>(null);
   const [copiado, setCopiado] = useState<string | null>(null);
   const [medio, setMedio] = useState<Medio>("yape");
+  const [codigo, setCodigo] = useState("");
 
   const cargar = useCallback(async () => {
     if (!supabase) return;
     const [s, r, m] = await Promise.all([
       supabase.rpc("mi_saldo"),
-      supabase.from("recargas_saldo").select("id, monto, medio, operacion, estado, nota, created_at").order("created_at", { ascending: false }).limit(20),
+      supabase.from("recargas_saldo").select("id, monto, medio, operacion, estado, verificacion, nota, created_at").order("created_at", { ascending: false }).limit(20),
       supabase.from("movimientos_saldo").select("id, tipo, monto, detalle, created_at").order("created_at", { ascending: false }).limit(50),
     ]);
     if (s.error) return setFalta(true);
@@ -97,21 +112,26 @@ export default function SaldoDueno() {
     if (!supabase || !montoValido || !operacionValida) return;
     setEnviando(true);
     setMensaje(null);
-    const { error } = await supabase.rpc("pedir_recarga", {
+    const { data, error } = await supabase.rpc("pedir_recarga", {
       p_monto: montoFinal,
       p_operacion: operacionLimpia,
       p_medio: medio,
+      p_codigo_seguridad: medio === "yape" && codigo ? codigo : null,
     });
     setEnviando(false);
     if (error) {
       const clave = Object.keys(ERRORES).find((k) => error.message.includes(k));
       return setMensaje({ tipo: "error", texto: clave ? ERRORES[clave] : "No se pudo enviar. Inténtalo de nuevo." });
     }
+    const alInstante = !!(data as { al_instante: boolean }[] | null)?.[0]?.al_instante;
     setOperacion("");
+    setCodigo("");
     setOtro("");
     setMensaje({
       tipo: "ok",
-      texto: `¡Listo! Revisaremos tu ${medio === "bcp" ? "transferencia" : "Yape"} y sumaremos el saldo. Normalmente toma unas horas.`,
+      texto: alInstante
+        ? `¡Listo! Sumamos ${soles(montoFinal)} a tu saldo. Lo verificaremos con tu ${medio === "bcp" ? "transferencia" : "Yape"}.`
+        : `¡Listo! Lo confirmaremos apenas veamos tu ${medio === "bcp" ? "transferencia" : "Yape"}. Normalmente toma unas horas.`,
     });
     cargar();
   }
@@ -300,6 +320,30 @@ export default function SaldoDueno() {
               </div>
             ) : null}
 
+            <p className="rounded-xl bg-[#F4F4F4] p-3 text-xs text-[#4A4A4A]">
+              Paga desde <strong>tu propio {medio === "bcp" ? "banco" : "Yape"}</strong>
+              {saldo.mi_nombre ? (
+                <>
+                  {" "}
+                  (a nombre de <strong>{saldo.mi_nombre}</strong>
+                  {medio === "yape" && saldo.mi_celular ? (
+                    <>
+                      {" "}
+                      y desde el <strong>{saldo.mi_celular}</strong>
+                    </>
+                  ) : null}
+                  )
+                </>
+              ) : null}
+              . Así se confirma solo. Si pagas desde la cuenta de otra persona, lo revisamos a mano.
+              {Number(saldo.auto_hasta) > 0 && !saldo.recarga_auto_bloqueada && (
+                <>
+                  {" "}
+                  Las recargas de hasta <strong>{soles(Number(saldo.auto_hasta))}</strong> se suman al instante.
+                </>
+              )}
+            </p>
+
             <label className="flex flex-col gap-1">
               <span className="text-sm font-bold">4. Escribe el número de operación</span>
               <input
@@ -310,6 +354,22 @@ export default function SaldoDueno() {
                 className="rounded-xl border border-[#E3E3E3] px-3 py-3 text-base outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20"
               />
             </label>
+
+            {medio === "yape" && (
+              <label className="flex flex-col gap-1">
+                <span className="text-sm font-bold">
+                  Código de seguridad <span className="font-medium text-[#5A5A5A]">(3 números, en tu comprobante de Yape)</span>
+                </span>
+                <input
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value.replace(/\D/g, "").slice(0, 3))}
+                  inputMode="numeric"
+                  placeholder="123"
+                  autoComplete="off"
+                  className="w-28 rounded-xl border border-[#E3E3E3] px-3 py-3 text-center text-base tracking-widest outline-none focus:border-[#6D28D9] focus:ring-2 focus:ring-[#6D28D9]/20"
+                />
+              </label>
+            )}
 
             {mensaje && (
               <p
@@ -322,7 +382,7 @@ export default function SaldoDueno() {
 
             <button
               type="submit"
-              disabled={!montoValido || !operacionValida || enviando}
+              disabled={!montoValido || !operacionValida || (medio === "yape" && codigo.length > 0 && codigo.length !== 3) || enviando}
               className="boton-morado rounded-xl py-3 font-bold text-white disabled:opacity-50"
             >
               {enviando ? "Enviando…" : medio === "bcp" ? "Ya transferí · Avisar recarga" : "Ya yapeé · Avisar recarga"}
@@ -349,9 +409,17 @@ export default function SaldoDueno() {
                   </span>
                   {r.nota && <span className="block text-xs text-[#5A5A5A]">{r.nota}</span>}
                 </span>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${ESTADO_RECARGA[r.estado]?.clase ?? ""}`}>
-                  {ESTADO_RECARGA[r.estado]?.texto ?? r.estado}
-                </span>
+                {r.verificacion === "por_verificar" ? (
+                  <span className="shrink-0 rounded-full bg-[#EDE9FE] px-2 py-0.5 text-[11px] font-bold text-[#6D28D9]">
+                    Sumada · por verificar
+                  </span>
+                ) : r.verificacion === "fallida" ? (
+                  <span className="shrink-0 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-bold text-red-700">Anulada</span>
+                ) : (
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${ESTADO_RECARGA[r.estado]?.clase ?? ""}`}>
+                    {ESTADO_RECARGA[r.estado]?.texto ?? r.estado}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
