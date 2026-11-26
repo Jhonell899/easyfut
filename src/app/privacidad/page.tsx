@@ -29,7 +29,7 @@ const SECCIONES: Seccion[] = [
     titulo: "Quién puede verlos",
     parrafos: [
       "El rentador de la cancha que reservas ve tu nombre, tu celular y el historial de tus reservas en EasyFut (cuántas pagaste, dejaste vencer o fueron rechazadas).",
-      "Cuando el rentador confirma tu pago en la app se abre un chat entre tú y ese rentador (uno solo para todas tus reservas con él). Solo lo ven ustedes dos; se puede escribir hasta 2 días después de su último partido. No compartas contraseñas ni códigos por ahí.",
+      "Cuando el rentador confirma tu pago en la app se abre un chat entre tú y ese rentador (uno solo para todas tus reservas con él). Solo lo ven ustedes dos; se puede escribir hasta 2 días después de su último partido. Si uno de los dos reporta el chat, el equipo de EasyFut puede leer los mensajes de ese chat para revisarlo y cerrarlo. No compartas contraseñas ni códigos por ahí.",
       "El número de WhatsApp de cada rentador y los medios de pago de su cancha son públicos, porque los jugadores los necesitan para pagar y coordinar.",
       "Usamos Supabase como proveedor de base de datos y de cuentas, y OpenStreetMap para mostrar mapas.",
     ],

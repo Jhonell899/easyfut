@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { fmtFecha, soles } from "@/lib/horario";
+import ReportarChat from "@/components/ReportarChat";
 
 type Datos = {
   chat_id: string;
@@ -12,6 +13,7 @@ type Datos = {
   otra_celular: string | null;
   abierto: boolean;
   abierto_hasta: string;
+  bloqueado: boolean;
   cliente_pagadas: number | null;
   cliente_vencidas: number | null;
   cliente_canceladas: number | null;
@@ -31,6 +33,7 @@ type Mensaje = { id: string; autor: "cliente" | "dueno" | "sistema"; texto: stri
 const ERRORES: Record<string, string> = {
   texto_invalido: "Escribe un mensaje de hasta 1000 caracteres.",
   chat_cerrado: "Este chat está cerrado hasta tu próxima reserva confirmada.",
+  chat_bloqueado: "EasyFut cerró este chat después de revisar un reporte.",
   sin_permiso: "No participas en este chat.",
   muy_rapido: "Estás enviando muy rápido. Espera un momento.",
 };
@@ -192,6 +195,8 @@ export default function ChatReserva({ chatId }: { chatId: string }) {
             </ul>
           </div>
         )}
+
+        <ReportarChat chatId={chatId} />
       </section>
 
       {/* Mensajes */}
@@ -260,7 +265,9 @@ export default function ChatReserva({ chatId }: { chatId: string }) {
         </form>
       ) : (
         <p className="rounded-2xl bg-[#F4F4F4] p-3 text-center text-sm text-[#5A5A5A]">
-          El chat se cerró 2 días después de su último partido. Se vuelve a abrir con la próxima reserva confirmada.
+          {datos.bloqueado
+            ? "EasyFut cerró este chat después de revisar un reporte. Puedes leer los mensajes, pero ya no escribir."
+            : "El chat se cerró 2 días después de su último partido. Se vuelve a abrir con la próxima reserva confirmada."}
         </p>
       )}
     </div>

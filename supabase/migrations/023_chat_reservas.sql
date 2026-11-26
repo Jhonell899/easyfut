@@ -7,11 +7,12 @@
 --   fuera (SQL Editor, scripts) no abren ni crean chats.
 -- · Cada reserva confirmada deja un aviso dentro del chat de la pareja y lo
 --   mantiene abierto hasta 2 días después de su partido.
--- · Solo el dueño y el jugador de ese chat leen los mensajes.
+-- · Solo el dueño y el jugador de ese chat leen los mensajes. Si uno lo reporta,
+--   el admin puede leer ese chat (solo ese) y cerrarlo para siempre.
 -- · El cliente de una reserva solo lo pone la app al reservar (crear_reserva):
 --   nadie puede ponerlo ni cambiarlo por otro desde fuera.
 --
--- Tablas nuevas: chats, mensajes_chat, lecturas_chat.
+-- Tablas nuevas: chats, mensajes_chat, lecturas_chat, reportes_chat.
 -- Columnas nuevas: reservas.confirmada_en, reservas.chat_id.
 -- Requiere la 021. Todo va en una sola transacción: si algo falla, no cambia nada.
 -- =============================================================================
@@ -25,6 +26,7 @@ create table if not exists chats (
   cliente_id        uuid not null references usuarios(id) on delete cascade,
   abierto_hasta     timestamptz not null default now(),
   ultima_reserva_id uuid,
+  bloqueado         boolean not null default false,
   created_at        timestamptz not null default now(),
   unique (dueno_id, cliente_id),
   check (dueno_id <> cliente_id)
@@ -155,7 +157,7 @@ create trigger avisar_chat_reserva after update of estado on reservas
 -- El dueño ve al jugador (nombre, celular, historial). El jugador ve al dueño.
 create or replace function datos_chat(p_chat uuid)
 returns table (chat_id uuid, soy text, otra_nombre text, otra_celular text, abierto boolean,
-               abierto_hasta timestamptz,
+               abierto_hasta timestamptz, bloqueado boolean,
                cliente_pagadas bigint, cliente_vencidas bigint, cliente_canceladas bigint, cliente_pagos_falsos bigint)
 language plpgsql stable security definer set search_path = public as $$
 declare
@@ -180,7 +182,7 @@ begin
   end if;
 
   return query
-    select ch.id, v_soy, v_nombre, v_cel, now() <= ch.abierto_hasta, ch.abierto_hasta,
+    select ch.id, v_soy, v_nombre, v_cel, not ch.bloqueado and now() <= ch.abierto_hasta, ch.abierto_hasta, ch.bloqueado,
            case when v_soy = 'dueno' then h.pagadas end,
            case when v_soy = 'dueno' then h.vencidas end,
            case when v_soy = 'dueno' then h.canceladas end,
@@ -221,7 +223,7 @@ revoke execute on function chat_de_reserva(text) from public, anon;
 grant execute on function chat_de_reserva(text) to authenticated;
 
 -- 4. Enviar y leer -------------------------------------------------------------------
--- Errores: texto_invalido, sin_permiso, chat_cerrado, muy_rapido
+-- Errores: texto_invalido, sin_permiso, chat_bloqueado, chat_cerrado, muy_rapido
 create or replace function enviar_mensaje(p_chat uuid, p_texto text) returns uuid
 language plpgsql security definer set search_path = public as $$
 declare
@@ -237,6 +239,7 @@ begin
   elsif auth.uid() = ch.cliente_id then v_autor := 'cliente';
   else raise exception 'sin_permiso';
   end if;
+  if ch.bloqueado then raise exception 'chat_bloqueado'; end if;
   if now() > ch.abierto_hasta then raise exception 'chat_cerrado'; end if;
   if (select count(*) from mensajes_chat
        where chat_id = ch.id and autor_id = auth.uid() and created_at > now() - interval '1 minute') >= 15 then
@@ -276,7 +279,7 @@ language sql stable security definer set search_path = public as $$
            where m.chat_id = ch.id and m.autor_id is distinct from auth.uid()
              and m.created_at > coalesce((select l.leido_en from lecturas_chat l
                                            where l.chat_id = ch.id and l.usuario_id = auth.uid()), '-infinity')),
-         now() <= ch.abierto_hasta,
+         not ch.bloqueado and now() <= ch.abierto_hasta,
          uc.nombre, ur.inicio
   from chats ch
   join usuarios due on due.id = ch.dueno_id
@@ -292,13 +295,128 @@ $$;
 revoke execute on function mis_chats() from public, anon;
 grant execute on function mis_chats() to authenticated;
 
--- 6. Descripciones -------------------------------------------------------------------
+-- 6. Reportar un chat (llega al administrador) -------------------------------------
+-- El admin solo puede leer los mensajes de un chat que alguien reportó.
+create table if not exists reportes_chat (
+  id           uuid primary key default gen_random_uuid(),
+  chat_id      uuid not null references chats(id) on delete cascade,
+  reportado_por uuid references usuarios(id) on delete set null,
+  motivo       text not null check (motivo in ('acoso', 'estafa', 'spam', 'otro')),
+  detalle      text check (detalle is null or length(detalle) <= 500),
+  estado       text not null default 'pendiente' check (estado in ('pendiente', 'revisado')),
+  nota_admin   text check (nota_admin is null or length(nota_admin) <= 500),
+  revisado_por uuid references usuarios(id) on delete set null,
+  revisado_en  timestamptz,
+  created_at   timestamptz not null default now()
+);
+-- Un solo reporte pendiente por persona y chat
+create unique index if not exists reportes_chat_pendiente_unico
+  on reportes_chat (chat_id, reportado_por) where estado = 'pendiente';
+alter table reportes_chat enable row level security;
+drop policy if exists reportes_chat_ver on reportes_chat;
+create policy reportes_chat_ver on reportes_chat for select to authenticated
+  using (reportado_por = auth.uid() or es_admin());
+
+-- Errores: sin_permiso, motivo_invalido, ya_reportado, demasiados_reportes
+create or replace function reportar_chat(p_chat uuid, p_motivo text, p_detalle text default null)
+returns uuid
+language plpgsql security definer set search_path = public as $$
+declare
+  v_detalle text := nullif(left(trim(coalesce(p_detalle, '')), 500), '');
+  v_id uuid;
+begin
+  if not es_participante_chat(p_chat) then raise exception 'sin_permiso'; end if;
+  if p_motivo is null or p_motivo not in ('acoso', 'estafa', 'spam', 'otro') then raise exception 'motivo_invalido'; end if;
+  if (select count(*) from reportes_chat
+       where reportado_por = auth.uid() and created_at > now() - interval '1 day') >= 5 then
+    raise exception 'demasiados_reportes';
+  end if;
+  insert into reportes_chat (chat_id, reportado_por, motivo, detalle)
+  values (p_chat, auth.uid(), p_motivo, v_detalle)
+  returning id into v_id;
+  return v_id;
+exception when unique_violation then
+  raise exception 'ya_reportado';
+end $$;
+revoke execute on function reportar_chat(uuid, text, text) from public, anon;
+grant execute on function reportar_chat(uuid, text, text) to authenticated;
+
+-- Admin: lista de reportes (pendientes primero)
+create or replace function admin_reportes_chat()
+returns table (id uuid, chat_id uuid, motivo text, detalle text, estado text, nota_admin text, created_at timestamptz,
+               reporta_nombre text, reporta_correo text,
+               dueno_nombre text, dueno_correo text, cliente_nombre text, cliente_correo text,
+               chat_bloqueado boolean, mensajes bigint)
+language plpgsql stable security definer set search_path = public, auth as $$
+begin
+  if not es_admin() then raise exception 'sin_permiso'; end if;
+  return query
+    select r.id, r.chat_id, r.motivo, r.detalle, r.estado, r.nota_admin, r.created_at,
+           ur.nombre, ar.email::text,
+           ud.nombre, ad.email::text, uc.nombre, ac.email::text,
+           ch.bloqueado,
+           (select count(*) from mensajes_chat m where m.chat_id = r.chat_id)
+    from reportes_chat r
+    join chats ch on ch.id = r.chat_id
+    left join usuarios ur on ur.id = r.reportado_por
+    left join auth.users ar on ar.id = r.reportado_por
+    join usuarios ud on ud.id = ch.dueno_id
+    left join auth.users ad on ad.id = ch.dueno_id
+    join usuarios uc on uc.id = ch.cliente_id
+    left join auth.users ac on ac.id = ch.cliente_id
+    order by (r.estado = 'pendiente') desc, r.created_at desc
+    limit 200;
+end $$;
+revoke execute on function admin_reportes_chat() from public, anon;
+grant execute on function admin_reportes_chat() to authenticated;
+
+-- Admin: mensajes de un chat, SOLO si ese chat fue reportado
+create or replace function admin_mensajes_chat(p_chat uuid)
+returns table (id uuid, autor text, autor_nombre text, texto text, created_at timestamptz)
+language plpgsql stable security definer set search_path = public as $$
+begin
+  if not es_admin() then raise exception 'sin_permiso'; end if;
+  if not exists (select 1 from reportes_chat r where r.chat_id = p_chat) then raise exception 'sin_reporte'; end if;
+  return query
+    select m.id, m.autor, u.nombre, m.texto, m.created_at
+    from mensajes_chat m left join usuarios u on u.id = m.autor_id
+    where m.chat_id = p_chat
+    order by m.created_at
+    limit 500;
+end $$;
+revoke execute on function admin_mensajes_chat(uuid) from public, anon;
+grant execute on function admin_mensajes_chat(uuid) to authenticated;
+
+-- Admin: marcar revisado y, si hace falta, cerrar el chat para siempre (o reabrirlo)
+create or replace function admin_revisar_reporte_chat(p_id uuid, p_nota text, p_bloquear boolean default null)
+returns void
+language plpgsql security definer set search_path = public as $$
+declare
+  v_chat uuid;
+begin
+  if not es_admin() then raise exception 'sin_permiso'; end if;
+  update reportes_chat
+     set estado = 'revisado', nota_admin = nullif(left(trim(coalesce(p_nota, '')), 500), ''),
+         revisado_por = auth.uid(), revisado_en = now()
+   where id = p_id
+  returning chat_id into v_chat;
+  if v_chat is null then raise exception 'no_existe'; end if;
+  if p_bloquear is not null then
+    update chats set bloqueado = p_bloquear where id = v_chat;
+  end if;
+end $$;
+revoke execute on function admin_revisar_reporte_chat(uuid, text, boolean) from public, anon;
+grant execute on function admin_revisar_reporte_chat(uuid, text, boolean) to authenticated;
+
+-- 7. Descripciones -------------------------------------------------------------------
 comment on table chats is 'Un chat por pareja dueño (rentador) – jugador (alquilador). Se crea cuando el dueño confirma desde la app el pago de una reserva.';
 comment on column chats.abierto_hasta is 'Se puede escribir hasta 2 días después del último partido confirmado entre los dos.';
 comment on column chats.ultima_reserva_id is 'Última reserva confirmada que abrió o reabrió el chat.';
 comment on column reservas.confirmada_en is 'Cuándo el dueño confirmó el pago desde la app.';
 comment on column reservas.chat_id is 'Chat de la pareja dueño–jugador al que pertenece esta reserva.';
 comment on table mensajes_chat is 'Mensajes de cada chat (autor: cliente, dueno o sistema).';
+comment on column chats.bloqueado is 'true = el admin cerró el chat por un reporte; ya no se puede escribir.';
+comment on table reportes_chat is 'Reportes de chats que llegan al admin (acoso, estafa, spam u otro).';
 comment on table lecturas_chat is 'Hasta cuándo leyó cada persona cada chat (para contar mensajes sin leer).';
 
 commit;

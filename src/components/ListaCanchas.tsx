@@ -11,6 +11,20 @@ type Filtro = { clave: string; texto: string; cumple: (c: Cancha) => boolean };
 const HORAS_BUSQUEDA = Array.from({ length: 18 }, (_, i) => `${String(i + 6).padStart(2, "0")}:00`);
 const TAMANO_PAGINA = 18;
 
+/**
+ * Texto seguro para el filtro de búsqueda de Supabase (.or). Solo deja letras, números,
+ * espacios, guiones y apóstrofos: así nadie puede meter comas, paréntesis o puntos que
+ * cambien las condiciones de la consulta (inyección en el filtro).
+ */
+function textoDeBusqueda(termino: string) {
+  return termino
+    .normalize("NFC")
+    .replace(/[^\p{L}\p{N}\s'-]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 60);
+}
+
 const DISTRITOS_POPULARES = [
   "Ate", "Barranco", "Breña", "Carabayllo", "Chorrillos", "Comas", "El Agustino",
   "Independencia", "Jesús María", "La Molina", "La Victoria", "Lima Cercado", "Lince",
@@ -84,8 +98,8 @@ export default function ListaCanchas({
         .eq("activa", true);
 
       if (dist) query = query.eq("distrito", dist);
-      if (termino.trim()) {
-        const t = termino.trim();
+      const t = textoDeBusqueda(termino);
+      if (t) {
         query = query.or(`nombre.ilike.%${t}%,direccion.ilike.%${t}%,distrito.ilike.%${t}%`);
       }
 
