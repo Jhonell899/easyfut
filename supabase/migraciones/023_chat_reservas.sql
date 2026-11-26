@@ -11,6 +11,8 @@
 --   el admin puede leer ese chat (solo ese) y cerrarlo para siempre.
 -- · El cliente de una reserva solo lo pone la app al reservar (crear_reserva):
 --   nadie puede ponerlo ni cambiarlo por otro desde fuera.
+-- · Para reservar, la cuenta debe tener un celular vinculado; la reserva usa ese
+--   número (así el chat puede llamar al número registrado).
 --
 -- Tablas nuevas: chats, mensajes_chat, lecturas_chat, reportes_chat.
 -- Columnas nuevas: reservas.confirmada_en, reservas.chat_id.
@@ -175,8 +177,12 @@ begin
 
   if v_soy = 'dueno' then
     -- Los datos que el jugador dejó en su última reserva con este dueño
-    select r.nombre_cliente, r.celular_cliente into v_nombre, v_cel
-    from reservas r where r.chat_id = ch.id order by r.inicio desc limit 1;
+    select coalesce(r.nombre_cliente, u.nombre), coalesce(u.celular_verificado, u.celular, r.celular_cliente)
+      into v_nombre, v_cel
+    from usuarios u
+    left join lateral (select x.nombre_cliente, x.celular_cliente from reservas x
+                        where x.chat_id = ch.id order by x.inicio desc limit 1) r on true
+    where u.id = ch.cliente_id;
   else
     select u.nombre, u.celular_verificado into v_nombre, v_cel from usuarios u where u.id = ch.dueno_id;
   end if;
@@ -408,7 +414,130 @@ end $$;
 revoke execute on function admin_revisar_reporte_chat(uuid, text, boolean) from public, anon;
 grant execute on function admin_revisar_reporte_chat(uuid, text, boolean) to authenticated;
 
--- 7. Descripciones -------------------------------------------------------------------
+-- 7. Reservar exige celular vinculado a la cuenta ---------------------------------
+create or replace function crear_reserva(
+  p_cancha_id uuid, p_inicio timestamptz, p_fin timestamptz,
+  p_nombre text, p_celular text)
+returns table (r_codigo text, r_monto numeric, r_expira_en timestamptz)
+language plpgsql security definer set search_path = public as $$
+declare
+  v_cancha    canchas%rowtype;
+  v_franja    tarifas_horarias%rowtype;
+  v_ini_local timestamp := p_inicio at time zone 'America/Lima';
+  v_fin_local timestamp := p_fin    at time zone 'America/Lima';
+  v_hora_fin  time;
+  v_minutos   numeric   := extract(epoch from (p_fin - p_inicio)) / 60;
+  v_monto     numeric;
+  v_ip        text      := ip_solicitud();
+  v_cel_cuenta text;
+begin
+  -- Reservar exige cuenta (019)
+  if auth.uid() is null then raise exception 'requiere_cuenta'; end if;
+  -- 023: la reserva usa SIEMPRE el celular vinculado a la cuenta (no uno escrito a mano)
+  select coalesce(u.celular_verificado, u.celular) into v_cel_cuenta from usuarios u where u.id = auth.uid();
+  if coalesce(v_cel_cuenta, '') !~ '^9[0-9]{8}$' then raise exception 'sin_celular'; end if;
+  p_celular := v_cel_cuenta;
+  select * into v_cancha from canchas where id = p_cancha_id and activa;
+  if not found then raise exception 'cancha_no_disponible'; end if;
+  -- 021: el dueño necesita saldo para recibir reservas
+  if saldo_de(v_cancha.dueno_id) < (select precio_reserva from ajustes_easyfut where id = 1) then
+    raise exception 'cancha_sin_saldo';
+  end if;
+
+  if p_inicio <= now() then raise exception 'horario_pasado'; end if;
+  if p_inicio > now() + interval '30 days' then raise exception 'muy_lejos'; end if;
+
+  if length(trim(coalesce(p_nombre, ''))) < 2
+     or coalesce(p_celular, '') !~ '^9[0-9]{8}$' then
+    raise exception 'datos_invalidos';
+  end if;
+
+  if exists (
+    select 1 from clientes_bloqueados b
+    where b.celular = p_celular
+      and (b.dueno_id is null or b.dueno_id = v_cancha.dueno_id)
+      and (b.hasta is null or b.hasta > now())
+  ) then
+    raise exception 'cliente_bloqueado';
+  end if;
+
+  -- Reincidencia: vencidas sin aviso + pagos falsos en 7 días
+  if (
+    select count(*) from reservas r
+    where r.celular_cliente = p_celular
+      and r.created_at > now() - interval '7 days'
+      and (r.estado = 'expirada'
+           or (r.estado = 'pendiente' and r.pago_avisado_en is null and r.expira_en < now())
+           or r.pago_rechazado_en is not null)
+  ) >= 3 then
+    raise exception 'demasiadas_vencidas';
+  end if;
+
+  -- Reservar y cancelar una y otra vez para retener un horario: máximo 4 cancelaciones propias en 24 h
+  if (
+    select count(*) from reservas r
+    where r.celular_cliente = p_celular
+      and r.cancelada_por_cliente_en > now() - interval '24 hours'
+  ) >= 4 then
+    raise exception 'demasiadas_cancelaciones';
+  end if;
+
+  -- 1 reserva sin pagar (sin "Ya pagué") a la vez por número
+  if exists (
+    select 1 from reservas r
+    where r.celular_cliente = p_celular
+      and r.estado = 'pendiente' and r.pago_avisado_en is null and r.expira_en > now()
+  ) then
+    raise exception 'pendiente_activa';
+  end if;
+
+  -- Máximo 2 sin confirmar por el dueño por número (incluye las de "Ya pagué")
+  if (select count(*) from reservas r where r.celular_cliente = p_celular and reserva_viva(r)) >= 2 then
+    raise exception 'demasiadas_sin_confirmar';
+  end if;
+
+  -- Máximo 3 sin confirmar desde la misma conexión (incluye las de "Ya pagué")
+  if v_ip is not null and (select count(*) from reservas r where r.ip = v_ip and reserva_viva(r)) >= 3 then
+    raise exception 'limite_conexion';
+  end if;
+
+  if v_minutos <= 0 or mod(v_minutos, v_cancha.duracion_turno_min) <> 0 then
+    raise exception 'duracion_invalida';
+  end if;
+
+  if v_fin_local > ((v_ini_local::date + 1)::timestamp) then
+    raise exception 'cruza_medianoche';
+  end if;
+
+  v_hora_fin := case when v_fin_local::time = '00:00'
+                     then '24:00'::time else v_fin_local::time end;
+
+  select * into v_franja from tarifas_horarias
+   where cancha_id   = p_cancha_id
+     and dia_semana  = extract(dow from v_ini_local)::smallint
+     and hora_inicio <= v_ini_local::time
+     and hora_fin    >= v_hora_fin
+   limit 1;
+  if not found then raise exception 'fuera_de_horario'; end if;
+
+  v_monto := round(v_franja.precio_hora * v_minutos / 60, 2);
+
+  begin
+    insert into reservas
+      (cancha_id, cliente_id, inicio, fin, nombre_cliente, celular_cliente, monto, expira_en, ip)
+    values
+      (p_cancha_id, auth.uid(), p_inicio, p_fin, trim(p_nombre), p_celular, v_monto,
+       now() + interval '10 minutes', v_ip)
+    returning reservas.codigo, reservas.monto, reservas.expira_en
+      into r_codigo, r_monto, r_expira_en;
+  exception when exclusion_violation then
+    raise exception 'horario_ocupado';
+  end;
+
+  return next;
+end $$;
+
+-- 8. Descripciones -------------------------------------------------------------------
 comment on table chats is 'Un chat por pareja dueño (rentador) – jugador (alquilador). Se crea cuando el dueño confirma desde la app el pago de una reserva.';
 comment on column chats.abierto_hasta is 'Se puede escribir hasta 2 días después del último partido confirmado entre los dos.';
 comment on column chats.ultima_reserva_id is 'Última reserva confirmada que abrió o reabrió el chat.';

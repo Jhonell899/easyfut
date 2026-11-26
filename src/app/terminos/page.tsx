@@ -22,7 +22,7 @@ const SECCIONES: Seccion[] = [
   {
     titulo: "Reservas y pagos",
     parrafos: [
-      "Al reservar, el horario queda separado por 10 minutos. En ese tiempo debes pagar directamente al rentador (Yape, Plin o transferencia) y avisarle con el botón \"Ya pagué\". Si no lo haces, el horario se libera.",
+      "Para reservar necesitas una cuenta con tu celular vinculado: la reserva usa ese número y es el que verán el rentador y el chat para llamarte. Al reservar, el horario queda separado por 10 minutos. En ese tiempo debes pagar directamente al rentador (Yape, Plin o transferencia) y avisarle con el botón \"Ya pagué\". Si no lo haces, el horario se libera.",
       "El pago se hace directamente al rentador: EasyFut no recibe, retiene ni procesa tu dinero. La reserva queda confirmada cuando el rentador confirma que recibió el pago.",
       "Puedes cancelar tu reserva desde la app mientras no hayas avisado el pago, sin costo.",
       "Después de pagar, cada cancha aplica una de tres políticas de cancelación fijas (Flexible, Moderada o Estricta), que ves antes de reservar. La devolución que corresponda la hace el rentador por el mismo medio de pago, en un máximo de 48 horas.",

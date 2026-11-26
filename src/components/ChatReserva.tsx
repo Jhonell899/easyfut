@@ -145,14 +145,24 @@ export default function ChatReserva({ chatId }: { chatId: string }) {
             {celular && <p className="text-sm text-[#4A4A4A]">+51 {celular.replace(/(\d{3})(\d{3})(\d{3})/, "$1 $2 $3")}</p>}
           </div>
           {celular && (
-            <a
-              href={`https://wa.me/51${celular}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="shrink-0 rounded-xl bg-[#DCF5EA] px-3 py-2 text-sm font-bold text-[#0F7A55]"
-            >
-              WhatsApp
-            </a>
+            <div className="flex shrink-0 flex-col gap-1.5">
+              {/* En el celular abre el marcador con el número registrado */}
+              <a
+                href={`tel:+51${celular}`}
+                aria-label={`Llamar a ${datos.otra_nombre ?? (esDueno ? "el jugador" : "el dueño")}`}
+                className="rounded-xl bg-[#6D28D9] px-3 py-2 text-center text-sm font-bold text-white"
+              >
+                📞 Llamar
+              </a>
+              <a
+                href={`https://wa.me/51${celular}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-xl bg-[#DCF5EA] px-3 py-2 text-center text-sm font-bold text-[#0F7A55]"
+              >
+                WhatsApp
+              </a>
+            </div>
           )}
         </div>
 
