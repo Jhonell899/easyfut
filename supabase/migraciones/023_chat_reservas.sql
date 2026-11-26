@@ -2,9 +2,10 @@
 -- 023 · Chat entre el dueño (rentador) y el jugador (alquilador)
 --
 -- · Cada pareja dueño–jugador tiene UN chat con su propio id (tabla chats).
--- · El chat se abre SOLO desde la app: cuando el dueño (con su sesión) confirma el
---   pago de una reserva que el jugador hizo en la app. Confirmaciones hechas por
---   fuera (SQL Editor, scripts) no abren ni crean chats.
+-- · El chat se abre SOLO desde la app y SOLO después de cobrar la comisión: cuando el
+--   dueño (con su sesión) confirma el pago de una reserva que el jugador hizo en la
+--   app y se le descuenta el S/ 1 de su saldo. Sin cobro no hay chat, así el dueño no
+--   puede saltarse la comisión. Confirmaciones hechas por fuera no abren chats.
 -- · Cada reserva confirmada deja un aviso dentro del chat de la pareja y lo
 --   mantiene abierto hasta 2 días después de su partido.
 -- · Solo el dueño y el jugador de ese chat leen los mensajes. Si uno lo reporta,
@@ -15,7 +16,7 @@
 --   número (así el chat puede llamar al número registrado).
 --
 -- Tablas nuevas: chats, mensajes_chat, lecturas_chat, reportes_chat.
--- Columnas nuevas: reservas.confirmada_en, reservas.chat_id.
+-- Columna nueva: reservas.confirmada_en (confirmado desde la app).
 -- Requiere la 021. Todo va en una sola transacción: si algo falla, no cambia nada.
 -- =============================================================================
 
@@ -35,7 +36,6 @@ create table if not exists chats (
 );
 
 alter table reservas add column if not exists confirmada_en timestamptz;
-alter table reservas add column if not exists chat_id uuid references chats(id) on delete set null;
 alter table chats drop constraint if exists chats_ultima_reserva_fk;
 alter table chats add constraint chats_ultima_reserva_fk
   foreign key (ultima_reserva_id) references reservas(id) on delete set null;
@@ -88,16 +88,21 @@ begin
   end if;
 end $$;
 
--- 2. Reservas: cliente solo desde la app y chat al confirmar desde la app ----------
+-- ¿A esta reserva ya se le cobró el S/ 1 al dueño? (sin cobro no hay chat)
+create or replace function reserva_cobrada(p_reserva uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select exists (select 1 from movimientos_saldo m where m.reserva_id = p_reserva and m.tipo = 'reserva');
+$$;
+revoke execute on function reserva_cobrada(uuid) from public, anon, authenticated;
+
+-- 2. Reservas: cliente solo desde la app; marca de confirmación desde la app -------
 create or replace function preparar_chat_reserva() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
   v_dueno uuid;
-  v_chat  uuid;
 begin
   if tg_op = 'INSERT' then
     new.confirmada_en := null;
-    new.chat_id := null;
     -- Solo la app (crear_reserva, con la sesión del jugador) pone el cliente
     if new.cliente_id is not null and new.cliente_id is distinct from auth.uid() then
       new.cliente_id := null;
@@ -105,27 +110,19 @@ begin
     return new;
   end if;
 
-  -- Nadie cambia estos datos a mano
+  -- Nadie cambia esta marca a mano
   new.confirmada_en := old.confirmada_en;
-  new.chat_id := old.chat_id;
-  -- Se puede dejar vacío (si se borra la cuenta), no cambiar por otro
+  -- El cliente se puede dejar vacío (si se borra la cuenta), no cambiar por otro
   if new.cliente_id is not null and new.cliente_id is distinct from old.cliente_id then
     new.cliente_id := old.cliente_id;
   end if;
 
-  -- ¿El dueño (o el admin) confirma el pago desde la app?
+  -- ¿El dueño (o el admin) confirma el pago desde la app, con su sesión?
   if new.estado = 'confirmada' and old.estado is distinct from 'confirmada'
      and new.cliente_id is not null and auth.uid() is not null then
     select dueno_id into v_dueno from canchas where id = new.cancha_id;
     if (auth.uid() = v_dueno or es_admin()) and v_dueno <> new.cliente_id then
       new.confirmada_en := now();
-      insert into chats (dueno_id, cliente_id, abierto_hasta, ultima_reserva_id)
-      values (v_dueno, new.cliente_id, new.fin + interval '2 days', new.id)
-      on conflict (dueno_id, cliente_id) do update
-        set abierto_hasta = greatest(chats.abierto_hasta, excluded.abierto_hasta),
-            ultima_reserva_id = excluded.ultima_reserva_id
-      returning id into v_chat;
-      new.chat_id := v_chat;
     end if;
   end if;
   return new;
@@ -134,16 +131,32 @@ drop trigger if exists preparar_chat_reserva on reservas;
 create trigger preparar_chat_reserva before insert or update on reservas
   for each row execute function preparar_chat_reserva();
 
--- Aviso automático dentro del chat cuando se confirma una reserva
-create or replace function avisar_chat_reserva() returns trigger
+-- Abre (o reabre) el chat de la pareja SOLO si:
+--   1) el pago se confirmó desde la app (confirmada_en se acaba de poner), y
+--   2) ya se cobró el S/ 1 de esa reserva al dueño (lo hace cobrar_reserva de la 021).
+-- El nombre empieza con "tras_cobro" para correr DESPUÉS de cobrar_reserva
+-- (Postgres ejecuta los triggers AFTER en orden alfabético).
+create or replace function tras_cobro_abrir_chat() returns trigger
 language plpgsql security definer set search_path = public as $$
 declare
+  v_dueno  uuid;
   v_cancha text;
+  v_chat   uuid;
 begin
-  if new.chat_id is not null and old.chat_id is distinct from new.chat_id then
-    select nombre into v_cancha from canchas where id = new.cancha_id;
+  if new.estado = 'confirmada' and old.estado is distinct from 'confirmada'
+     and new.cliente_id is not null
+     and new.confirmada_en is not null and new.confirmada_en is distinct from old.confirmada_en
+     and reserva_cobrada(new.id) then
+    select dueno_id, nombre into v_dueno, v_cancha from canchas where id = new.cancha_id;
+    insert into chats (dueno_id, cliente_id, abierto_hasta, ultima_reserva_id)
+    values (v_dueno, new.cliente_id, new.fin + interval '2 days', new.id)
+    on conflict (dueno_id, cliente_id) do update
+      set abierto_hasta = greatest(chats.abierto_hasta, excluded.abierto_hasta),
+          ultima_reserva_id = excluded.ultima_reserva_id
+    returning id into v_chat;
+
     insert into mensajes_chat (chat_id, reserva_id, autor, texto)
-    values (new.chat_id, new.id, 'sistema',
+    values (v_chat, new.id, 'sistema',
             'Pago confirmado ✓ Reserva ' || new.codigo || ' en ' || coalesce(v_cancha, 'la cancha') || ', el '
             || to_char(new.inicio at time zone 'America/Lima', 'DD/MM') || ' de '
             || to_char(new.inicio at time zone 'America/Lima', 'HH24:MI') || ' a '
@@ -152,8 +165,9 @@ begin
   return new;
 end $$;
 drop trigger if exists avisar_chat_reserva on reservas;
-create trigger avisar_chat_reserva after update of estado on reservas
-  for each row execute function avisar_chat_reserva();
+drop trigger if exists tras_cobro_abrir_chat on reservas;
+create trigger tras_cobro_abrir_chat after update of estado on reservas
+  for each row execute function tras_cobro_abrir_chat();
 
 -- 3. Datos del chat para quien lo abre ---------------------------------------------
 -- El dueño ve al jugador (nombre, celular, historial). El jugador ve al dueño.
@@ -180,8 +194,10 @@ begin
     select coalesce(r.nombre_cliente, u.nombre), coalesce(u.celular_verificado, u.celular, r.celular_cliente)
       into v_nombre, v_cel
     from usuarios u
-    left join lateral (select x.nombre_cliente, x.celular_cliente from reservas x
-                        where x.chat_id = ch.id order by x.inicio desc limit 1) r on true
+    left join lateral (select x.nombre_cliente, x.celular_cliente
+                        from reservas x join canchas k on k.id = x.cancha_id
+                        where x.cliente_id = ch.cliente_id and k.dueno_id = ch.dueno_id and reserva_cobrada(x.id)
+                        order by x.inicio desc limit 1) r on true
     where u.id = ch.cliente_id;
   else
     select u.nombre, u.celular_verificado into v_nombre, v_cel from usuarios u where u.id = ch.dueno_id;
@@ -211,8 +227,10 @@ returns table (codigo text, estado text, inicio timestamptz, fin timestamptz, mo
                cancha_nombre text, cancha_direccion text)
 language sql stable security definer set search_path = public as $$
   select r.codigo, r.estado, r.inicio, r.fin, r.monto, c.nombre, c.direccion || coalesce(', ' || c.distrito, '')
-  from reservas r join canchas c on c.id = r.cancha_id
-  where r.chat_id = p_chat and es_participante_chat(p_chat)
+  from chats ch
+  join reservas r on r.cliente_id = ch.cliente_id
+  join canchas c on c.id = r.cancha_id and c.dueno_id = ch.dueno_id
+  where ch.id = p_chat and es_participante_chat(p_chat) and reserva_cobrada(r.id)
   order by r.inicio desc
   limit 10;
 $$;
@@ -222,8 +240,11 @@ grant execute on function reservas_del_chat(uuid) to authenticated;
 -- El chat de una reserva (para el enlace en la página de la reserva)
 create or replace function chat_de_reserva(p_codigo text) returns uuid
 language sql stable security definer set search_path = public as $$
-  select r.chat_id from reservas r
-  where r.codigo = upper(trim(p_codigo)) and r.chat_id is not null and es_participante_chat(r.chat_id);
+  select ch.id
+  from reservas r
+  join canchas c on c.id = r.cancha_id
+  join chats ch on ch.dueno_id = c.dueno_id and ch.cliente_id = r.cliente_id
+  where r.codigo = upper(trim(p_codigo)) and reserva_cobrada(r.id) and es_participante_chat(ch.id);
 $$;
 revoke execute on function chat_de_reserva(text) from public, anon;
 grant execute on function chat_de_reserva(text) to authenticated;
@@ -541,8 +562,7 @@ end $$;
 comment on table chats is 'Un chat por pareja dueño (rentador) – jugador (alquilador). Se crea cuando el dueño confirma desde la app el pago de una reserva.';
 comment on column chats.abierto_hasta is 'Se puede escribir hasta 2 días después del último partido confirmado entre los dos.';
 comment on column chats.ultima_reserva_id is 'Última reserva confirmada que abrió o reabrió el chat.';
-comment on column reservas.confirmada_en is 'Cuándo el dueño confirmó el pago desde la app.';
-comment on column reservas.chat_id is 'Chat de la pareja dueño–jugador al que pertenece esta reserva.';
+comment on column reservas.confirmada_en is 'Cuándo el dueño confirmó el pago desde la app (con el cobro del S/ 1 se abre el chat).';
 comment on table mensajes_chat is 'Mensajes de cada chat (autor: cliente, dueno o sistema).';
 comment on column chats.bloqueado is 'true = el admin cerró el chat por un reporte; ya no se puede escribir.';
 comment on table reportes_chat is 'Reportes de chats que llegan al admin (acoso, estafa, spam u otro).';
