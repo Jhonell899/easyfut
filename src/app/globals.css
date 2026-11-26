@@ -1,5 +1,62 @@
 @import "tailwindcss";
 
+/* ==========================================================================
+   Tokens de diseño EasyFut
+   Cada color tiene un nombre y genera clases de Tailwind:
+   bg-marca, text-marca, border-marca, bg-marca-tinte, text-tinta-suave, etc.
+   Si un color cambia, se cambia SOLO aquí.
+   ========================================================================== */
+@theme {
+  /* Morado: botones, enlaces y acciones */
+  --color-marca: #6d28d9;
+  --color-marca-oscuro: #5b21b6;
+  --color-marca-texto: #4c1d95;
+  --color-marca-claro: #c4b5fd;
+  --color-marca-tinte: #ede9fe;
+
+  /* Verde oscuro: portadas, barras y superficies oscuras */
+  --color-cancha: #0a3d2e;
+  --color-cancha-noche: #062a1f;
+
+  /* Verde éxito: pagado, confirmado, verificado */
+  --color-exito: #0f7a55;
+  --color-exito-tinte: #dcf5ea;
+
+  /* Textos */
+  --color-tinta: #1b1b1b;
+  --color-tinta-suave: #5a5a5a;
+  --color-tinta-tenue: #8a968f;
+
+  /* Superficies y bordes */
+  --color-borde: #e3e3e3;
+  --color-superficie: #ffffff;
+  --color-superficie-suave: #f4f4f4;
+  --color-fondo: #f3f1fa;
+
+  /* Movimiento */
+  --animate-aparecer: aparecer 0.25s ease-out both;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 /* Paleta EasyFut
    Verde oscuro  #062A1F / #0A3D2E  → portadas, barras y superficies oscuras
    Morado        #6D28D9 (tinte #EDE9FE, claro #C4B5FD) → botones y acciones
