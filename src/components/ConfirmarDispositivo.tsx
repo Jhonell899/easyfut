@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { esperaParaEnviar, registrarEnvio } from "@/lib/dispositivo";
 import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
+import { cuentaBorrada } from "@/lib/cuentaBorrada";
 import VerificarCodigo from "@/components/VerificarCodigo";
 
 /** Pide el código de correo para usar el panel desde un dispositivo nuevo. */
@@ -22,6 +23,11 @@ export default function ConfirmarDispositivo({ destino }: { destino: string }) {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user?.email) return window.location.assign(`/ingresar?next=${encodeURIComponent(destino)}`);
+      // Cuenta borrada con una sesión vieja: no se manda código, se cierra la sesión
+      if (await cuentaBorrada(supabase, user.id)) {
+        await supabase.auth.signOut({ scope: "local" });
+        return window.location.assign(`/ingresar?next=${encodeURIComponent(destino)}`);
+      }
       setCorreo(user.email);
       // Si se pidió un correo hace poco (por ejemplo, al recargar la página), no se manda otro
       if (esperaParaEnviar(user.email) > 0) return setEnviado(true);

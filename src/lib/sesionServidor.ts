@@ -42,10 +42,12 @@ export async function usuarioActual() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: perfil } = await supabase
+  const { data: perfil, error } = await supabase
     .from("usuarios")
     .select("*") // "*" para no fallar si aún no existe celular_verificado
     .eq("id", user.id)
     .maybeSingle();
+  // Sesión de una cuenta cuyos datos se borraron: cuenta como sin sesión (migración 024)
+  if (!error && !perfil) return null;
   return { supabase, user, perfil: perfil as Perfil | null };
 }

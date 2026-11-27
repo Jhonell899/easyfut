@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
+import { cuentaBorrada, MENSAJE_CUENTA_BORRADA } from "@/lib/cuentaBorrada";
 import CampoTexto from "@/components/CampoTexto";
 import VerificarCodigo from "@/components/VerificarCodigo";
 import { esConfiable, esperaParaEnviar, registrarEnvio } from "@/lib/dispositivo";
@@ -41,7 +42,7 @@ export default function FormularioIngreso({
     setError(null);
     setSinVerificar(false);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: correo.trim(),
       password: clave,
     });
@@ -56,6 +57,12 @@ export default function FormularioIngreso({
         return setSinVerificar(true);
       }
       return setError(traducir(error.message));
+    }
+    // Cuenta cuyos datos se borraron: ya no existe, aunque la contraseña coincida
+    if (await cuentaBorrada(supabase, data.user.id)) {
+      await supabase.auth.signOut({ scope: "local" });
+      setEnviando(false);
+      return setError(MENSAJE_CUENTA_BORRADA);
     }
     // Dispositivo nuevo: la contraseña no basta, se pide un código al correo
     if ((await esConfiable()) === false) {
