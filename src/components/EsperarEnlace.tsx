@@ -291,10 +291,15 @@ export default function EsperarEnlace({
       <ol className="flex flex-col gap-1.5 rounded-xl bg-superficie-suave p-3 text-left text-sm text-tinta">
         <li>1. Abre el correo de Supabase Auth.</li>
         <li>
-          2. Toca el enlace <strong>“{ENLACE[tipo]}”</strong>. Puedes abrirlo aquí o en tu celular.
+          2. Toca el enlace <strong>“{ENLACE[tipo]}”</strong>.{" "}
+          {/* Sin secreto (sin la migración 025 o entrando sin contraseña) solo sirve en este navegador */}
+          {secreto ? "Puedes abrirlo aquí o en tu celular." : "Ábrelo en este mismo navegador."}
         </li>
         {tipo === "recuperacion" && <li>3. Ahí mismo crea tu contraseña nueva.</li>}
-        <li>{tipo === "recuperacion" ? "4" : "3"}. Listo: esta pantalla seguirá sola. El enlace dura 10 minutos.</li>
+        <li>
+          {tipo === "recuperacion" ? "4" : "3"}. {secreto ? "Listo: esta pantalla seguirá sola." : "Listo: entrarás directo."} El
+          enlace dura 10 minutos.
+        </li>
       </ol>
 
       <div className="flex items-center justify-center gap-3 rounded-xl border border-borde p-3 text-sm" role="status" aria-live="polite">
