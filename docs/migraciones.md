@@ -30,7 +30,7 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 | — | `deshacer/deshacer_022_recargas_automaticas.sql` | La 022 (recargas que se confirman solas) se ejecutó por error y se deshace con este script. La 022 está guardada en la rama `mejora/recargas-automaticas` para probarla | ⏳ Pendiente |
 | 023 | `023_chat_reservas.sql` | Chat dueño–jugador: uno por pareja con su propio id; se abre solo cuando el dueño confirma el pago desde la app; el cliente de una reserva solo lo pone la app; se puede reportar y el admin lee solo los chats reportados y puede cerrarlos. Además, para reservar la cuenta debe tener un celular vinculado y la reserva usa ese número. Va en una transacción | ✅ Ejecutada |
 | 024 | `024_cuentas_borradas.sql` | Una cuenta borrada ya no puede entrar: borrar a alguien de `usuarios` borra también su cuenta de acceso (`auth.users`), las cuentas que ya no tienen datos se borran al intentar entrar (su correo queda libre), y el login puede saber si un correo tiene cuenta para decir "No tienes cuenta, ¿quieres crear una?" (máximo 20 consultas cada 10 minutos por conexión). Va en una transacción | ✅ Ejecutada |
-| 025 | `025_aprobar_con_enlace.sql` | Confirmar con un toque en el enlace del correo **desde cualquier dispositivo**: al crear cuenta, la pantalla donde te registraste entra sola cuando tocas el enlace (aunque sea en el celular); al entrar desde un dispositivo nuevo, el enlace pregunta "¿Eres tú?" con el navegador e IP de quien quiere entrar, y si apruebas, esa pantalla entra sola. Tabla `aprobaciones_ingreso` (solo guarda la huella del secreto). Va en una transacción | ⏳ Pendiente |
+| 025 | `025_aprobar_con_enlace.sql` | Un toque en el enlace del correo **desde cualquier dispositivo**, siempre al correo registrado y con 10 minutos de vida: **crear cuenta** (la pantalla donde te registraste entra sola), **dispositivo nuevo** (el enlace pregunta "¿Eres tú?" con el navegador e IP; si apruebas, esa pantalla entra sola) y **recuperar la cuenta** (el enlace pide la contraseña nueva; la pantalla que lo pidió entra con ella; "No pedí esto" lo anula). Tabla `aprobaciones_ingreso` (solo guarda la huella del secreto). Va en una transacción | ⏳ Pendiente |
 
 > Desde la 019, las migraciones 001–018 muestran los **nombres antiguos**. Los nombres actuales están en la 019 y en el diagrama de la base de datos.
 
@@ -38,8 +38,11 @@ Cuando ejecutes una, cambia su estado aquí (⏳ → ✅) y haz commit.
 
 Supabase solo deja editar las plantillas **después de configurar un correo propio (SMTP)**.
 Mientras tanto la app funciona con el **enlace** que manda Supabase ("Confirm email address" al crear
-cuenta, "Log In" al entrar desde un dispositivo nuevo). Desde la 025 el enlace se puede abrir en
-**cualquier dispositivo**: la pantalla que lo pidió sigue sola.
+cuenta, "Log In" al entrar desde un dispositivo nuevo, "Reset Password" al recuperar la cuenta). Desde
+la 025 el enlace se puede abrir en **cualquier dispositivo**: la pantalla que lo pidió sigue sola.
+
+Para que el enlace de Supabase también venza a los 10 minutos: *Authentication → Sign In / Providers →
+Email → Email OTP Expiration* = `600` (segundos).
 
 > El correo de Supabase tiene un límite bajo de envíos por hora para todo el proyecto. Para el público
 > conviene configurar un SMTP propio (Authentication → Emails → SMTP Settings).

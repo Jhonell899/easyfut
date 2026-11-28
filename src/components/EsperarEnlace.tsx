@@ -3,21 +3,31 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { confiarDispositivo, esConfiable, esperaParaEnviar, registrarEnvio } from "@/lib/dispositivo";
-import { borrarEspera, estadoAprobacion } from "@/lib/aprobacion";
+import { borrarEspera, estadoAprobacion, type TipoEnlace } from "@/lib/aprobacion";
 import { Aviso, Boton } from "@/components/ui";
+import CampoTexto from "@/components/CampoTexto";
 
-const TREINTA_MIN = 30 * 60_000;
+// Cada enlace dura 10 minutos (migración 025)
+const DIEZ_MIN = 10 * 60_000;
 
-type Final = "rechazada" | "vencida" | "usada" | "entrar_a_mano";
+type Final = "rechazada" | "vencida" | "usada" | "entrar_a_mano" | "nueva_clave";
+
+const ENLACE: Record<TipoEnlace, string> = {
+  registro: "Confirm email address",
+  dispositivo: "Log In",
+  recuperacion: "Reset Password",
+};
 
 /**
- * "Revisa tu correo": espera a que la persona toque el enlace del correo, en este
- * dispositivo o en otro (por ejemplo, el celular), y entonces continúa sola.
+ * "Revisa tu correo": espera a que la persona toque el enlace del correo (crear cuenta,
+ * dispositivo nuevo o recuperar la cuenta), en este dispositivo o en otro (por ejemplo,
+ * el celular), y entonces continúa sola.
  *
  * · En este navegador: otra pestaña abre el enlace y esta pantalla lo nota.
  * · En otro dispositivo: pregunta a la base cada pocos segundos con su `secreto`
  *   (migración 025). Al quedar aprobada, entra con la `clave` (si se dio) y deja
- *   este dispositivo de confianza.
+ *   este dispositivo de confianza. Al recuperar la cuenta, pide la contraseña nueva
+ *   que se creó con el enlace y entra con ella, sin otro correo.
  */
 export default function EsperarEnlace({
   correo,
@@ -32,8 +42,8 @@ export default function EsperarEnlace({
 }: {
   correo: string;
   destino: string;
-  /** registro = crear cuenta; dispositivo = entrar desde un dispositivo nuevo */
-  tipo: "registro" | "dispositivo";
+  /** registro = crear cuenta; dispositivo = entrar desde un dispositivo nuevo; recuperacion = olvidé mi contraseña */
+  tipo: TipoEnlace;
   /** Secreto de la solicitud. Sin él, solo funciona abriendo el enlace en este navegador. */
   secreto?: string | null;
   /** Contraseña escrita en esta pantalla (solo en memoria), para entrar al aprobarse. */
@@ -51,6 +61,7 @@ export default function EsperarEnlace({
   const [aviso, setAviso] = useState<string | null>(null);
   const [espera, setEspera] = useState(0);
   const [reenviando, setReenviando] = useState(false);
+  const [nuevaClave, setNuevaClave] = useState("");
   const ocupado = useRef(false);
   const terminado = useRef(false);
   const vueltasConSesion = useRef(0);
@@ -70,6 +81,8 @@ export default function EsperarEnlace({
   const continuar = useCallback(async () => {
     const supabase = supabaseNavegador();
     if (!supabase || ocupado.current || terminado.current) return;
+    // Recuperar la cuenta: la contraseña nueva se creó con el enlace; se pide aquí
+    if (tipo === "recuperacion" && !clave) return terminar("nueva_clave");
     ocupado.current = true;
     setEntrando(true);
     if (clave) {
@@ -84,7 +97,7 @@ export default function EsperarEnlace({
     }
     if (secreto) await confiarDispositivo(secreto);
     irAdentro();
-  }, [clave, correo, secreto, irAdentro, terminar]);
+  }, [tipo, clave, correo, secreto, irAdentro, terminar]);
 
   const revisar = useCallback(async () => {
     const supabase = supabaseNavegador();
@@ -108,7 +121,7 @@ export default function EsperarEnlace({
     if (estado === "vencida" || estado === "no_existe") return terminar("vencida");
   }, [correo, clave, secreto, continuar, irAdentro, terminar]);
 
-  // Revisa cada 3 s (15 s si la pestaña está oculta) durante 30 minutos,
+  // Revisa cada 3 s (15 s si la pestaña está oculta) durante 10 minutos,
   // y al volver a esta pestaña o cuando otra pestaña inicia sesión.
   useEffect(() => {
     if (final || pausado) return;
@@ -121,7 +134,7 @@ export default function EsperarEnlace({
       if (!vivo) return;
       await revisar();
       if (!vivo || terminado.current) return;
-      if (Date.now() - inicio > TREINTA_MIN) return setPausado(true);
+      if (Date.now() - inicio > DIEZ_MIN) return setPausado(true);
       temporizador = setTimeout(ciclo, document.hidden ? 15_000 : 3_000);
     };
     temporizador = setTimeout(ciclo, 2_000);
@@ -169,19 +182,65 @@ export default function EsperarEnlace({
     setAviso("Te enviamos un correo nuevo. Usa el más reciente.");
   }
 
-  const nombreEnlace = tipo === "registro" ? "Confirm email address" : "Log In";
+  // Recuperar la cuenta: entra aquí con la contraseña nueva y este dispositivo queda de confianza
+  async function entrarConNueva(e: React.FormEvent) {
+    e.preventDefault();
+    const supabase = supabaseNavegador();
+    if (!supabase || !nuevaClave) return;
+    setEntrando(true);
+    setError(null);
+    const { error } = await supabase.auth.signInWithPassword({ email: correo, password: nuevaClave });
+    if (error) {
+      setEntrando(false);
+      return setError("Esa no es la contraseña nueva que creaste. Revísala e inténtalo otra vez.");
+    }
+    if (secreto) await confiarDispositivo(secreto);
+    irAdentro();
+  }
+
+  if (final === "nueva_clave") {
+    return (
+      <form onSubmit={entrarConNueva} className="flex flex-col gap-4">
+        <Aviso tono="exito" titulo="Tu contraseña se cambió">
+          Escribe la contraseña nueva que creaste para entrar aquí.
+        </Aviso>
+        <CampoTexto
+          etiqueta="Contraseña nueva"
+          type="password"
+          autoComplete="current-password"
+          value={nuevaClave}
+          onChange={(e) => setNuevaClave(e.target.value)}
+          required
+          autoFocus
+        />
+        {error && <Aviso tono="error">{error}</Aviso>}
+        <Boton type="submit" ancho cargando={entrando}>
+          Entrar
+        </Boton>
+      </form>
+    );
+  }
 
   if (final) {
-    const textos: Record<Final, { tono: "error" | "aviso" | "info"; titulo: string; detalle: string }> = {
+    const otraVez =
+      tipo === "registro"
+        ? "Regístrate de nuevo para recibir otro."
+        : tipo === "recuperacion"
+          ? "Pide la recuperación de nuevo para recibir otro."
+          : "Vuelve a ingresar para recibir otro.";
+    const textos: Record<Exclude<Final, "nueva_clave">, { tono: "error" | "aviso" | "info"; titulo: string; detalle: string }> = {
       rechazada: {
         tono: "error",
-        titulo: "Este ingreso fue rechazado",
-        detalle: "Desde el enlace del correo se respondió “No fui yo”, así que este dispositivo no puede entrar.",
+        titulo: tipo === "recuperacion" ? "Se anuló la recuperación" : "Este ingreso fue rechazado",
+        detalle:
+          tipo === "recuperacion"
+            ? "Desde el enlace del correo se respondió “No pedí esto”. La contraseña no cambió."
+            : "Desde el enlace del correo se respondió “No fui yo”, así que este dispositivo no puede entrar.",
       },
       vencida: {
         tono: "aviso",
         titulo: "Este enlace ya no sirve",
-        detalle: "Venció o pediste uno más nuevo. Vuelve a ingresar para recibir otro.",
+        detalle: `Venció (dura 10 minutos) o pediste uno más nuevo. ${otraVez}`,
       },
       usada: {
         tono: "info",
@@ -202,7 +261,7 @@ export default function EsperarEnlace({
         </Aviso>
         {onVolver && final !== "entrar_a_mano" ? (
           <Boton ancho onClick={onVolver}>
-            Volver a ingresar
+            {tipo === "registro" ? "Volver a registrarme" : tipo === "recuperacion" ? "Pedir otro enlace" : "Volver a ingresar"}
           </Boton>
         ) : (
           <Boton ancho href={`/ingresar?next=${encodeURIComponent(destino)}`}>
@@ -232,9 +291,10 @@ export default function EsperarEnlace({
       <ol className="flex flex-col gap-1.5 rounded-xl bg-superficie-suave p-3 text-left text-sm text-tinta">
         <li>1. Abre el correo de Supabase Auth.</li>
         <li>
-          2. Toca el enlace <strong>“{nombreEnlace}”</strong>. Puedes abrirlo aquí o en tu celular.
+          2. Toca el enlace <strong>“{ENLACE[tipo]}”</strong>. Puedes abrirlo aquí o en tu celular.
         </li>
-        <li>3. Listo: esta pantalla seguirá sola.</li>
+        {tipo === "recuperacion" && <li>3. Ahí mismo crea tu contraseña nueva.</li>}
+        <li>{tipo === "recuperacion" ? "4" : "3"}. Listo: esta pantalla seguirá sola. El enlace dura 10 minutos.</li>
       </ol>
 
       <div className="flex items-center justify-center gap-3 rounded-xl border border-borde p-3 text-sm" role="status" aria-live="polite">
@@ -274,7 +334,7 @@ export default function EsperarEnlace({
         </button>
         {onVolver && (
           <button type="button" onClick={onVolver} className="text-tinta-suave underline-offset-2 hover:underline">
-            {tipo === "registro" ? "Usar otro correo" : "Volver"}
+            {tipo === "dispositivo" ? "Volver" : "Usar otro correo"}
           </button>
         )}
       </div>

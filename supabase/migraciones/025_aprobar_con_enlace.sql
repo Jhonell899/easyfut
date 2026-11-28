@@ -1,10 +1,11 @@
 -- =============================================================================
--- 025 · Confirmar con un toque en el enlace del correo, desde cualquier dispositivo
+-- 025 · Un toque en el enlace del correo: crear cuenta, entrar desde un dispositivo
+--       nuevo y recuperar la cuenta, desde cualquier dispositivo
 --
 -- Con el correo de Supabase (sin SMTP propio) el correo trae solo un enlace, sin
--- código. Esta migración hace que ese enlace funcione aunque se abra en OTRO
--- dispositivo (por ejemplo, te registras en la computadora y abres el correo en
--- el celular):
+-- código. El enlace llega SOLO al correo registrado de la cuenta y funciona aunque
+-- se abra en OTRO dispositivo (por ejemplo, pides en la computadora y abres el
+-- correo en el celular):
 --
 -- · Crear cuenta: la pantalla donde te registraste espera sola. Cuando tocas el
 --   enlace (donde sea), detecta que el correo quedó confirmado, entra y deja ese
@@ -13,19 +14,23 @@
 --   datos de ese dispositivo (navegador e IP). El enlace del correo pregunta
 --   "¿Eres tú?" y muestra esos datos. Si apruebas, la pantalla que esperaba entra
 --   sola; si dices "No fui yo", ese ingreso queda bloqueado.
+-- · Recuperar la cuenta (olvidé mi contraseña): el enlace abre "Crea tu nueva
+--   contraseña". La pantalla que lo pidió se entera sola y entra con la contraseña
+--   nueva, sin otro correo. "No pedí esto" lo anula y la contraseña no cambia.
 -- · La pantalla que espera guarda un secreto de un solo uso; en la base solo se
 --   guarda su huella. La solicitud se aprueba solo con la sesión que da el enlace
 --   del correo (prueba de que eres el dueño del correo).
--- · Cada solicitud vence: 30 minutos (dispositivo nuevo) o 24 horas (crear cuenta).
---   Pedir una nueva anula las anteriores que seguían pendientes.
+-- · Cada solicitud vence a los 10 minutos. Pedir una nueva anula las anteriores
+--   que seguían pendientes.
 --
 -- Tabla nueva: aprobaciones_ingreso.
--- Funciones nuevas: estado_de_aprobacion, emitir_token_dispositivo (interna),
---   pedir_aprobacion_ingreso, estado_aprobacion, ver_aprobacion, aprobar_ingreso,
---   confiar_dispositivo_aprobado.
+-- Funciones nuevas: agente_solicitud, estado_de_aprobacion, emitir_token_dispositivo
+--   (interna), pedir_aprobacion_ingreso, pedir_recuperacion, estado_aprobacion,
+--   ver_aprobacion, aprobar_ingreso, confiar_dispositivo_aprobado.
 -- Cambian: handle_new_user (guarda la huella del registro), confiar_dispositivo
---   (misma regla, ahora usa emitir_token_dispositivo).
--- Requiere la 018 y la 019. Todo va en una sola transacción: si algo falla, no cambia nada.
+--   (misma regla, ahora usa emitir_token_dispositivo), sesion_con_codigo_reciente
+--   (también cuenta el enlace de recuperación).
+-- Requiere la 018, la 019 y la 024. Todo va en una sola transacción: si algo falla, no cambia nada.
 -- =============================================================================
 
 begin;
@@ -34,7 +39,7 @@ begin;
 create table if not exists aprobaciones_ingreso (
   id            uuid primary key default gen_random_uuid(),
   usuario_id    uuid not null references auth.users(id) on delete cascade,
-  motivo        text not null check (motivo in ('registro', 'dispositivo')),
+  motivo        text not null check (motivo in ('registro', 'dispositivo', 'recuperacion')),
   secreto_hash  text not null unique,
   ip            text,
   agente        text,
@@ -49,9 +54,9 @@ create index if not exists aprobaciones_ingreso_usuario_idx on aprobaciones_ingr
 alter table aprobaciones_ingreso enable row level security;
 
 comment on table aprobaciones_ingreso is
-  'Ingresos que esperan que el dueño del correo toque el enlace (crear cuenta o entrar desde un dispositivo nuevo).';
+  'Lo que espera que el dueño del correo toque el enlace: crear cuenta, entrar desde un dispositivo nuevo o recuperar la cuenta.';
 comment on column aprobaciones_ingreso.secreto_hash is 'Huella del secreto que guarda la pantalla que espera (nunca el secreto).';
-comment on column aprobaciones_ingreso.motivo is 'registro = crear cuenta; dispositivo = entrar desde un dispositivo nuevo.';
+comment on column aprobaciones_ingreso.motivo is 'registro = crear cuenta; dispositivo = entrar desde un dispositivo nuevo; recuperacion = olvidé mi contraseña.';
 
 -- Navegador de quien llama (Supabase lo envía en las cabeceras)
 create or replace function agente_solicitud() returns text
@@ -95,13 +100,25 @@ begin
   if v_huella ~ '^[0-9a-f]{64}$' then
     begin
       insert into aprobaciones_ingreso (usuario_id, motivo, secreto_hash, vence)
-      values (new.id, 'registro', v_huella, now() + interval '24 hours');
+      values (new.id, 'registro', v_huella, now() + interval '10 minutes');
     exception when others then
       null; -- sin solicitud, la pantalla que espera pide entrar con la contraseña
     end;
   end if;
   return new;
 end $$;
+
+-- ¿La sesión empezó con un enlace del correo hace menos de 10 minutos? (antes en la 018)
+-- Ahora también cuenta el enlace de recuperar la cuenta: también prueba que eres el dueño del correo.
+create or replace function sesion_con_codigo_reciente() returns boolean
+language sql stable as $$
+  select exists (
+    select 1
+    from jsonb_array_elements(coalesce(auth.jwt() -> 'amr', '[]'::jsonb)) a
+    where a ->> 'method' in ('otp', 'magiclink', 'email/signup', 'email', 'recovery')
+      and (a ->> 'timestamp')::bigint > extract(epoch from now()) - 600
+  );
+$$;
 
 -- 3. Dar el token de dispositivo de confianza (interna) ----------------------------
 --    Mismo cuerpo que confiar_dispositivo de la 019, sin la revisión de la sesión.
@@ -173,13 +190,61 @@ begin
 
   insert into aprobaciones_ingreso (usuario_id, motivo, secreto_hash, ip, agente, vence)
   values (auth.uid(), 'dispositivo', huella_token(v_secreto), ip_solicitud(), agente_solicitud(),
-          now() + interval '30 minutes')
+          now() + interval '10 minutes')
   returning id into v_id;
 
   return query select v_id, v_secreto;
 end $$;
 revoke execute on function pedir_aprobacion_ingreso() from public, anon;
 grant execute on function pedir_aprobacion_ingreso() to authenticated;
+
+-- 4b. Recuperar la cuenta (olvidé mi contraseña): sin sesión --------------------------
+--     La pantalla manda la huella de su secreto. Devuelve la solicitud, o null si el
+--     correo no tiene cuenta. Comparte el límite por conexión de correo_tiene_cuenta (024).
+--     Errores: datos_invalidos, demasiados_intentos
+create or replace function pedir_recuperacion(p_correo text, p_huella text)
+returns uuid
+language plpgsql security definer set search_path = public, auth as $$
+declare
+  v_ip      text := coalesce(left(ip_solicitud(), 64), 'desconocida');
+  v_usuario uuid;
+  v_id      uuid;
+begin
+  if coalesce(p_huella, '') !~ '^[0-9a-f]{64}$' then raise exception 'datos_invalidos'; end if;
+
+  delete from consultas_correo where creado < now() - interval '1 day';
+  if (select count(*) from consultas_correo
+       where ip = v_ip and creado > now() - interval '10 minutes') >= 20 then
+    raise exception 'demasiados_intentos';
+  end if;
+  insert into consultas_correo (ip) values (v_ip);
+
+  select u.id into v_usuario
+    from auth.users u
+    join usuarios p on p.id = u.id
+   where lower(u.email) = lower(trim(coalesce(p_correo, '')))
+     and u.email_confirmed_at is not null;
+  if v_usuario is null then return null; end if;
+
+  if (select count(*) from aprobaciones_ingreso
+       where usuario_id = v_usuario and motivo = 'recuperacion'
+         and creada > now() - interval '1 hour') >= 5 then
+    raise exception 'demasiados_intentos';
+  end if;
+
+  -- Una sola recuperación pendiente a la vez
+  update aprobaciones_ingreso
+     set vence = least(vence, now())
+   where usuario_id = v_usuario and motivo = 'recuperacion'
+     and aprobada_en is null and rechazada_en is null and usada_en is null;
+
+  insert into aprobaciones_ingreso (usuario_id, motivo, secreto_hash, ip, agente, vence)
+  values (v_usuario, 'recuperacion', p_huella, ip_solicitud(), agente_solicitud(), now() + interval '10 minutes')
+  returning id into v_id;
+  return v_id;
+end $$;
+revoke execute on function pedir_recuperacion(text, text) from public;
+grant execute on function pedir_recuperacion(text, text) to anon, authenticated;
 
 -- 5. La pantalla que espera pregunta cómo va (con su secreto) -----------------------
 create or replace function estado_aprobacion(p_secreto text)
@@ -224,7 +289,7 @@ begin
   if not sesion_con_codigo_reciente() then raise exception 'requiere_codigo'; end if;
 
   select * into a from aprobaciones_ingreso
-   where id = p_solicitud and usuario_id = auth.uid() and motivo = 'dispositivo'
+   where id = p_solicitud and usuario_id = auth.uid() and motivo in ('dispositivo', 'recuperacion')
    for update;
   if not found then raise exception 'no_existe'; end if;
   if estado_de_aprobacion(a) <> 'pendiente' then return estado_de_aprobacion(a); end if;
@@ -267,13 +332,15 @@ revoke execute on function confiar_dispositivo_aprobado(text, text, text) from p
 grant execute on function confiar_dispositivo_aprobado(text, text, text) to authenticated;
 
 comment on function pedir_aprobacion_ingreso() is
-  'Dispositivo nuevo: crea la solicitud de ingreso (vence en 30 min) y devuelve su secreto una sola vez.';
+  'Dispositivo nuevo: crea la solicitud de ingreso (vence en 10 min) y devuelve su secreto una sola vez.';
+comment on function pedir_recuperacion(text, text) is
+  'Olvidé mi contraseña: crea la solicitud de recuperación (vence en 10 min). null si el correo no tiene cuenta.';
 comment on function estado_aprobacion(text) is
   'Pantalla que espera: pendiente, aprobada, usada, rechazada, vencida o no_existe.';
 comment on function ver_aprobacion(uuid) is
   'Página del enlace: navegador, IP y estado de la solicitud (solo el dueño de la cuenta).';
 comment on function aprobar_ingreso(uuid, boolean, boolean) is
-  'Página del enlace: aprueba o rechaza la solicitud. Exige la sesión del enlace del correo.';
+  'Página del enlace: aprueba o rechaza la solicitud (dispositivo nuevo o recuperación). Exige la sesión del enlace del correo.';
 comment on function confiar_dispositivo_aprobado(text, text, text) is
   'Pantalla que esperaba: con una solicitud aprobada, este dispositivo queda de confianza (una sola vez).';
 

@@ -25,11 +25,15 @@ export function clienteCorreo(): SupabaseClient | null {
 /**
  * Dirección a la que vuelve el enlace del correo.
  * `solicitud`: ingreso desde un dispositivo nuevo que espera aprobación (migración 025).
- * `registro`: confirmar una cuenta nueva.
+ * `registro`: confirmar una cuenta nueva. `recuperar`: crear una contraseña nueva.
  */
-export function enlaceDeVuelta(destino: string, extra: { solicitud?: string | null; registro?: boolean } = {}): string {
+export function enlaceDeVuelta(
+  destino: string,
+  extra: { solicitud?: string | null; registro?: boolean; recuperar?: boolean } = {}
+): string {
   const params = new URLSearchParams({ next: destino });
   if (extra.solicitud) params.set("solicitud", extra.solicitud);
   if (extra.registro) params.set("registro", "1");
+  if (extra.recuperar) params.set("recuperar", "1");
   return `${window.location.origin}/auth/confirmar?${params.toString()}`;
 }

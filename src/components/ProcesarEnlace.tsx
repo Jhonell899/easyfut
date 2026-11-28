@@ -6,6 +6,7 @@ import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { confiarDispositivo } from "@/lib/dispositivo";
 import { borrarEspera, describirNavegador, leerEspera, type EstadoAprobacion } from "@/lib/aprobacion";
 import { Aviso, Boton } from "@/components/ui";
+import CampoTexto from "@/components/CampoTexto";
 
 const ERRORES: Record<string, string> = {
   otp_expired: "Este enlace ya venció o ya se usó. Pide uno nuevo desde la app.",
@@ -15,7 +16,14 @@ const ERRORES: Record<string, string> = {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-type Solicitud = { id: string; ip: string | null; agente: string | null; creada: string; estado: EstadoAprobacion };
+type Solicitud = {
+  id: string;
+  motivo: string;
+  ip: string | null;
+  agente: string | null;
+  creada: string;
+  estado: EstadoAprobacion;
+};
 
 type Pantalla =
   | { tipo: "cargando" }
@@ -25,11 +33,46 @@ type Pantalla =
   | { tipo: "aprobada" }
   | { tipo: "rechazada" }
   /** Cuenta confirmada desde otro dispositivo */
-  | { tipo: "registro" };
+  | { tipo: "registro" }
+  /** Recuperar la cuenta: crear la contraseña nueva */
+  | { tipo: "nuevaClave"; solicitud: Solicitud | null; mismo: boolean }
+  | { tipo: "claveCambiada" }
+  | { tipo: "recuperacionAnulada" }
+  /** La solicitud ya no sirve (venció, se anuló o ya se usó): no se entra */
+  | { tipo: "inactiva"; mensaje: string; volverA: string; textoVolver: string };
 
 function haceCuanto(fecha: string): string {
   const min = Math.max(0, Math.round((Date.now() - new Date(fecha).getTime()) / 60_000));
   return min < 1 ? "hace un momento" : min === 1 ? "hace 1 minuto" : `hace ${min} minutos`;
+}
+
+function traducirClave(msg: string): string {
+  if (/should be different|same.*password|different from the old/i.test(msg)) return "Usa una contraseña distinta a la anterior.";
+  if (/pwned|leaked|compromised|breach/i.test(msg)) return "Esa contraseña apareció en filtraciones de datos. Elige otra.";
+  if (/session|jwt|expired|reauth/i.test(msg)) return "El enlace venció. Pide otro desde la app.";
+  if (/weak|at least|characters|password/i.test(msg)) return "La contraseña debe tener al menos 8 caracteres.";
+  return "No pudimos guardar la contraseña. Inténtalo de nuevo.";
+}
+
+const INACTIVA: Record<string, string> = {
+  vencida: "Este enlace venció (dura 10 minutos) o se pidió uno más nuevo.",
+  rechazada: "Esta solicitud ya se anuló.",
+  usada: "Este enlace ya se usó.",
+  aprobada: "Este enlace ya se usó.",
+};
+
+/** Datos del dispositivo que pidió el enlace. */
+function DatosSolicitud({ s }: { s: Solicitud }) {
+  return (
+    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-xl bg-superficie-suave p-4 text-sm">
+      <dt className="text-tinta-suave">Dispositivo</dt>
+      <dd className="font-bold text-tinta">{describirNavegador(s.agente)}</dd>
+      <dt className="text-tinta-suave">Conexión (IP)</dt>
+      <dd className="font-bold text-tinta">{s.ip ?? "Desconocida"}</dd>
+      <dt className="text-tinta-suave">Cuándo</dt>
+      <dd className="font-bold text-tinta">{haceCuanto(s.creada)}</dd>
+    </dl>
+  );
 }
 
 /**
@@ -38,12 +81,16 @@ function haceCuanto(fecha: string): string {
  * · Abierto en el mismo navegador que lo pidió: entra directo y este dispositivo queda de confianza.
  * · Abierto en otro dispositivo (por ejemplo, el celular):
  *   – crear cuenta: avisa que quedó confirmada; la otra pantalla entra sola;
- *   – dispositivo nuevo: pregunta "¿Eres tú?" con el navegador e IP de quien pidió entrar (migración 025).
+ *   – dispositivo nuevo: pregunta "¿Eres tú?" con el navegador e IP de quien pidió entrar.
+ * · Recuperar la cuenta: pide la contraseña nueva; la otra pantalla entra con ella.
+ * Cada enlace dura 10 minutos (migración 025).
  */
 export default function ProcesarEnlace() {
   const [pantalla, setPantalla] = useState<Pantalla>({ tipo: "cargando" });
   const [ocupado, setOcupado] = useState(false);
   const [destino, setDestino] = useState("/");
+  const [nuevaClave, setNuevaClave] = useState("");
+  const [errorClave, setErrorClave] = useState<string | null>(null);
   const hecho = useRef(false);
 
   const error = (mensaje: string) => setPantalla({ tipo: "error", mensaje });
@@ -67,6 +114,7 @@ export default function ProcesarEnlace() {
     setDestino(dest);
     const solicitud = query.get("solicitud");
     const esRegistro = query.get("registro") === "1";
+    const esRecuperacion = query.get("recuperar") === "1" || hash.get("type") === "recovery";
 
     const codigoError = hash.get("error_code") ?? query.get("error_code") ?? hash.get("error") ?? query.get("error");
     if (codigoError) {
@@ -98,17 +146,37 @@ export default function ProcesarEnlace() {
       const mismoNavegador =
         !!espera && espera.correo === correoSesion && (!solicitud || espera.solicitud === solicitud);
 
+      // Datos de la solicitud (solo el dueño de la cuenta puede verlos)
+      let fila: Solicitud | null = null;
+      if (solicitud && UUID.test(solicitud)) {
+        const { data: filas } = await supabase.rpc("ver_aprobacion", { p_solicitud: solicitud });
+        const f = (Array.isArray(filas) ? filas[0] : null) as Omit<Solicitud, "id"> | null;
+        if (f) fila = { id: solicitud, ...f };
+      }
+
+      // Solicitud que ya no sirve (pasaron los 10 minutos, se anuló o ya se usó): no se entra
+      if (fila && fila.estado !== "pendiente" && !(fila.estado === "aprobada" && fila.motivo === "dispositivo")) {
+        await supabase.auth.signOut({ scope: "local" });
+        const recuperar = fila.motivo === "recuperacion";
+        return setPantalla({
+          tipo: "inactiva",
+          mensaje: INACTIVA[fila.estado] ?? "Este enlace ya no está activo.",
+          volverA: recuperar ? `/recuperar?next=${encodeURIComponent(dest)}` : `/ingresar?next=${encodeURIComponent(dest)}`,
+          textoVolver: recuperar ? "Pedir otro enlace" : "Ir a Ingresar",
+        });
+      }
+
+      if (esRecuperacion) return setPantalla({ tipo: "nuevaClave", solicitud: fila, mismo: mismoNavegador });
+
       if (solicitud && UUID.test(solicitud)) {
         if (mismoNavegador) {
           // Es el mismo dispositivo que pidió entrar: se aprueba y entra
           await supabase.rpc("aprobar_ingreso", { p_solicitud: solicitud, p_aprobar: true, p_este_dispositivo: true });
           return entrarAqui(dest);
         }
-        const { data: filas, error: errVer } = await supabase.rpc("ver_aprobacion", { p_solicitud: solicitud });
-        const fila = (Array.isArray(filas) ? filas[0] : null) as Omit<Solicitud, "id"> | null;
         // Sin la migración 025 o solicitud de otra cuenta: se entra como antes
-        if (errVer || !fila) return entrarAqui(dest);
-        return setPantalla({ tipo: "pregunta", solicitud: { id: solicitud, ...fila } });
+        if (!fila) return entrarAqui(dest);
+        return setPantalla({ tipo: "pregunta", solicitud: fila });
       }
 
       if (esRegistro && !mismoNavegador) return setPantalla({ tipo: "registro" });
@@ -139,6 +207,39 @@ export default function ProcesarEnlace() {
     setPantalla({ tipo: "pregunta", solicitud: { ...solicitud, estado } });
   }
 
+  // Recuperar la cuenta: guarda la contraseña nueva y avisa a la pantalla que espera
+  async function guardarClave(e: React.FormEvent, p: Extract<Pantalla, { tipo: "nuevaClave" }>) {
+    e.preventDefault();
+    const supabase = supabaseNavegador();
+    if (!supabase) return;
+    if (nuevaClave.length < 8) return setErrorClave("La contraseña debe tener al menos 8 caracteres.");
+    setOcupado(true);
+    setErrorClave(null);
+    const { error: errClave } = await supabase.auth.updateUser({ password: nuevaClave });
+    if (errClave) {
+      setOcupado(false);
+      return setErrorClave(traducirClave(errClave.message));
+    }
+    // Se cierran las sesiones abiertas en otros dispositivos
+    await supabase.auth.signOut({ scope: "others" });
+    if (p.solicitud) {
+      await supabase.rpc("aprobar_ingreso", { p_solicitud: p.solicitud.id, p_aprobar: true, p_este_dispositivo: p.mismo });
+    }
+    if (p.mismo || !p.solicitud) return entrarAqui();
+    setOcupado(false);
+    setPantalla({ tipo: "claveCambiada" });
+  }
+
+  async function noPediEsto(s: Solicitud) {
+    const supabase = supabaseNavegador();
+    if (!supabase) return;
+    setOcupado(true);
+    await supabase.rpc("aprobar_ingreso", { p_solicitud: s.id, p_aprobar: false });
+    await supabase.auth.signOut({ scope: "local" });
+    setOcupado(false);
+    setPantalla({ tipo: "recuperacionAnulada" });
+  }
+
   const seguirAqui = (
     <Boton variante="secundario" ancho cargando={ocupado} onClick={() => entrarAqui()}>
       Seguir en este dispositivo
@@ -159,6 +260,19 @@ export default function ProcesarEnlace() {
         <Link href="/ingresar" className="boton-morado w-full rounded-xl py-3 font-bold text-white">
           Ir a Ingresar
         </Link>
+      </div>
+    );
+  }
+
+  if (pantalla.tipo === "inactiva") {
+    return (
+      <div className="flex flex-col gap-4">
+        <Aviso tono="aviso" titulo="Este enlace ya no sirve">
+          {pantalla.mensaje} Pide uno nuevo desde la app.
+        </Aviso>
+        <Boton ancho href={pantalla.volverA}>
+          {pantalla.textoVolver}
+        </Boton>
       </div>
     );
   }
@@ -190,10 +304,72 @@ export default function ProcesarEnlace() {
     return (
       <div className="flex flex-col gap-4">
         <Aviso tono="error" titulo="Bloqueamos ese ingreso">
-          Nadie entró. Ojo: alguien conoce tu contraseña. No la uses en otros sitios.
+          Nadie entró. Ojo: alguien conoce tu contraseña. Cámbiala desde “¿Olvidaste tu contraseña?” en Ingresar.
         </Aviso>
         {seguirAqui}
       </div>
+    );
+  }
+
+  if (pantalla.tipo === "claveCambiada") {
+    return (
+      <div className="flex flex-col gap-4">
+        <Aviso tono="exito" titulo="Listo, tu contraseña se cambió">
+          Vuelve a la otra pantalla y entra con tu contraseña nueva. Cerramos la sesión en tus otros dispositivos.
+        </Aviso>
+        {seguirAqui}
+      </div>
+    );
+  }
+
+  if (pantalla.tipo === "recuperacionAnulada") {
+    return (
+      <div className="flex flex-col gap-4">
+        <Aviso tono="info" titulo="Listo, no cambiamos nada">
+          Tu contraseña sigue igual. Alguien escribió tu correo en “Recuperar cuenta”, pero sin este enlace no puede
+          hacer nada.
+        </Aviso>
+        <Boton ancho href="/">
+          Ir a EasyFut
+        </Boton>
+      </div>
+    );
+  }
+
+  if (pantalla.tipo === "nuevaClave") {
+    const p = pantalla;
+    const deOtroDispositivo = !p.mismo && p.solicitud;
+    return (
+      <form onSubmit={(e) => guardarClave(e, p)} className="flex flex-col gap-4">
+        <div className="flex flex-col items-center gap-2 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-marca-tinte text-2xl" aria-hidden="true">
+            🔑
+          </span>
+          <h2 className="text-lg font-bold">Crea tu contraseña nueva</h2>
+          {deOtroDispositivo && <p className="text-sm text-tinta-suave">Pediste recuperar tu cuenta desde:</p>}
+        </div>
+        {deOtroDispositivo && p.solicitud && <DatosSolicitud s={p.solicitud} />}
+        <CampoTexto
+          etiqueta="Contraseña nueva"
+          type="password"
+          autoComplete="new-password"
+          value={nuevaClave}
+          onChange={(e) => setNuevaClave(e.target.value)}
+          ayuda="Mínimo 8 caracteres. Mejor si mezclas letras y números."
+          minLength={8}
+          required
+          autoFocus
+        />
+        {errorClave && <Aviso tono="error">{errorClave}</Aviso>}
+        <Boton type="submit" ancho tamano="lg" cargando={ocupado}>
+          Guardar contraseña
+        </Boton>
+        {deOtroDispositivo && p.solicitud && (
+          <Boton variante="fantasma" ancho disabled={ocupado} onClick={() => noPediEsto(p.solicitud!)}>
+            No pedí esto
+          </Boton>
+        )}
+      </form>
     );
   }
 
@@ -204,7 +380,7 @@ export default function ProcesarEnlace() {
         aprobada: "Este ingreso ya estaba aprobado.",
         usada: "Este ingreso ya se completó.",
         rechazada: "Este ingreso ya estaba rechazado.",
-        vencida: "Este enlace venció o se pidió uno más nuevo. Si eras tú, vuelve a ingresar en el otro dispositivo.",
+        vencida: "Este enlace venció (dura 10 minutos) o se pidió uno más nuevo. Si eras tú, vuelve a ingresar en el otro dispositivo.",
       };
       return (
         <div className="flex flex-col gap-4">
@@ -222,14 +398,7 @@ export default function ProcesarEnlace() {
           <h2 className="text-lg font-bold">¿Eres tú quien quiere entrar?</h2>
           <p className="text-sm text-tinta-suave">Alguien escribió tu contraseña y quiere entrar a tu cuenta desde:</p>
         </div>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 rounded-xl bg-superficie-suave p-4 text-sm">
-          <dt className="text-tinta-suave">Dispositivo</dt>
-          <dd className="font-bold text-tinta">{describirNavegador(s.agente)}</dd>
-          <dt className="text-tinta-suave">Conexión (IP)</dt>
-          <dd className="font-bold text-tinta">{s.ip ?? "Desconocida"}</dd>
-          <dt className="text-tinta-suave">Cuándo</dt>
-          <dd className="font-bold text-tinta">{haceCuanto(s.creada)}</dd>
-        </dl>
+        <DatosSolicitud s={s} />
         <Boton variante="exito" ancho cargando={ocupado} onClick={() => responder(s, true)}>
           Sí, soy yo
         </Boton>

@@ -6,6 +6,7 @@ import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { correoTieneCuenta, cuentaBorrada } from "@/lib/cuentas";
 import CampoTexto from "@/components/CampoTexto";
 import EsperarEnlace from "@/components/EsperarEnlace";
+import AvisoSinCuenta from "@/components/AvisoSinCuenta";
 import { esConfiable } from "@/lib/dispositivo";
 import { mandarEnlaceIngreso, prepararIngresoNuevo, type IngresoNuevo } from "@/lib/aprobacion";
 
@@ -80,7 +81,8 @@ export default function FormularioIngreso({
     // Dispositivo nuevo: la contraseña no basta. Se pide la aprobación con el enlace del
     // correo (se puede tocar aquí o en el celular) y se cierra la sesión mientras tanto.
     if ((await esConfiable()) === false) {
-      const ingreso = await prepararIngresoNuevo(supabase, correo, siguiente ?? "/");
+      // El enlace va solo al correo registrado de la cuenta (el de la sesión)
+      const ingreso = await prepararIngresoNuevo(supabase, data.user.email ?? correo.trim(), siguiente ?? "/");
       await supabase.auth.signOut();
       setEnviando(false);
       if (ingreso.bloqueado)
@@ -97,7 +99,7 @@ export default function FormularioIngreso({
     return (
       <EsperarEnlace
         tipo="dispositivo"
-        correo={correo.trim()}
+        correo={paso2.correo}
         destino={siguiente ?? "/"}
         secreto={paso2.secreto}
         clave={clave}
@@ -106,7 +108,7 @@ export default function FormularioIngreso({
         reenviar={async () => {
           const supabase = supabaseNavegador();
           if (!supabase) return "La app no está conectada a la base de datos.";
-          return mandarEnlaceIngreso(supabase, correo.trim(), siguiente ?? "/", paso2.solicitud);
+          return mandarEnlaceIngreso(supabase, paso2.correo, siguiente ?? "/", paso2.solicitud);
         }}
         onVolver={() => setPaso2(null)}
       />
@@ -135,21 +137,11 @@ export default function FormularioIngreso({
         onChange={(e) => setClave(e.target.value)}
         required
       />
+      <Link href={`/recuperar${sufijo}`} className="-mt-2 self-end text-sm font-bold text-[#6D28D9]">
+        ¿Olvidaste tu contraseña?
+      </Link>
 
-      {sinCuenta && (
-        <div className="flex items-center justify-between gap-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-900" role="alert">
-          <p>
-            <strong className="block">No tienes cuenta.</strong>
-            ¿Quieres crear una?
-          </p>
-          <Link
-            href={`/registro${sufijo}`}
-            className="shrink-0 rounded-xl bg-[#6D28D9] px-4 py-2 font-bold text-white"
-          >
-            Crear cuenta
-          </Link>
-        </div>
-      )}
+      {sinCuenta && <AvisoSinCuenta sufijo={sufijo} />}
       {error && (
         <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">
           {error}

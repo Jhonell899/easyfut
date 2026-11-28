@@ -3,8 +3,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
 import { registrarEnvio } from "@/lib/dispositivo";
+import { correoTieneCuenta } from "@/lib/cuentas";
 
-// Confirmar con un toque en el enlace del correo, desde cualquier dispositivo (migración 025).
+// Un toque en el enlace del correo, desde cualquier dispositivo (migración 025): crear
+// cuenta, entrar desde un dispositivo nuevo y recuperar la cuenta. Cada enlace dura 10 minutos.
 // La pantalla que espera guarda un secreto de un solo uso; la base solo guarda su huella.
 
 export type EstadoAprobacion = "pendiente" | "aprobada" | "usada" | "rechazada" | "vencida" | "no_existe";
@@ -47,8 +49,10 @@ export async function estadoAprobacion(supabase: SupabaseClient, secreto: string
 
 const CLAVE_ESPERA = "easyfut:espera";
 
+export type TipoEnlace = "registro" | "dispositivo" | "recuperacion";
+
 export type Espera = {
-  tipo: "registro" | "dispositivo";
+  tipo: TipoEnlace;
   correo: string;
   solicitud?: string;
   secreto?: string;
@@ -136,6 +140,8 @@ export async function mandarEnlaceIngreso(
 }
 
 export type IngresoNuevo = {
+  /** Correo registrado de la cuenta: el único al que se manda el enlace */
+  correo: string;
   secreto: string | null;
   solicitud: string | null;
   /** Error al mandar el correo (la pantalla de espera lo muestra) */
@@ -145,7 +151,8 @@ export type IngresoNuevo = {
 };
 
 /**
- * Dispositivo nuevo, con la sesión de la contraseña todavía abierta: si este navegador
+ * Dispositivo nuevo, con la sesión de la contraseña todavía abierta. `correo` debe ser
+ * el correo registrado de la cuenta (el de la sesión), nunca uno escrito a mano. Si este navegador
  * ya espera un enlace para este correo, lo reutiliza (no manda otro correo); si no,
  * crea la solicitud y manda el correo.
  */
@@ -163,15 +170,72 @@ export async function prepararIngresoNuevo(
     previa.secreto &&
     (await estadoAprobacion(supabase, previa.secreto)) === "pendiente"
   ) {
-    return { secreto: previa.secreto, solicitud: previa.solicitud, error: null, bloqueado: false };
+    return { correo: email, secreto: previa.secreto, solicitud: previa.solicitud, error: null, bloqueado: false };
   }
 
   const nueva = await pedirAprobacion(supabase);
   if ("error" in nueva && nueva.error === "demasiados_intentos")
-    return { secreto: null, solicitud: null, error: null, bloqueado: true };
+    return { correo: email, secreto: null, solicitud: null, error: null, bloqueado: true };
   // Sin la migración 025 sigue funcionando, pero solo abriendo el enlace en este navegador
   const sol = "error" in nueva ? null : nueva;
   guardarEspera({ tipo: "dispositivo", correo: email, solicitud: sol?.solicitud, secreto: sol?.secreto }, 30);
   const error = await mandarEnlaceIngreso(supabase, email, destino, sol?.solicitud ?? null);
-  return { secreto: sol?.secreto ?? null, solicitud: sol?.solicitud ?? null, error, bloqueado: false };
+  return { correo: email, secreto: sol?.secreto ?? null, solicitud: sol?.solicitud ?? null, error, bloqueado: false };
+}
+
+// ---------------------------------------------------------------------------
+// Recuperar la cuenta (olvidé mi contraseña)
+
+/** Manda el enlace “Reset Password” al correo registrado. Devuelve un mensaje de error o null. */
+export async function mandarEnlaceRecuperacion(
+  supabase: SupabaseClient,
+  correo: string,
+  destino: string,
+  solicitud: string | null
+): Promise<string | null> {
+  registrarEnvio(correo);
+  const { error } = await (clienteCorreo() ?? supabase).auth.resetPasswordForEmail(correo, {
+    redirectTo: enlaceDeVuelta(destino, { solicitud, recuperar: true }),
+  });
+  return error ? mensajeErrorCorreo(error.message) : null;
+}
+
+export type Recuperacion = { correo: string; solicitud: string | null; secreto: string | null; error: string | null };
+
+/**
+ * Olvidé mi contraseña (sin sesión): crea la solicitud y manda el enlace solo si el correo
+ * tiene una cuenta. Si este navegador ya espera un enlace para ese correo, lo reutiliza.
+ */
+export async function pedirRecuperacion(
+  supabase: SupabaseClient,
+  correo: string,
+  destino: string
+): Promise<Recuperacion | { sinCuenta: true } | { bloqueado: true }> {
+  const email = correo.trim();
+  const previa = leerEspera();
+  if (
+    previa?.tipo === "recuperacion" &&
+    previa.correo === email.toLowerCase() &&
+    previa.solicitud &&
+    previa.secreto &&
+    (await estadoAprobacion(supabase, previa.secreto)) === "pendiente"
+  ) {
+    return { correo: email, solicitud: previa.solicitud, secreto: previa.secreto, error: null };
+  }
+
+  let solicitud: string | null = null;
+  const espera = await crearSecreto();
+  if (espera) {
+    const { data, error } = await supabase.rpc("pedir_recuperacion", { p_correo: email, p_huella: espera.huella });
+    if (error && /demasiados_intentos/.test(error.message)) return { bloqueado: true };
+    if (!error && data === null) return { sinCuenta: true };
+    if (!error && typeof data === "string") solicitud = data;
+  }
+  // Sin la migración 025 (o sin crypto): se revisa aparte si el correo tiene cuenta
+  if (!solicitud && (await correoTieneCuenta(supabase, email)) === false) return { sinCuenta: true };
+
+  const secreto = solicitud ? espera!.secreto : null;
+  guardarEspera({ tipo: "recuperacion", correo: email, solicitud: solicitud ?? undefined, secreto: secreto ?? undefined }, 10);
+  const error = await mandarEnlaceRecuperacion(supabase, email, destino, solicitud);
+  return { correo: email, solicitud, secreto, error };
 }
