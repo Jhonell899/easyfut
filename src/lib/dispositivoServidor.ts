@@ -39,12 +39,25 @@ export async function crearTokenDispositivo(
   return { token: typeof data === "string" ? data : null, error: null };
 }
 
+/**
+ * Interruptor SOLO para probar en tu computadora: con EASYFUT_SIN_CORREO_DISPOSITIVO=1 en
+ * .env.local, los dispositivos nuevos no piden el enlace del correo (no se gastan correos).
+ * Nunca funciona publicado: exige `npm run dev` (NODE_ENV=development) y que la página se
+ * abra en localhost. En Vercel no tiene efecto aunque alguien ponga la variable.
+ */
+export function modoLocalSinCorreo(cabeceras: Headers): boolean {
+  if (process.env.NODE_ENV !== "development") return false;
+  if (process.env.EASYFUT_SIN_CORREO_DISPOSITIVO !== "1") return false;
+  return /^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(cabeceras.get("host") ?? "");
+}
+
 /** true = de confianza, false = no, null = la migración 018 aún no existe. */
 export async function dispositivoEsConfiable(
   supabase: SupabaseClient,
   token: string | null | undefined,
   cabeceras: Headers
 ): Promise<boolean | null> {
+  if (modoLocalSinCorreo(cabeceras)) return true;
   const { data, error } = await supabase.rpc("dispositivo_confiable", {
     p_token: token ?? null,
     p_ip: ipDe(cabeceras),
