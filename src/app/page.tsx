@@ -101,13 +101,8 @@ export default async function Inicio() {
           </p>
         )}
 
-        {supabase && !error && canchas.length === 0 && (
-          <div className="rounded-3xl bg-white p-8 text-center shadow-sm border border-slate-100">
-            <p className="text-sm font-medium text-slate-600">Pronto tendremos canchas disponibles en tu distrito.</p>
-          </div>
-        )}
-
-        {canchas.length > 0 && <ListaCanchas canchas={canchas} confianza={confianza} />}
+        {/* El buscador aparece siempre, haya o no canchas publicadas */}
+        {supabase && !error && <ListaCanchas canchas={canchas} confianza={confianza} />}
 
         {/* Banner para dueños de canchas (Responsive Desktop & Mobile) */}
         <div className="fondo-cancha sombra-fuerte mt-6 rounded-3xl p-6 sm:p-8 text-white">
