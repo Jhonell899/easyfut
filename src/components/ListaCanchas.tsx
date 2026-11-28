@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { fmtFecha, hoyLima, sumarDias } from "@/lib/horario";
@@ -445,10 +446,26 @@ export default function ListaCanchas({
               <path d="M21 21l-4.35-4.35" />
             </svg>
           </div>
-          <h3 className="text-lg font-bold text-slate-900">No encontramos canchas con esos filtros</h3>
-          <p className="max-w-md text-xs sm:text-sm text-slate-500">
-            Intenta buscando en otro distrito o seleccionando otro horario. Hay muchas canchas disponibles en toda la ciudad.
-          </p>
+          {canchas.length === 0 ? (
+            // Todavía no hay ninguna cancha publicada
+            <>
+              <h3 className="text-lg font-bold text-slate-900">Pronto tendremos canchas disponibles</h3>
+              <p className="max-w-md text-xs sm:text-sm text-slate-500">
+                Todavía no hay canchas publicadas en tu distrito. ¿Tienes una?{" "}
+                <Link href="/publicar" className="font-bold text-violet-700 underline underline-offset-2">
+                  Publícala gratis
+                </Link>
+                .
+              </p>
+            </>
+          ) : (
+            <>
+              <h3 className="text-lg font-bold text-slate-900">No encontramos canchas con esos filtros</h3>
+              <p className="max-w-md text-xs sm:text-sm text-slate-500">
+                Prueba con otro distrito u otro horario, o quita los filtros para ver todas las canchas.
+              </p>
+            </>
+          )}
           {hayFiltros && (
             <button
               type="button"
