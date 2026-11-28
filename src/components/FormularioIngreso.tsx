@@ -3,14 +3,17 @@
 import Link from "next/link";
 import { useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
-import { cuentaBorrada, MENSAJE_CUENTA_BORRADA } from "@/lib/cuentaBorrada";
+import { cuentaBorrada } from "@/lib/cuentaBorrada";
 import CampoTexto from "@/components/CampoTexto";
 import VerificarCodigo from "@/components/VerificarCodigo";
 import { esConfiable, esperaParaEnviar, registrarEnvio } from "@/lib/dispositivo";
 import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
 
+// Mismo mensaje para todo: nunca se dice si una cuenta existe o no
+const INCORRECTOS = "Correo o contraseña incorrectos.";
+
 function traducir(msg: string): string {
-  if (/invalid login credentials/i.test(msg)) return "Correo o contraseña incorrectos.";
+  if (/invalid login credentials/i.test(msg)) return INCORRECTOS;
   if (/email not confirmed/i.test(msg))
     return "Aún no confirmaste tu correo. Revisa tu bandeja de entrada (y spam).";
   if (/rate limit|too many/i.test(msg)) return "Demasiados intentos. Espera un momento.";
@@ -27,7 +30,6 @@ export default function FormularioIngreso({
   const [correo, setCorreo] = useState("");
   const [clave, setClave] = useState("");
   const [enviando, setEnviando] = useState(false);
-  const [sinVerificar, setSinVerificar] = useState(false);
   // Segundo paso: código por correo al entrar desde un dispositivo nuevo
   const [paso2, setPaso2] = useState(false);
   const [error, setError] = useState<string | null>(
@@ -40,7 +42,6 @@ export default function FormularioIngreso({
     if (!supabase) return setError("Falta configurar Supabase.");
     setEnviando(true);
     setError(null);
-    setSinVerificar(false);
 
     const { data, error } = await supabase.auth.signInWithPassword({
       email: correo.trim(),
@@ -54,15 +55,15 @@ export default function FormularioIngreso({
         const { data: borrada } = await supabase.rpc("liberar_correo_no_verificado", { p_correo: correo.trim() });
         if (borrada === false)
           return setError("Aún no verificas tu correo. Escribe el código que te enviamos o espera unos minutos y regístrate de nuevo.");
-        return setSinVerificar(true);
+        return setError(INCORRECTOS);
       }
       return setError(traducir(error.message));
     }
-    // Cuenta cuyos datos se borraron: ya no existe, aunque la contraseña coincida
+    // Cuenta cuyos datos se borraron: no entra, aunque la contraseña coincida
     if (await cuentaBorrada(supabase, data.user.id)) {
       await supabase.auth.signOut({ scope: "local" });
       setEnviando(false);
-      return setError(MENSAJE_CUENTA_BORRADA);
+      return setError(INCORRECTOS);
     }
     // Dispositivo nuevo: la contraseña no basta, se pide un código al correo
     if ((await esConfiable()) === false) {
@@ -124,17 +125,6 @@ export default function FormularioIngreso({
         required
       />
 
-      {sinVerificar && (
-        <div className="flex items-center justify-between gap-3 rounded-xl bg-amber-50 p-4 text-sm text-amber-900" role="alert">
-          <p>Ese registro no se terminó de verificar, así que la cuenta no existe. Regístrate de nuevo.</p>
-          <Link
-            href={`/registro${sufijo}`}
-            className="shrink-0 rounded-xl bg-[#6D28D9] px-4 py-2 font-bold text-white"
-          >
-            Registrarme
-          </Link>
-        </div>
-      )}
       {error && (
         <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">
           {error}

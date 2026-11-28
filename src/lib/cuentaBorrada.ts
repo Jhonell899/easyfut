@@ -12,5 +12,3 @@ export async function cuentaBorrada(supabase: SupabaseClient, id: string): Promi
   const { data: perfil, error: errPerfil } = await supabase.from("usuarios").select("id").eq("id", id).maybeSingle();
   return !errPerfil && !perfil;
 }
-
-export const MENSAJE_CUENTA_BORRADA = "Esa cuenta ya no existe. Crea una cuenta nueva para entrar.";
