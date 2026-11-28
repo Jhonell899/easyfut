@@ -14,11 +14,20 @@ export async function esConfiable(): Promise<boolean | null> {
   }
 }
 
-/** Marca este dispositivo como de confianza. Solo funciona justo después de entrar con el correo. */
-export async function confiarDispositivo(): Promise<void> {
+/**
+ * Marca este dispositivo como de confianza. Funciona justo después de entrar con el
+ * enlace del correo, o con el secreto de una solicitud ya aprobada (migración 025).
+ */
+export async function confiarDispositivo(secreto?: string | null): Promise<boolean> {
   try {
-    await fetch("/api/dispositivo", { method: "POST" });
-  } catch {}
+    const r = await fetch("/api/dispositivo", {
+      method: "POST",
+      ...(secreto ? { headers: { "Content-Type": "application/json" }, body: JSON.stringify({ secreto }) } : {}),
+    });
+    return r.ok;
+  } catch {
+    return false;
+  }
 }
 
 // ---------------------------------------------------------------------------

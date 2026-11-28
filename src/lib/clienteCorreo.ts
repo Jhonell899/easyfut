@@ -22,7 +22,14 @@ export function clienteCorreo(): SupabaseClient | null {
   return cliente;
 }
 
-/** Dirección a la que vuelve el enlace del correo. */
-export function enlaceDeVuelta(destino: string): string {
-  return `${window.location.origin}/auth/confirmar?next=${encodeURIComponent(destino)}`;
+/**
+ * Dirección a la que vuelve el enlace del correo.
+ * `solicitud`: ingreso desde un dispositivo nuevo que espera aprobación (migración 025).
+ * `registro`: confirmar una cuenta nueva.
+ */
+export function enlaceDeVuelta(destino: string, extra: { solicitud?: string | null; registro?: boolean } = {}): string {
+  const params = new URLSearchParams({ next: destino });
+  if (extra.solicitud) params.set("solicitud", extra.solicitud);
+  if (extra.registro) params.set("registro", "1");
+  return `${window.location.origin}/auth/confirmar?${params.toString()}`;
 }

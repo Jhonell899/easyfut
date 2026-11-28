@@ -5,9 +5,9 @@ import { useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { correoTieneCuenta, cuentaBorrada } from "@/lib/cuentas";
 import CampoTexto from "@/components/CampoTexto";
-import VerificarCodigo from "@/components/VerificarCodigo";
-import { esConfiable, esperaParaEnviar, registrarEnvio } from "@/lib/dispositivo";
-import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
+import EsperarEnlace from "@/components/EsperarEnlace";
+import { esConfiable } from "@/lib/dispositivo";
+import { mandarEnlaceIngreso, prepararIngresoNuevo, type IngresoNuevo } from "@/lib/aprobacion";
 
 // Si no se pudo saber si el correo tiene cuenta (sin la migración 024 o sin conexión)
 const INCORRECTOS = "Correo o contraseña incorrectos.";
@@ -32,8 +32,8 @@ export default function FormularioIngreso({
   const [enviando, setEnviando] = useState(false);
   // El correo no tiene cuenta: se ofrece crear una (el login nunca crea cuentas)
   const [sinCuenta, setSinCuenta] = useState(false);
-  // Segundo paso: código por correo al entrar desde un dispositivo nuevo
-  const [paso2, setPaso2] = useState(false);
+  // Segundo paso: enlace por correo al entrar desde un dispositivo nuevo (migración 025)
+  const [paso2, setPaso2] = useState<IngresoNuevo | null>(null);
   const [error, setError] = useState<string | null>(
     errorEnlace ? "Ese enlace ya se usó, venció o se abrió en otro navegador. Si estabas creando tu cuenta, probablemente ya quedó confirmada: ingresa con tu correo y contraseña." : null
   );
@@ -57,7 +57,7 @@ export default function FormularioIngreso({
         const { data: borrada } = await supabase.rpc("liberar_correo_no_verificado", { p_correo: correo.trim() });
         setEnviando(false);
         if (borrada === false)
-          return setError("Aún no verificas tu correo. Escribe el código que te enviamos o espera unos minutos y regístrate de nuevo.");
+          return setError("Aún no confirmas tu correo. Toca el enlace que te enviamos o espera unos minutos y regístrate de nuevo.");
         return setSinCuenta(true);
       }
       // ¿No tiene cuenta o se equivocó de contraseña?
@@ -77,27 +77,15 @@ export default function FormularioIngreso({
       setEnviando(false);
       return setSinCuenta(true);
     }
-    // Dispositivo nuevo: la contraseña no basta, se pide un código al correo
+    // Dispositivo nuevo: la contraseña no basta. Se pide la aprobación con el enlace del
+    // correo (se puede tocar aquí o en el celular) y se cierra la sesión mientras tanto.
     if ((await esConfiable()) === false) {
+      const ingreso = await prepararIngresoNuevo(supabase, correo, siguiente ?? "/");
       await supabase.auth.signOut();
-      // Respeta la espera entre correos (1, 2 y 5 minutos): si hay uno reciente, usa ese
-      if (esperaParaEnviar(correo.trim()) > 0) {
-        setEnviando(false);
-        return setPaso2(true);
-      }
-      registrarEnvio(correo.trim());
-      const { error: errCodigo } = await (clienteCorreo() ?? supabase).auth.signInWithOtp({
-        email: correo.trim(),
-        options: { shouldCreateUser: false, emailRedirectTo: enlaceDeVuelta(siguiente ?? "/") },
-      });
       setEnviando(false);
-      if (errCodigo)
-        return setError(
-          /security purposes|rate limit|too many/i.test(errCodigo.message)
-            ? "Ya te enviamos un código hace poco. Espera un minuto e inténtalo de nuevo."
-            : "No pudimos enviarte el código de seguridad. Inténtalo de nuevo."
-        );
-      return setPaso2(true);
+      if (ingreso.bloqueado)
+        return setError("Hubo demasiados intentos de ingreso en la última hora. Espera un rato e inténtalo de nuevo.");
+      return setPaso2(ingreso);
     }
     // Navegación completa para que el servidor lea la nueva sesión
     window.location.assign(`/auth/destino?next=${encodeURIComponent(siguiente ?? "/")}`);
@@ -107,12 +95,20 @@ export default function FormularioIngreso({
 
   if (paso2) {
     return (
-      <VerificarCodigo
+      <EsperarEnlace
+        tipo="dispositivo"
         correo={correo.trim()}
         destino={siguiente ?? "/"}
-        tipo="email"
-        explicacion="Estás entrando desde un dispositivo nuevo. Por seguridad, confirma que eres tú con el código que te enviamos."
-        onVolver={() => setPaso2(false)}
+        secreto={paso2.secreto}
+        clave={clave}
+        errorInicial={paso2.error}
+        explicacion="Estás entrando desde un dispositivo nuevo. Por seguridad, confirma que eres tú con el enlace que te enviamos."
+        reenviar={async () => {
+          const supabase = supabaseNavegador();
+          if (!supabase) return "La app no está conectada a la base de datos.";
+          return mandarEnlaceIngreso(supabase, correo.trim(), siguiente ?? "/", paso2.solicitud);
+        }}
+        onVolver={() => setPaso2(null)}
       />
     );
   }
