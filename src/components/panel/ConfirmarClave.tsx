@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
+import { BotonVerClave, useVerClave } from "@/components/ui/VerClave";
 
 /**
  * Pide la contraseña de la cuenta antes de una acción delicada (cambiar a dónde
@@ -21,6 +22,7 @@ export default function ConfirmarClave({
   const [ocupado, setOcupado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
+  const ver = useVerClave();
 
   useEffect(() => input.current?.focus(), []);
 
@@ -74,14 +76,17 @@ export default function ConfirmarClave({
 
         <label className="flex flex-col gap-1.5 text-sm font-medium">
           Contraseña de tu cuenta
-          <input
-            ref={input}
-            type="password"
-            autoComplete="current-password"
-            value={clave}
-            onChange={(e) => setClave(e.target.value)}
-            className="rounded-xl border border-[#E3E3E3] px-3 py-3 text-base font-normal outline-none focus:border-[#6D28D9]"
-          />
+          <div className="relative">
+            <input
+              ref={input}
+              type={ver.tipo}
+              autoComplete="current-password"
+              value={clave}
+              onChange={(e) => setClave(e.target.value)}
+              className="w-full rounded-xl border border-[#E3E3E3] px-3 py-3 pr-12 text-base font-normal outline-none focus:border-[#6D28D9]"
+            />
+            <BotonVerClave {...ver} />
+          </div>
         </label>
 
         {error && (
