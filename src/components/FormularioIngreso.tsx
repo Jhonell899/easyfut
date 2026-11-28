@@ -35,6 +35,9 @@ export default function FormularioIngreso({
   const [sinCuenta, setSinCuenta] = useState(false);
   // Segundo paso: enlace por correo al entrar desde un dispositivo nuevo (migración 025)
   const [paso2, setPaso2] = useState<IngresoNuevo | null>(null);
+  // Entrar sin contraseña: solo con el enlace que llega al correo registrado
+  const [conEnlace, setConEnlace] = useState(false);
+  const [esperaEnlace, setEsperaEnlace] = useState<{ correo: string; error: string | null } | null>(null);
   const [error, setError] = useState<string | null>(
     errorEnlace ? "Ese enlace ya se usó, venció o se abrió en otro navegador. Si estabas creando tu cuenta, probablemente ya quedó confirmada: ingresa con tu correo y contraseña." : null
   );
@@ -93,7 +96,44 @@ export default function FormularioIngreso({
     window.location.assign(`/auth/destino?next=${encodeURIComponent(siguiente ?? "/")}`);
   }
 
+  // Sin contraseña: manda el enlace "Log In" al correo registrado. Al tocarlo se entra y
+  // ese navegador queda de confianza (un solo correo). Nunca crea cuentas.
+  async function pedirEnlace(e: React.FormEvent) {
+    e.preventDefault();
+    const supabase = supabaseNavegador();
+    if (!supabase) return setError("Falta configurar Supabase.");
+    const email = correo.trim();
+    setEnviando(true);
+    setError(null);
+    setSinCuenta(false);
+    if ((await correoTieneCuenta(supabase, email)) === false) {
+      setEnviando(false);
+      return setSinCuenta(true);
+    }
+    const errorCorreo = await mandarEnlaceIngreso(supabase, email, siguiente ?? "/", null);
+    setEnviando(false);
+    setEsperaEnlace({ correo: email, error: errorCorreo });
+  }
+
   const sufijo = siguiente ? `?next=${encodeURIComponent(siguiente)}` : "";
+
+  if (esperaEnlace) {
+    return (
+      <EsperarEnlace
+        tipo="dispositivo"
+        correo={esperaEnlace.correo}
+        destino={siguiente ?? "/"}
+        errorInicial={esperaEnlace.error}
+        explicacion="Te enviamos un enlace para entrar sin contraseña. Ábrelo en este mismo navegador (si lo abres en otro, entrarás allá)."
+        reenviar={async () => {
+          const supabase = supabaseNavegador();
+          if (!supabase) return "La app no está conectada a la base de datos.";
+          return mandarEnlaceIngreso(supabase, esperaEnlace.correo, siguiente ?? "/", null);
+        }}
+        onVolver={() => setEsperaEnlace(null)}
+      />
+    );
+  }
 
   if (paso2) {
     return (
@@ -116,7 +156,7 @@ export default function FormularioIngreso({
   }
 
   return (
-    <form onSubmit={ingresar} className="flex flex-col gap-4">
+    <form onSubmit={conEnlace ? pedirEnlace : ingresar} className="flex flex-col gap-4">
       <CampoTexto
         etiqueta="Correo"
         type="email"
@@ -129,17 +169,25 @@ export default function FormularioIngreso({
         placeholder="tucorreo@ejemplo.com"
         required
       />
-      <CampoTexto
-        etiqueta="Contraseña"
-        type="password"
-        autoComplete="current-password"
-        value={clave}
-        onChange={(e) => setClave(e.target.value)}
-        required
-      />
-      <Link href={`/recuperar${sufijo}`} className="-mt-2 self-end text-sm font-bold text-[#6D28D9]">
-        ¿Olvidaste tu contraseña?
-      </Link>
+      {conEnlace ? (
+        <p className="rounded-xl bg-[#F5F3FF] px-3 py-2 text-sm text-[#4C1D95]">
+          Te enviaremos un enlace a tu correo registrado. Tócalo y entrarás sin escribir tu contraseña.
+        </p>
+      ) : (
+        <>
+          <CampoTexto
+            etiqueta="Contraseña"
+            type="password"
+            autoComplete="current-password"
+            value={clave}
+            onChange={(e) => setClave(e.target.value)}
+            required
+          />
+          <Link href={`/recuperar${sufijo}`} className="-mt-2 self-end text-sm font-bold text-[#6D28D9]">
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </>
+      )}
 
       {sinCuenta && <AvisoSinCuenta sufijo={sufijo} />}
       {error && (
@@ -153,7 +201,18 @@ export default function FormularioIngreso({
         disabled={enviando}
         className="rounded-xl bg-[#6D28D9] py-3 font-bold text-white disabled:opacity-50"
       >
-        {enviando ? "Ingresando…" : "Ingresar"}
+        {conEnlace ? (enviando ? "Enviando…" : "Enviarme el enlace") : enviando ? "Ingresando…" : "Ingresar"}
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          setConEnlace((v) => !v);
+          setError(null);
+          setSinCuenta(false);
+        }}
+        className="-mt-1 text-sm font-bold text-[#6D28D9]"
+      >
+        {conEnlace ? "Entrar con mi contraseña" : "Entrar sin contraseña (con un enlace a tu correo)"}
       </button>
 
       <p className="text-center text-sm text-[#5A5A5A]">
