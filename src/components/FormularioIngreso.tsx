@@ -162,11 +162,6 @@ export default function FormularioIngreso({
           Crear cuenta
         </Link>
       </p>
-      <p className="text-center text-sm">
-        <Link href="/" className="text-[#5A5A5A] underline-offset-2 hover:underline">
-          Seguir sin cuenta
-        </Link>
-      </p>
     </form>
   );
 }

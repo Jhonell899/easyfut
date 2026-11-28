@@ -15,7 +15,7 @@ const SECCIONES: Seccion[] = [
   {
     titulo: "Cuentas",
     parrafos: [
-      "Puedes reservar sin cuenta. Para publicar canchas necesitas una cuenta con correo verificado y un número de WhatsApp confirmado.",
+      "Para reservar necesitas una cuenta con tu correo confirmado y un celular vinculado. Para publicar canchas necesitas además un número de WhatsApp confirmado.",
       "Eres responsable de la veracidad de tus datos y del uso de tu cuenta. Cada cancha se administra solo desde la cuenta de su rentador.",
     ],
   },
