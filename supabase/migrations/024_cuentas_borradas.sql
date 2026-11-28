@@ -8,8 +8,13 @@
 -- · Borrar a alguien de usuarios ahora borra también su cuenta de acceso.
 -- · Si ya hay cuentas sin datos (borradas antes de esta migración), al intentar
 --   entrar se borran y su correo queda libre para registrarse de nuevo.
+-- · El login puede preguntar si un correo tiene cuenta, para decir "No tienes
+--   cuenta, ¿quieres crear una?". Máximo 20 consultas cada 10 minutos por conexión.
+--   Las cuentas solo se crean desde Registrarse.
 --
--- Funciones nuevas: borrar_cuenta_de_acceso (disparador), liberar_cuenta_borrada.
+-- Tabla nueva: consultas_correo (límite de consultas por conexión).
+-- Funciones nuevas: borrar_cuenta_de_acceso (disparador), liberar_cuenta_borrada,
+-- correo_tiene_cuenta. Usa ip_solicitud() de la 009.
 -- Todo va en una sola transacción: si algo falla, no cambia nada.
 -- =============================================================================
 
@@ -51,10 +56,48 @@ end $$;
 revoke execute on function liberar_cuenta_borrada() from public, anon;
 grant execute on function liberar_cuenta_borrada() to authenticated;
 
+-- 3. ¿Este correo tiene cuenta? (para el login) -----------------------------------
+--    Cuenta = correo verificado y con datos en usuarios. Errores: demasiados_intentos
+create table if not exists consultas_correo (
+  id      bigint generated always as identity primary key,
+  ip      text not null,
+  creado  timestamptz not null default now()
+);
+create index if not exists consultas_correo_ip_idx on consultas_correo (ip, creado desc);
+-- Sin políticas: solo la función de abajo la usa
+alter table consultas_correo enable row level security;
+
+create or replace function correo_tiene_cuenta(p_correo text) returns boolean
+language plpgsql security definer set search_path = public, auth as $$
+declare
+  v_ip text := coalesce(left(ip_solicitud(), 64), 'desconocida');
+begin
+  delete from consultas_correo where creado < now() - interval '1 day';
+  if (select count(*) from consultas_correo
+       where ip = v_ip and creado > now() - interval '10 minutes') >= 20 then
+    raise exception 'demasiados_intentos';
+  end if;
+  insert into consultas_correo (ip) values (v_ip);
+
+  return exists (
+    select 1
+      from auth.users u
+      join usuarios p on p.id = u.id
+     where lower(u.email) = lower(trim(coalesce(p_correo, '')))
+       and u.email_confirmed_at is not null
+  );
+end $$;
+revoke execute on function correo_tiene_cuenta(text) from public;
+grant execute on function correo_tiene_cuenta(text) to anon, authenticated;
+
 comment on function borrar_cuenta_de_acceso() is
   'Disparador: al borrar una fila de usuarios borra su cuenta de acceso (auth.users), para que ya no pueda entrar.';
 comment on function liberar_cuenta_borrada() is
   'Al entrar: si la cuenta ya no tiene fila en usuarios, la borra y devuelve true (su correo queda libre).';
+comment on function correo_tiene_cuenta(text) is
+  'Login: true si el correo tiene una cuenta verificada con datos. Máximo 20 consultas cada 10 minutos por conexión.';
+comment on table consultas_correo is
+  'Consultas de correo_tiene_cuenta por conexión (IP), para limitarlas. Se borran al día.';
 
 commit;
 

@@ -12,3 +12,13 @@ export async function cuentaBorrada(supabase: SupabaseClient, id: string): Promi
   const { data: perfil, error: errPerfil } = await supabase.from("usuarios").select("id").eq("id", id).maybeSingle();
   return !errPerfil && !perfil;
 }
+
+/**
+ * ¿El correo tiene una cuenta verificada? true / false, o null si no se pudo saber
+ * (sin la migración 024, sin conexión o demasiadas consultas seguidas).
+ */
+export async function correoTieneCuenta(supabase: SupabaseClient, correo: string): Promise<boolean | null> {
+  const { data, error } = await supabase.rpc("correo_tiene_cuenta", { p_correo: correo });
+  if (error || typeof data !== "boolean") return null;
+  return data;
+}

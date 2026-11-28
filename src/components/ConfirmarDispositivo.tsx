@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { esperaParaEnviar, registrarEnvio } from "@/lib/dispositivo";
 import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
-import { cuentaBorrada } from "@/lib/cuentaBorrada";
+import { cuentaBorrada } from "@/lib/cuentas";
 import VerificarCodigo from "@/components/VerificarCodigo";
 
 /** Pide el código de correo para usar el panel desde un dispositivo nuevo. */
