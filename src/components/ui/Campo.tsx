@@ -2,6 +2,7 @@
 
 import { useId, type ComponentProps, type ReactNode } from "react";
 import { cx } from "./cx";
+import { BotonVerClave, useVerClave } from "./VerClave";
 
 const BASE =
   "w-full rounded-xl border bg-superficie px-3 py-3 text-base text-tinta outline-none transition " +
@@ -49,15 +50,29 @@ function Marco({
 export function Campo({ etiqueta, ayuda, error, className, id, ...input }: Envoltura & ComponentProps<"input">) {
   const generado = useId();
   const idCampo = id ?? generado;
+  // Las contraseñas llevan un ojo para verlas
+  const esClave = input.type === "password";
+  const ver = useVerClave();
+  const campo = (
+    <input
+      id={idCampo}
+      aria-invalid={error ? true : undefined}
+      aria-describedby={error || ayuda ? `${idCampo}-nota` : undefined}
+      className={cx(BASE, estilos(error), esClave && "pr-12")}
+      {...input}
+      type={esClave ? ver.tipo : input.type}
+    />
+  );
   return (
     <Marco id={idCampo} etiqueta={etiqueta} ayuda={ayuda} error={error} className={className}>
-      <input
-        id={idCampo}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error || ayuda ? `${idCampo}-nota` : undefined}
-        className={cx(BASE, estilos(error))}
-        {...input}
-      />
+      {esClave ? (
+        <div className="relative">
+          {campo}
+          <BotonVerClave {...ver} />
+        </div>
+      ) : (
+        campo
+      )}
     </Marco>
   );
 }

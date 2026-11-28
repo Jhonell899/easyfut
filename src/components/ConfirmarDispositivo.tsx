@@ -2,15 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
-import { esperaParaEnviar, registrarEnvio } from "@/lib/dispositivo";
-import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
-import VerificarCodigo from "@/components/VerificarCodigo";
+import { cuentaBorrada } from "@/lib/cuentas";
+import { mandarEnlaceIngreso, prepararIngresoNuevo, type IngresoNuevo } from "@/lib/aprobacion";
+import { Aviso } from "@/components/ui";
+import EsperarEnlace from "@/components/EsperarEnlace";
 
-/** Pide el código de correo para usar el panel desde un dispositivo nuevo. */
+/** Pide confirmar con el enlace del correo para usar el panel desde un dispositivo nuevo. */
 export default function ConfirmarDispositivo({ destino }: { destino: string }) {
   const [correo, setCorreo] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [enviado, setEnviado] = useState(false);
+  const [ingreso, setIngreso] = useState<IngresoNuevo | null>(null);
   const yaEnviado = useRef(false);
 
   useEffect(() => {
@@ -22,39 +22,38 @@ export default function ConfirmarDispositivo({ destino }: { destino: string }) {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user?.email) return window.location.assign(`/ingresar?next=${encodeURIComponent(destino)}`);
+      // Cuenta borrada con una sesión vieja: no se manda correo, se cierra la sesión
+      if (await cuentaBorrada(supabase, user.id)) {
+        await supabase.auth.signOut({ scope: "local" });
+        return window.location.assign(`/ingresar?next=${encodeURIComponent(destino)}`);
+      }
       setCorreo(user.email);
-      // Si se pidió un correo hace poco (por ejemplo, al recargar la página), no se manda otro
-      if (esperaParaEnviar(user.email) > 0) return setEnviado(true);
-      registrarEnvio(user.email);
-      const { error } = await (clienteCorreo() ?? supabase).auth.signInWithOtp({
-        email: user.email,
-        options: { shouldCreateUser: false, emailRedirectTo: enlaceDeVuelta(destino) },
-      });
-      if (error)
-        return setError(
-          /security purposes|rate limit|too many/i.test(error.message)
-            ? "Ya te enviamos un código hace poco. Revisa tu correo o espera un minuto y usa “Reenviar código”."
-            : "No pudimos enviarte el código. Inténtalo de nuevo en unos minutos."
-        );
-      setEnviado(true);
+      // La sesión sigue abierta: al aprobarse, este dispositivo queda de confianza
+      setIngreso(await prepararIngresoNuevo(supabase, user.email, destino));
     })();
   }, [destino]);
 
-  if (!correo) return <div className="h-40 animate-pulse rounded-2xl bg-[#F3F1FA]" />;
+  if (!correo || !ingreso) return <div className="h-40 animate-pulse rounded-2xl bg-[#F3F1FA]" />;
 
   return (
     <div className="flex flex-col gap-3">
-      {error && (
-        <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900" role="alert">
-          {error}
-        </p>
-      )}
-      {(enviado || error) && (
-        <VerificarCodigo
+      {ingreso.bloqueado ? (
+        <Aviso tono="aviso" titulo="Demasiados intentos">
+          Hubo demasiados intentos de ingreso en la última hora. Espera un rato y vuelve a abrir esta página.
+        </Aviso>
+      ) : (
+        <EsperarEnlace
+          tipo="dispositivo"
           correo={correo}
           destino={destino}
-          tipo="email"
-          explicacion="Para proteger tus canchas y el dinero de tus clientes, confirma con el código que te enviamos a tu correo. Este dispositivo quedará de confianza por 30 días."
+          secreto={ingreso.secreto}
+          errorInicial={ingreso.error}
+          explicacion="Para proteger tus canchas y el dinero de tus clientes, confirma con el enlace que te enviamos a tu correo. Este dispositivo quedará de confianza por 30 días."
+          reenviar={async () => {
+            const supabase = supabaseNavegador();
+            if (!supabase) return "La app no está conectada a la base de datos.";
+            return mandarEnlaceIngreso(supabase, correo, destino, ingreso.solicitud);
+          }}
         />
       )}
       <button

@@ -5,8 +5,9 @@ import { useState } from "react";
 import { supabaseNavegador } from "@/lib/sesionNavegador";
 import { clienteCorreo, enlaceDeVuelta } from "@/lib/clienteCorreo";
 import { registrarEnvio } from "@/lib/dispositivo";
+import { crearSecreto, guardarEspera } from "@/lib/aprobacion";
 import CampoTexto from "@/components/CampoTexto";
-import VerificarCodigo from "@/components/VerificarCodigo";
+import EsperarEnlace from "@/components/EsperarEnlace";
 
 type Tipo = "cliente" | "dueno";
 
@@ -62,6 +63,8 @@ export default function FormularioRegistro({
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verificando, setVerificando] = useState(false);
+  // Secreto de la pantalla que espera el enlace (migración 025); solo en memoria
+  const [secreto, setSecreto] = useState<string | null>(null);
   const [correoExiste, setCorreoExiste] = useState(false);
 
   const celularLimpio = celular.replace(/\D/g, "");
@@ -83,14 +86,23 @@ export default function FormularioRegistro({
     // para que este registro empiece de cero con un código nuevo.
     await supabase.rpc("liberar_correo_no_verificado", { p_correo: email });
 
+    // Secreto de un solo uso: con él, esta pantalla sabe cuándo se tocó el enlace aunque
+    // se abra en otro dispositivo. Al registro solo viaja su huella (migración 025).
+    const espera = await crearSecreto();
+
     // El correo de confirmación se pide con el cliente de enlaces (funciona en cualquier navegador)
     registrarEnvio(email);
     const { data, error } = await (clienteCorreo() ?? supabase).auth.signUp({
       email,
       password: clave,
       options: {
-        data: { nombre: nombre.trim(), celular: celularLimpio, rol: tipo },
-        emailRedirectTo: enlaceDeVuelta(destino),
+        data: {
+          nombre: nombre.trim(),
+          celular: celularLimpio,
+          rol: tipo,
+          ...(espera ? { huella_espera: espera.huella } : {}),
+        },
+        emailRedirectTo: enlaceDeVuelta(destino, { registro: true }),
       },
     });
 
@@ -113,15 +125,30 @@ export default function FormularioRegistro({
       window.location.assign(`/auth/destino?next=${encodeURIComponent(destino)}`);
     } else {
       setEnviando(false);
-      setVerificando(true); // Supabase envió el código al correo
+      guardarEspera({ tipo: "registro", correo: email }, 24 * 60);
+      setSecreto(espera?.secreto ?? null);
+      setVerificando(true); // Supabase envió el enlace al correo
     }
   }
 
   if (verificando) {
     return (
-      <VerificarCodigo
+      <EsperarEnlace
+        tipo="registro"
         correo={correo.trim()}
         destino={destino}
+        secreto={secreto}
+        clave={clave}
+        reenviar={async () => {
+          const supabase = supabaseNavegador();
+          if (!supabase) return "La app no está conectada a la base de datos.";
+          const { error } = await (clienteCorreo() ?? supabase).auth.resend({
+            type: "signup",
+            email: correo.trim(),
+            options: { emailRedirectTo: enlaceDeVuelta(destino, { registro: true }) },
+          });
+          return error ? traducir(error.message) : null;
+        }}
         onVolver={() => setVerificando(false)}
       />
     );

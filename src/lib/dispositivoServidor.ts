@@ -26,15 +26,19 @@ export function faltaMigracion(error?: { code?: string; message?: string } | nul
   return error.code === "PGRST202" || /could not find the function/i.test(error.message ?? "");
 }
 
-/** Crea un token nuevo para este dispositivo. Requiere haber entrado con el correo hace poco. */
+/**
+ * Crea un token nuevo para este dispositivo. Requiere haber entrado con el correo hace
+ * poco, o el secreto de una solicitud de ingreso ya aprobada (migración 025).
+ */
 export async function crearTokenDispositivo(
   supabase: SupabaseClient,
-  cabeceras: Headers
+  cabeceras: Headers,
+  secreto?: string | null
 ): Promise<{ token: string | null; error: string | null }> {
-  const { data, error } = await supabase.rpc("confiar_dispositivo", {
-    p_ip: ipDe(cabeceras),
-    p_agente: agenteDe(cabeceras),
-  });
+  const datos = { p_ip: ipDe(cabeceras), p_agente: agenteDe(cabeceras) };
+  const { data, error } = secreto
+    ? await supabase.rpc("confiar_dispositivo_aprobado", { ...datos, p_secreto: secreto })
+    : await supabase.rpc("confiar_dispositivo", datos);
   if (error) return { token: null, error: faltaMigracion(error) ? "migracion_pendiente" : error.message };
   return { token: typeof data === "string" ? data : null, error: null };
 }

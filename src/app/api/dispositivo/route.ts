@@ -26,11 +26,19 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ confiable }, { headers: { "Cache-Control": "no-store" } });
 }
 
-// POST: marcar este dispositivo como de confianza (solo justo después de entrar con el correo)
+// POST: marcar este dispositivo como de confianza: justo después de entrar con el
+// enlace del correo, o con { secreto } de una solicitud de ingreso aprobada (migración 025)
 export async function POST(request: NextRequest) {
   const supabase = await supabaseServidor();
   if (!supabase) return NextResponse.json({ ok: false, error: "sin_configurar" }, { status: 500 });
-  const { token, error } = await crearTokenDispositivo(supabase, request.headers);
+  let secreto: string | null = null;
+  try {
+    const cuerpo = (await request.json()) as { secreto?: unknown };
+    if (typeof cuerpo?.secreto === "string" && /^[0-9a-f]{64}$/.test(cuerpo.secreto)) secreto = cuerpo.secreto;
+  } catch {
+    // sin cuerpo: entró con el enlace del correo
+  }
+  const { token, error } = await crearTokenDispositivo(supabase, request.headers, secreto);
   if (!token) {
     const codigo = error === "migracion_pendiente"
       ? "migracion_pendiente"
@@ -38,7 +46,9 @@ export async function POST(request: NextRequest) {
         ? "demasiados_intentos"
         : /requiere_codigo/.test(error ?? "")
           ? "requiere_codigo"
-          : "error";
+          : /sin_aprobacion/.test(error ?? "")
+            ? "sin_aprobacion"
+            : "error";
     return NextResponse.json({ ok: false, error: codigo }, { status: codigo === "migracion_pendiente" ? 200 : 400 });
   }
   const respuesta = NextResponse.json({ ok: true });
